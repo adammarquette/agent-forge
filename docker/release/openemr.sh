@@ -487,6 +487,18 @@ check_upgrade() {
         return 0
     fi
 
+    # A never-configured site has no sites/default/docker-version file, so
+    # docker_version_sites below defaults to 0 -- indistinguishable from a
+    # real "needs upgrading from version 0" case unless this is checked
+    # first. Without this guard, a fresh install with no existing config
+    # (e.g. a brand-new volume) misfires run_upgrade, which correctly
+    # refuses ("not configured yet") and returns 1; with set -e that kills
+    # the script and the container crash-loops instead of ever reaching the
+    # normal first-time setup path.
+    if [[ "$(is_configured)" != "1" ]]; then
+        return 0
+    fi
+
     # Read version numbers from different locations
     # Use integer types to guarantee numeric values defaulting to 0
     local -i docker_version_root=0
@@ -705,7 +717,11 @@ check_upgrade
 log_timing "3-UpgradeCheck"
 
 # Step 4: Verify configuration exists (critical check for worker containers)
-CONFIG=$(php -r "require_once('${SQLCONF_FILE}'); echo \$config;")
+# A missing sqlconf.php means "not configured yet" (same as is_configured()'s
+# own is_file() guard), not a fatal error -- an unconditional require_once
+# crashes the whole script (set -e) on a genuinely fresh volume where
+# swarm-pieces restoration hasn't run yet or doesn't apply.
+CONFIG=$(php -r "if (is_file('${SQLCONF_FILE}')) { require_once('${SQLCONF_FILE}'); echo \$config; } else { echo 0; }")
 if [[ "${AUTHORITY}" = "no" ]] && [[ "${CONFIG}" = "0" ]]; then
     echo "Critical failure! An OpenEMR worker is trying to run on a missing configuration." >&2
     echo " - Is this due to a Kubernetes grant hiccup?" >&2
