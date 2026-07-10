@@ -1,0 +1,8 @@
+# Applies to builds whose context is the repo root (docker/railway/Dockerfile).
+# Keeps the Railway build context small; deps are rebuilt inside the image.
+.git
+node_modules
+vendor
+tmp
+tmp-phpstan
+docker/development-easy/databasevolume
