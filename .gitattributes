@@ -50,3 +50,22 @@ Documentation/EHI_Export/schemaspy/schemas/* export-ignore
 Documentation/EHI_Export/schemaspy/schemas/openemr.meta.xml -export-ignore
 .phpstan/**/*.* text eol=lf
 .phpstan/*.* text eol=lf
+
+# Shell scripts run inside Linux containers via their shebang line
+# (#!/usr/bin/env bash). A CRLF-corrupted shebang makes `env` fail to find
+# the interpreter ("env: can't execute 'bash': No such file or directory")
+# once the script is copied into a container image, so force LF regardless
+# of the checking-out platform's core.autocrlf setting.
+*.sh text eol=lf
+
+# Dot-sourced into bash scripts (not executed via shebang), but a CRLF line
+# ending still breaks it: bash sees a trailing $'\r' as a stray command.
+docker/release/utilities/devtoolsLibrary.source text eol=lf
+
+# Read via `cat` into a bash `local -i` (integer) variable in openemr.sh's
+# upgrade-version check; a trailing \r makes the arithmetic assignment fail
+# ("invalid arithmetic operator") and silently defaults the version to 0.
+# No leading slash: matches every docker-version file in the tree (root,
+# sites/default/, docker/release/upgrade/, docker/binary/upgrade/), all of
+# which are read the same way.
+docker-version text eol=lf

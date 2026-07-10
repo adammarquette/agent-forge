@@ -62,6 +62,13 @@ from GitLab CI using the Railway CLI and environment-scoped **project tokens**
 4. **Settings → Networking → Public Networking**: generate a domain and set
    the **target port to 80** (the container serves HTTP on 80; Railway
    terminates TLS at the edge).
+5. **Set the `PORT` variable to `80`.** The domain's "target port" setting
+   only controls edge routing — Railway's own healthcheck/internal proxy
+   targets whatever `PORT` resolves to, which otherwise silently defaults
+   away from 80. Without this, the build succeeds and Apache starts
+   normally, but the healthcheck never passes ("service unavailable" on
+   every retry until the 10-minute timeout) because Railway is probing a
+   port nothing is listening on.
 
 ### 1.4 Copilot service
 
