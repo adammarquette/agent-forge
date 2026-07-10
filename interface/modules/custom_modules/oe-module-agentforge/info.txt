@@ -1,0 +1,3 @@
+name: oe-module-agentforge
+version: 0.1.0
+description: AgentForge launch integration module for OpenEMR
