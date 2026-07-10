@@ -54,7 +54,14 @@ from GitLab CI using the Railway CLI and environment-scoped **project tokens**
    MYSQL_PASS=<pick a password, different per environment>
    OE_USER=admin
    OE_PASS=<pick an admin password, different per environment>
+   SWARM_MODE=yes
    ```
+
+   `SWARM_MODE=yes` matches this fork's documented setup (see §5 below) and
+   enables `handle_swarm_mode()`'s leader-election and `/swarm-pieces/`
+   restore logic. Without it that coordination is skipped entirely, which
+   this doc has always assumed is on -- not previously listed here, which
+   was an oversight.
 
 3. **Settings → Volumes**: attach a volume mounted at
    `/var/www/localhost/htdocs/openemr/sites` (persists site config,
