@@ -1,0 +1,67 @@
+# =============================================================================
+# GitLab CI/CD -> Railway deployment pipeline (agent-forge / OpenEMR)
+# =============================================================================
+# Promotion model:
+#   push to main  --auto-->  development
+#                 --manual-> sdet        (one-click in the pipeline UI)
+#                 --manual-> production  (only after sdet has deployed)
+#
+# Railway does the actual building (docker/railway/Dockerfile via railway.json);
+# these jobs just upload the source with the Railway CLI.
+#
+# Required CI/CD variables (Settings -> CI/CD -> Variables, masked):
+#   RAILWAY_TOKEN_DEVELOPMENT  - Railway project token scoped to "development"
+#   RAILWAY_TOKEN_SDET         - Railway project token scoped to "sdet"
+#   RAILWAY_TOKEN_PRODUCTION   - Railway project token scoped to "production"
+#
+# See docs/DEPLOYMENT.md for the full Railway setup runbook.
+# =============================================================================
+
+stages:
+  - deploy
+
+variables:
+  # Name of the Railway service that receives this repo's deploys
+  RAILWAY_SERVICE: openemr
+
+.railway-deploy:
+  stage: deploy
+  image: ghcr.io/railwayapp/cli:latest
+  variables:
+    GIT_DEPTH: "1"
+  script:
+    - railway up --service "$RAILWAY_SERVICE" --ci
+
+deploy:development:
+  extends: .railway-deploy
+  variables:
+    RAILWAY_TOKEN: $RAILWAY_TOKEN_DEVELOPMENT
+  environment:
+    name: development
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+deploy:sdet:
+  extends: .railway-deploy
+  variables:
+    RAILWAY_TOKEN: $RAILWAY_TOKEN_SDET
+  environment:
+    name: sdet
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+      allow_failure: true
+
+deploy:production:
+  extends: .railway-deploy
+  variables:
+    RAILWAY_TOKEN: $RAILWAY_TOKEN_PRODUCTION
+  environment:
+    name: production
+  # Production can only be triggered after the sdet deploy job has succeeded.
+  needs:
+    - deploy:sdet
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+      allow_failure: true
