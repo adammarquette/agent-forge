@@ -75,6 +75,10 @@ OE_PASS="${OE_PASS:-pass}"                    # Initial admin password (CHANGE I
 MANUAL_SETUP="${MANUAL_SETUP:-no}"  # Set to "yes" to skip automatic setup
 K8S="${K8S:-}"                      # Kubernetes mode: "admin" or "worker"
 SWARM_MODE="${SWARM_MODE:-no}"      # Set to "yes" for multi-container coordination
+RUN_DB_UPGRADE="${RUN_DB_UPGRADE:-no}"  # Set to "yes" to keep sql_upgrade.php etc.
+                                         # reachable for a deploy that needs a DB
+                                         # upgrade; unset/no removes them like any
+                                         # other one-time setup script (default)
 
 # ============================================================================
 # CONTAINER ROLE DEFINITIONS
@@ -111,28 +115,33 @@ wait_for_mysql() {
     local -i initial_delay=1
     local -i max_delay=5
     local -i current_delay=${initial_delay}
+    local ping_output=""
     echo "Waiting for MySQL at ${MYSQL_HOST}:${MYSQL_PORT}..."
 
     # Try immediate connection first (MySQL might already be ready)
-    # Use mysqladmin ping for more efficient health check
-    if mysqladmin ping \
+    # Use mysqladmin ping for more efficient health check. Captured (not
+    # --silent/redirected to /dev/null) so a real failure - wrong
+    # MYSQL_ROOT_USER/MYSQL_ROOT_PASS vs. host genuinely unreachable - is
+    # distinguishable in the logs instead of both looking like the same
+    # generic timeout. mysqladmin's own error text never includes the
+    # password itself (just whether one was supplied), so this is safe to
+    # print as-is.
+    if ping_output=$(mysqladmin ping \
         --host="${MYSQL_HOST}" \
         --port="${MYSQL_PORT}" \
         --user="${MYSQL_ROOT_USER}" \
-        --password="${MYSQL_ROOT_PASS}" \
-        --silent >/dev/null 2>&1; then
+        --password="${MYSQL_ROOT_PASS}" 2>&1); then
         echo "MySQL is ready!"
         return 0
     fi
 
     while (( retries-- > 0 )); do
         # Test database connectivity using mysqladmin ping
-        if mysqladmin ping \
+        if ping_output=$(mysqladmin ping \
             --host="${MYSQL_HOST}" \
             --port="${MYSQL_PORT}" \
             --user="${MYSQL_ROOT_USER}" \
-            --password="${MYSQL_ROOT_PASS}" \
-            --silent >/dev/null 2>&1; then
+            --password="${MYSQL_ROOT_PASS}" 2>&1); then
             echo "MySQL is ready!"
             return 0
         fi
@@ -141,6 +150,7 @@ wait_for_mysql() {
         # Only print message every 10 seconds to reduce log noise
         if (( retries % 5 == 0 || current_delay <= 2 )); then
             echo "MySQL not ready yet, retrying in ${current_delay} seconds... (${retries} attempts remaining)"
+            echo "  mysqladmin: ${ping_output}"
         fi
         sleep "${current_delay}"
 
@@ -151,6 +161,7 @@ wait_for_mysql() {
     done
 
     echo "ERROR: Timed out waiting for MySQL at ${MYSQL_HOST}:${MYSQL_PORT}" >&2
+    echo "ERROR: Last mysqladmin output: ${ping_output}" >&2
     return 1
 }
 
@@ -643,16 +654,27 @@ cleanup_setup_scripts() {
 
     # Only remove setup scripts if OpenEMR is configured
     if [[ "${config_state}" = "1" ]] && [[ -f "${AUTO_CONFIG}" ]]; then
-        echo "Removing setup scripts (keeping upgrade scripts for future upgrades)..."
-        # Remove only the initial installation scripts (not upgrade scripts)
+        echo "Removing setup scripts..."
+        # Always remove the one-time installation scripts.
         rm -f "${OE_ROOT}/admin.php" \
               "${OE_ROOT}/setup.php" \
               "${OE_ROOT}/auto_configure.php" \
-              "${OE_ROOT}/acl_upgrade.php" \
-              "${OE_ROOT}/sql_patch.php" \
-              "${OE_ROOT}/sql_upgrade.php" \
-              "${OE_ROOT}/ippf_upgrade.php"
-        echo "Setup scripts removed (upgrade scripts preserved)"
+              "${OE_ROOT}/acl_upgrade.php"
+
+        # sql_patch.php, sql_upgrade.php, and ippf_upgrade.php are
+        # unauthenticated by design ($ignoreAuth = true), so they are removed
+        # by default like any other setup script. Only a deploy explicitly
+        # flagged with RUN_DB_UPGRADE=yes (e.g. a fork switched in ahead of a
+        # matching schema upgrade) keeps them reachable, and only for as long
+        # as that flag stays set.
+        if [[ "${RUN_DB_UPGRADE}" = "yes" ]]; then
+            echo "RUN_DB_UPGRADE=yes: keeping sql_patch.php, sql_upgrade.php, and ippf_upgrade.php reachable"
+        else
+            rm -f "${OE_ROOT}/sql_patch.php" \
+                  "${OE_ROOT}/sql_upgrade.php" \
+                  "${OE_ROOT}/ippf_upgrade.php"
+        fi
+        echo "Setup scripts removed"
     fi
 }
 
