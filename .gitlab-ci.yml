@@ -21,8 +21,11 @@ stages:
   - deploy
 
 variables:
-  # Name of the Railway service that receives this repo's deploys
-  RAILWAY_SERVICE: openemr
+  # Name of the Railway service that receives this repo's deploys. Must match
+  # the actual service name in the Railway dashboard exactly -- "openemr-Uubp"
+  # here, not "openemr" as docs/DEPLOYMENT.md's setup instructions name it;
+  # a mismatch here fails every deploy job with "Service not found".
+  RAILWAY_SERVICE: openemr-Uubp
 
 .railway-deploy:
   stage: deploy
