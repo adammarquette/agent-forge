@@ -164,9 +164,10 @@ RUN rm -rf /openemr/.git /openemr/node_modules /openemr/vendor /openemr/tmp
 FROM base AS openemr-composer
 COPY --from=openemr-source /openemr /openemr
 WORKDIR /openemr
-# Use Docker buildkit cache mount for Composer cache (requires DOCKER_BUILDKIT=1)
-RUN --mount=type=cache,target=/root/.composer/cache \
-    composer install --no-dev --optimize-autoloader \
+# No buildkit cache mount: Railway's builder requires a cacheKey-prefixed id
+# in a format not documented here, so this trades cross-build cache reuse for
+# a build that reliably passes on Railway's Metal builder.
+RUN composer install --no-dev --optimize-autoloader \
     && composer dump-autoload --optimize --apcu
 
 # Stage 3: Build frontend assets (npm)
@@ -175,9 +176,10 @@ FROM base AS openemr-assets
 COPY --from=openemr-source /openemr /openemr
 WORKDIR /openemr
 RUN apk add --no-cache build-base nodejs npm
-# Use Docker buildkit cache mount for npm cache (requires DOCKER_BUILDKIT=1)
-RUN --mount=type=cache,target=/root/.npm \
-    npm install --unsafe-perm \
+# No buildkit cache mount: Railway's builder requires a cacheKey-prefixed id
+# in a format not documented here, so this trades cross-build cache reuse for
+# a build that reliably passes on Railway's Metal builder.
+RUN npm install --unsafe-perm \
     && npm run build \
     && cd ccdaservice \
     && npm install --unsafe-perm \
@@ -228,14 +230,15 @@ RUN cd /tmp \
     && sed -i 's/^ *TransferLog/#TransferLog/' /etc/apache2/conf.d/ssl.conf
 
 # ============================================================================
-# WORKING DIRECTORY AND VOLUMES
+# WORKING DIRECTORY
 # ============================================================================
 # Set working directory to OpenEMR installation
 WORKDIR /var/www/localhost/htdocs/openemr
 
-# Define volumes for SSL certificates and Let's Encrypt certificates
-# These volumes persist certificates across container restarts
-VOLUME [ "/etc/letsencrypt/", "/etc/ssl" ]
+# No Dockerfile VOLUME directive here: Railway's builder rejects it outright
+# ("use Railway Volumes"). Persistence for /etc/ssl, /etc/letsencrypt, and
+# sites/default is configured as an actual Railway Volume attached to the
+# service (docs/DEPLOYMENT.md Section 1.3), not declared in the image.
 
 # ============================================================================
 # APACHE AND PHP CONFIGURATION FILES
