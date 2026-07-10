@@ -1,24 +1,37 @@
 # =============================================================================
 # GitLab CI/CD -> Railway deployment pipeline (agent-forge / OpenEMR)
 # =============================================================================
+# Pipeline entry point - see docs/CI-SETUP.md for the full explanation of this
+# structure and the one-time GitLab project-settings steps it depends on.
+# Per-stage jobs live under .gitlab/ci/, mirroring agent-forge-copilot's
+# structure (agent-forge#8).
+#
 # Promotion model:
 #   push to main  --auto-->  development
 #                 --manual-> sdet        (one-click in the pipeline UI)
 #                 --manual-> production  (only after sdet has deployed)
 #
-# Railway does the actual building (docker/railway/Dockerfile via railway.json);
-# these jobs just upload the source with the Railway CLI.
-#
 # Required CI/CD variables (Settings -> CI/CD -> Variables, masked):
 #   RAILWAY_TOKEN_DEVELOPMENT  - Railway project token scoped to "development"
 #   RAILWAY_TOKEN_SDET         - Railway project token scoped to "sdet"
 #   RAILWAY_TOKEN_PRODUCTION   - Railway project token scoped to "production"
+#   OE_PASS, MYSQL_PASS        - environment-scoped (Settings -> CI/CD ->
+#                                Variables -> set "Environment scope" per
+#                                value to development/sdet/production)
+#   DEVELOPMENT_URL            - plain (not masked) - the development
+#                                environment's Railway domain, used only by
+#                                the verify stage's post-deploy smoke test
 #
-# See docs/DEPLOYMENT.md for the full Railway setup runbook.
+# See docs/DEPLOYMENT.md for the full Railway setup runbook and
+# docs/CI-SETUP.md for this pipeline's structure and rationale.
 # =============================================================================
 
 stages:
+  - lint
+  - build
+  - test
   - deploy
+  - verify
 
 variables:
   # Name of the Railway service that receives this repo's deploys. Must match
@@ -27,44 +40,19 @@ variables:
   # a mismatch here fails every deploy job with "Service not found".
   RAILWAY_SERVICE: openemr-Uubp
 
-.railway-deploy:
-  stage: deploy
-  image: ghcr.io/railwayapp/cli:latest
-  variables:
-    GIT_DEPTH: "1"
-  script:
-    - railway up --service "$RAILWAY_SERVICE" --ci
-
-deploy:development:
-  extends: .railway-deploy
-  variables:
-    RAILWAY_TOKEN: $RAILWAY_TOKEN_DEVELOPMENT
-  environment:
-    name: development
+# Pipelines run on merge requests (lint/build/test feedback before merge) and
+# on pushes to the default branch (full suite + auto-deploy to development).
+# Without this, every feature-branch push would ALSO trigger a pipeline that
+# then runs again once the MR opens - the same commits tested twice on every
+# change (see agent-forge-copilot's .gitlab-ci.yml comment re: their issue #40).
+workflow:
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
 
-deploy:sdet:
-  extends: .railway-deploy
-  variables:
-    RAILWAY_TOKEN: $RAILWAY_TOKEN_SDET
-  environment:
-    name: sdet
-  rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-      when: manual
-      allow_failure: true
-
-deploy:production:
-  extends: .railway-deploy
-  variables:
-    RAILWAY_TOKEN: $RAILWAY_TOKEN_PRODUCTION
-  environment:
-    name: production
-  # Production can only be triggered after the sdet deploy job has succeeded.
-  needs:
-    - deploy:sdet
-  rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-      when: manual
-      allow_failure: true
+include:
+  - local: ".gitlab/ci/lint.yml"
+  - local: ".gitlab/ci/build.yml"
+  - local: ".gitlab/ci/test.yml"
+  - local: ".gitlab/ci/deploy.yml"
+  - local: ".gitlab/ci/verify.yml"

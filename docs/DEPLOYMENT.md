@@ -113,6 +113,18 @@ protected branch):
 The same three Railway tokens work for both repos — the token selects the
 *environment*, the `--service` flag in each repo's CI selects the *service*.
 
+In `agent-forge` only, also add (plain — these aren't secrets):
+
+| Key | Value |
+|-----|-------|
+| `DEVELOPMENT_URL` | the development environment's public Railway domain, e.g. `https://openemr-development-xxxx.up.railway.app` |
+
+`DEVELOPMENT_URL` is read by the `verify` stage's post-deploy smoke test
+(`.gitlab/ci/verify.yml`), which polls
+`${DEVELOPMENT_URL}/interface/login/login.php?site=default` until it
+returns HTTP 200. sdet/production aren't smoke-tested yet — see
+`docs/CI-SETUP.md`.
+
 ## 3. CI pipeline for the copilot repo
 
 Copy this as `.gitlab-ci.yml` in `agent-forge-copilot` (identical to this

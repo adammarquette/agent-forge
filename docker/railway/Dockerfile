@@ -170,6 +170,23 @@ WORKDIR /openemr
 RUN composer install --no-dev --optimize-autoloader \
     && composer dump-autoload --optimize --apcu
 
+# Stage 2b: CI tooling image - full (dev-included) Composer install.
+# openemr-composer above uses --no-dev for the production image, which
+# excludes phpstan/phpcs/rector/etc; CI's lint stage needs those, so this
+# stage exists purely to give CI a PHP 8.5 + full extension list image that
+# matches production exactly, without shipping dev tooling in the deploy
+# artifact. Not consumed by the production/final stages below.
+FROM base AS openemr-ci
+# pdo_sqlite is not an OpenEMR runtime dependency (composer.json only
+# requires ext-pdo_mysql) - it's needed here because
+# tests/Tests/Isolated/Services/.../HolidayServiceTest exercises a
+# throwaway in-memory SQLite DB. Installed only in this CI stage so
+# production's extension list stays exactly what the app requires.
+RUN apk add --no-cache php${PHP_VERSION_ABBR}-pdo_sqlite
+COPY --from=openemr-source /openemr /openemr
+WORKDIR /openemr
+RUN composer install --optimize-autoloader
+
 # Stage 3: Build frontend assets (npm)
 # Separate stage allows Docker to cache npm dependencies independently
 FROM base AS openemr-assets

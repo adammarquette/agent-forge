@@ -69,3 +69,18 @@ docker/release/utilities/devtoolsLibrary.source text eol=lf
 # sites/default/, docker/release/upgrade/, docker/binary/upgrade/), all of
 # which are read the same way.
 docker-version text eol=lf
+
+# This test's setUp() writes a heredoc verbatim to a fake `bin/console`
+# shell script and executes it via `/bin/sh <script>`. On a CRLF checkout,
+# lines like `exit 137` become `exit 137\r`; sh treats "137\r" as a
+# non-numeric exit argument ("numeric argument required") and exits 2
+# instead, which the test then observes as a swapped/garbled status
+# instead of the fixture's intended behavior. Force LF regardless of
+# checkout platform.
+tests/Tests/Isolated/Services/Background/SymfonyBackgroundServiceSpawnerTest.php text eol=lf
+
+# TwigTemplateRenderTest compares rendered template output (always LF, since
+# Twig/PHP emit LF) byte-for-byte against these recorded fixtures. A
+# CRLF checkout makes every fixture mismatch on line endings alone,
+# failing all 14 render-comparison tests regardless of actual content.
+tests/Tests/Isolated/Common/Twig/fixtures/render/*.html text eol=lf
