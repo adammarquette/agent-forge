@@ -6,44 +6,47 @@ This project deploys two applications from GitLab (`labs.gauntletai.com`) to
 | Repo | App | Railway service |
 |------|-----|-----------------|
 | `adammarquette/agent-forge` | OpenEMR (this repo) | `openemr` (+ `MySQL`) |
-| `adammarquette/agent-forge-copilot` | Copilot companion app | `copilot` |
+| `adammarquette/agent-forge-copilot` | Copilot companion app | `agent-forge-api` |
 
-Three environments live in **one Railway project**, promoted in order:
-
-```
-push to main ──auto──▶ development ──manual──▶ sdet ──manual──▶ production
-```
+**Single-environment model:** push to `main` auto-deploys to Railway's
+`staging` environment. (An earlier version of this doc described a
+development/sdet/production promotion chain; Railway's actual project only
+ever had two environments, and the working deployment has lived in
+`staging` since 2026-07-10 — see `agent-forge#8`'s update. The live project
+is currently named `lucid-clarity` in the Railway dashboard, not
+`agent-forge` — Railway auto-names projects created without an explicit
+name, and this one was never renamed.)
 
 Railway does not integrate natively with self-hosted GitLab, so deploys run
-from GitLab CI using the Railway CLI and environment-scoped **project tokens**
-(`railway up` uploads the source; Railway builds it with
+from GitLab CI using the Railway CLI and an environment-scoped **project
+token** (`railway up` uploads the source; Railway builds it with
 `docker/railway/Dockerfile` per `railway.json`).
 
 ---
 
 ## 1. One-time Railway setup
 
-### 1.1 Project and environments
+### 1.1 Project and environment
 
 1. In the [Railway dashboard](https://railway.com/dashboard), **New Project**
-   → "Empty Project". Name it `agent-forge`.
-2. Project **Settings → Environments**. The default environment is
-   `production`. Add two more: `development` and `sdet`.
-   (Services exist across all environments; each environment gets its own
-   instances, variables, volumes, and domains.)
+   → "Empty Project". Name it `agent-forge` (or use an existing project —
+   the live one is currently named `lucid-clarity`).
+2. Project **Settings → Environments**. Rename the default environment to
+   `staging`, or add a `staging` environment if you'd rather keep the
+   default around for something else.
 
 ### 1.2 MySQL service
 
 1. In the project canvas: **Create → Database → MySQL**.
-2. Repeat nothing — the service exists in every environment automatically,
-   but verify each environment shows its own MySQL instance and volume
-   (switch environments with the dropdown at the top).
+2. Verify the `staging` environment shows its own MySQL instance and volume
+   (switch environments with the dropdown at the top if the project has
+   more than one).
 
 ### 1.3 OpenEMR service
 
 1. **Create → Empty Service**, name it `openemr` (must match
    `RAILWAY_SERVICE` in `.gitlab-ci.yml`).
-2. In **each** environment, set the service **Variables** (use Railway
+2. In the `staging` environment, set the service **Variables** (use Railway
    reference syntax so credentials follow the MySQL service):
 
    ```
@@ -51,9 +54,9 @@ from GitLab CI using the Railway CLI and environment-scoped **project tokens**
    MYSQL_PORT=${{MySQL.MYSQLPORT}}
    MYSQL_ROOT_PASS=${{MySQL.MYSQLPASSWORD}}
    MYSQL_USER=openemr
-   MYSQL_PASS=<pick a password, different per environment>
+   MYSQL_PASS=<pick a password>
    OE_USER=admin
-   OE_PASS=<pick an admin password, different per environment>
+   OE_PASS=<pick an admin password>
    SWARM_MODE=yes
    ```
 
@@ -79,24 +82,18 @@ from GitLab CI using the Railway CLI and environment-scoped **project tokens**
 
 ### 1.4 Copilot service
 
-1. **Create → Empty Service**, name it `copilot`.
+1. **Create → Empty Service**, name it `agent-forge-api`.
 2. Configure variables/volumes as that app requires (its Railway build is
    auto-detected by Railpack unless the copilot repo adds its own
    `railway.json`/Dockerfile).
 3. If it needs a public URL, generate a domain the same way.
 
-### 1.5 Project tokens (one per environment)
+### 1.5 Project token
 
-Project **Settings → Tokens**: create three tokens, each scoped to one
-environment:
+Project **Settings → Tokens**: create one token scoped to the `staging`
+environment (e.g. named `gitlab-ci-staging`).
 
-| Token name | Environment |
-|------------|-------------|
-| `gitlab-ci-development` | development |
-| `gitlab-ci-sdet` | sdet |
-| `gitlab-ci-production` | production |
-
-Copy each value immediately — Railway shows it only once.
+Copy the value immediately — Railway shows it only once.
 
 ## 2. One-time GitLab setup (both repos)
 
@@ -106,89 +103,46 @@ protected branch):
 
 | Key | Value |
 |-----|-------|
-| `RAILWAY_TOKEN_DEVELOPMENT` | the development-scoped token |
-| `RAILWAY_TOKEN_SDET` | the sdet-scoped token |
-| `RAILWAY_TOKEN_PRODUCTION` | the production-scoped token |
+| `RAILWAY_TOKEN_STAGING` | the staging-scoped token |
 
-The same three Railway tokens work for both repos — the token selects the
+The same Railway token works for both repos — the token selects the
 *environment*, the `--service` flag in each repo's CI selects the *service*.
 
 In `agent-forge` only, also add (plain — these aren't secrets):
 
 | Key | Value |
 |-----|-------|
-| `DEVELOPMENT_URL` | the development environment's public Railway domain, e.g. `https://openemr-development-xxxx.up.railway.app` |
+| `STAGING_URL` | the staging environment's public Railway domain for the `openemr` service, e.g. `https://openemr-staging-xxxx.up.railway.app` |
 
-`DEVELOPMENT_URL` is read by the `verify` stage's post-deploy smoke test
+`STAGING_URL` is read by the `verify` stage's post-deploy smoke test
 (`.gitlab/ci/verify.yml`), which polls
-`${DEVELOPMENT_URL}/interface/login/login.php?site=default` until it
-returns HTTP 200. sdet/production aren't smoke-tested yet — see
-`docs/CI-SETUP.md`.
+`${STAGING_URL}/interface/login/login.php?site=default` until it
+returns HTTP 200.
+
+`agent-forge-copilot` uses its own `RAILWAY_TOKEN_STAGING`-equivalent
+variable and Railway domain for its `/health`/`/ready` smoke test — see
+that repo's `documentation/CI-SETUP.md`.
 
 ## 3. CI pipeline for the copilot repo
 
-Copy this as `.gitlab-ci.yml` in `agent-forge-copilot` (identical to this
-repo's pipeline except for the service name):
-
-```yaml
-stages:
-  - deploy
-
-variables:
-  RAILWAY_SERVICE: copilot
-
-.railway-deploy:
-  stage: deploy
-  image: ghcr.io/railwayapp/cli:latest
-  variables:
-    GIT_DEPTH: "1"
-  script:
-    - railway up --service "$RAILWAY_SERVICE" --ci
-
-deploy:development:
-  extends: .railway-deploy
-  variables:
-    RAILWAY_TOKEN: $RAILWAY_TOKEN_DEVELOPMENT
-  environment:
-    name: development
-  rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-
-deploy:sdet:
-  extends: .railway-deploy
-  variables:
-    RAILWAY_TOKEN: $RAILWAY_TOKEN_SDET
-  environment:
-    name: sdet
-  rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-      when: manual
-      allow_failure: true
-
-deploy:production:
-  extends: .railway-deploy
-  variables:
-    RAILWAY_TOKEN: $RAILWAY_TOKEN_PRODUCTION
-  environment:
-    name: production
-  needs:
-    - deploy:sdet
-  rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-      when: manual
-      allow_failure: true
-```
+`agent-forge-copilot` maintains its own `.gitlab-ci.yml` /
+`.gitlab/ci/deploy.yml` — see that repo directly rather than copying an
+example here, since keeping two independently-maintained copies in sync by
+hand is exactly the kind of drift this project has already been bitten by
+(the `RAILWAY_SERVICE`/environment mismatches this doc itself went through).
+Both repos deploy `railway up --service "$RAILWAY_SERVICE" --ci` against the
+same `staging` environment; only the service name and any
+service-specific variable reassertion differ.
 
 ## 4. Day-to-day workflow
 
-1. Merge/push to `main` → the pipeline auto-deploys to **development**.
-2. When development looks good, open the pipeline in GitLab and press ▶ on
-   `deploy:sdet`. Run tests against the sdet URL.
-3. When sdet passes, press ▶ on `deploy:production` (GitLab refuses to run
-   it until `deploy:sdet` succeeded in that pipeline).
+1. Merge/push to `main` → the pipeline auto-deploys to **staging**.
+2. `verify:staging` smoke-tests the deployed login page; a red job means the
+   deploy went out but isn't actually serving traffic — check deploy logs
+   before re-running.
 
-GitLab's **Operate → Environments** page tracks what commit is live in each
-environment.
+GitLab's **Operate → Environments** page tracks what commit is live in
+`staging`.
 
 ## 5. OpenEMR-on-Railway specifics
 
@@ -210,9 +164,9 @@ environment.
 ## 6. Troubleshooting
 
 - `Could not find service` in CI → service name in Railway doesn't match
-  `RAILWAY_SERVICE` (`openemr` / `copilot`).
-- `Unauthorized` in CI → token missing/wrong scope; project tokens are
-  per-environment, check the job used the matching `RAILWAY_TOKEN_*`.
+  `RAILWAY_SERVICE` (`openemr` / `agent-forge-api`).
+- `Unauthorized` in CI → token missing/wrong scope; the project token must
+  be scoped to the `staging` environment.
 - Healthcheck timeout on first deploy → check deploy logs; usually MySQL
   variables are missing/wrong in that environment.
 - Build OOM/timeout → the webpack + composer build is heavy; retry, or
