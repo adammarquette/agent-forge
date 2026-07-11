@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace OpenEMR\Modules\AgentForge;
 
 use OpenEMR\Common\Acl\AclMain;
-use OpenEMR\Events\PatientDemographics\RenderEvent;
+use OpenEMR\Common\Session\SessionWrapperFactory;
+use OpenEMR\Events\UserInterface\PageHeadingRenderEvent;
 use OpenEMR\FHIR\Config\ServerConfig;
 use OpenEMR\FHIR\SMART\SMARTLaunchToken;
 use OpenEMR\Modules\AgentForge\Config\AgentForgeGlobalConfig;
@@ -14,6 +15,13 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 final readonly class Bootstrap
 {
+    /**
+     * The demographics page's OemrUI page_id (interface/patient_file/summary/demographics.php),
+     * used to scope the launch button to that page only - PageHeadingRenderEvent
+     * fires on every OemrUI-rendered page, not just the patient chart.
+     */
+    private const DEMOGRAPHICS_PAGE_ID = 'core.mrd';
+
     public function __construct(
         private EventDispatcherInterface $eventDispatcher,
         private AgentForgeLaunchService $launchService = new AgentForgeLaunchService(),
@@ -24,20 +32,24 @@ final readonly class Bootstrap
     public function subscribeToEvents(): void
     {
         $this->eventDispatcher->addListener(
-            RenderEvent::EVENT_SECTION_LIST_RENDER_AFTER,
+            PageHeadingRenderEvent::EVENT_PAGE_HEADING_RENDER,
             $this->renderLaunchButton(...)
         );
     }
 
-    public function renderLaunchButton(RenderEvent $event): void
+    public function renderLaunchButton(PageHeadingRenderEvent $event): PageHeadingRenderEvent
     {
-        if (!AclMain::aclCheckCore('patients', 'demo')) {
-            return;
+        if ($event->getPageId() !== self::DEMOGRAPHICS_PAGE_ID) {
+            return $event;
         }
 
-        $pid = $event->getPid();
+        if (!AclMain::aclCheckCore('patients', 'demo')) {
+            return $event;
+        }
+
+        $pid = SessionWrapperFactory::getInstance()->getActiveSession()->get('pid');
         if (!is_numeric($pid) || (int) $pid <= 0) {
-            return;
+            return $event;
         }
 
         $launchToken = new SMARTLaunchToken();
@@ -46,7 +58,7 @@ final readonly class Bootstrap
 
         $serializedToken = $launchToken->serialize();
         if (!is_string($serializedToken)) {
-            return;
+            return $event;
         }
 
         $issuer = $this->config->getIssuer() ?? (new ServerConfig())->getFhirUrl();
@@ -65,11 +77,16 @@ final readonly class Bootstrap
         // dependency loading has onerror handling, not the content iframe
         // itself), and cross-origin navigation inside the iframe means this
         // page's JS can't inspect what actually rendered there once the
-        // redirect leaves same-origin. buildLaunchButtonMarkup()'s timeout is a
+        // redirect leaves same-origin. buildLaunchHeaderScript()'s timeout is a
         // generic, origin-agnostic safety net - it fires purely on "still open
         // after N seconds", not on detecting the specific failure - so it still
         // helps even when the failure is a silent one (e.g. sidecar CSP
         // frame-ancestors rejecting the frame outright, agent-forge#10).
-        echo $this->launchService->buildLaunchButtonMarkup($launchUrl);
+        $actions = $event->getActions();
+        $actions[] = $this->launchService->buildLaunchActionButton($launchUrl);
+        $event->setActions($actions);
+        $event->appendTitleNavContent($this->launchService->buildLaunchHeaderScript());
+
+        return $event;
     }
 }
