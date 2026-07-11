@@ -1,38 +1,73 @@
 # -----------------------------------------------------------------------------
 # LINT stage - style/static-analysis/spelling gates, run inside the CI image
-# build:ci-image just pushed (PHP 8.5 + the full extension list, matching
+# build:ci-image just built (PHP 8.5 + the full extension list, matching
 # production - phpstan in particular needs the real extension set to analyze
 # code that references ext-ldap/ext-soap/ext-xsl/etc without false negatives).
+#
+# image: references the tag by name with pull_policy: never rather than
+# always - there's no registry to pull from (see build.yml), and every job
+# runs through the same runner/Docker daemon that just built it locally.
+#
+# before_script copies vendor/ and oe-module-claimrev-connect/ out of the
+# image: GitLab always checks the repo out fresh into $CI_PROJECT_DIR
+# regardless of what the image's own Dockerfile put at its WORKDIR, so the
+# job's working directory never has either (both gitignored) even though
+# openemr-ci's /openemr/vendor was populated by `composer install` at build
+# time - and oe-module-claimrev-connect is a real composer dependency
+# (claimrevolution/oe-module-claimrev-connect) that
+# openemr/oe-module-installer-plugin relocates from vendor/ into
+# interface/modules/custom_modules/ as part of that same install, so it's
+# missing from the checkout too. Without it, anything referencing
+# OpenEMR\Modules\ClaimRevConnector\* (e.g. oe-module-dorn) looks like a
+# missing class to phpstan, even though the dependency is real and
+# resolves fine once actually present. Copying both in reuses that
+# pre-built install instead of re-running composer install (and its
+# network fetch) inside every lint job.
 # -----------------------------------------------------------------------------
 
 .lint_job: &lint_job
   stage: lint
   needs: ["build:ci-image"]
-  image: "$CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHORT_SHA"
+  image:
+    name: "openemr-ci:$CI_COMMIT_SHORT_SHA"
+    pull_policy: never
+  before_script:
+    - cp -r /openemr/vendor .
+    - cp -r /openemr/interface/modules/custom_modules/oe-module-claimrev-connect interface/modules/custom_modules/
 
 psr12:
   <<: *lint_job
   script:
     - composer phpcs
 
+# Invoked as the raw vendor/bin command, not `composer phpstan` - Composer
+# wraps script execution in its own subprocess with a 300s default
+# process-timeout, which killed phpstan mid-run at 79% (level 10 on the
+# full codebase legitimately takes longer than that here). Calling the
+# binary directly has no such wrapper.
 phpstan:
   <<: *lint_job
   script:
-    - composer phpstan
+    - vendor/bin/phpstan analyze --memory-limit=4G --configuration=phpstan.neon.dist
 
+# Same reasoning as phpstan above - invoke rector directly instead of
+# through `composer rector-check` to avoid Composer's process-timeout.
 rector:
   <<: *lint_job
   script:
-    - composer rector-check
+    - php -d memory_limit=4g ./vendor/bin/rector process --dry-run
 
-# composer codespell no-ops (prints a warning, exits 0) if the `codespell`
-# binary isn't on PATH - it's a Python tool, not something Composer
-# installs. openemr-ci is Alpine-based and doesn't ship it, so it's
-# installed here specifically rather than left to silently pass without
-# checking anything.
+# codespell isn't an apk package on this Alpine version (confirmed: "no
+# such package" even against the community repo explicitly) - it's a
+# Python tool, installed via pip instead. composer codespell would
+# otherwise silently no-op (prints a warning, exits 0) if the binary isn't
+# on PATH, so this is installed explicitly rather than left to silently
+# pass without checking anything.
 codespell:
   <<: *lint_job
   before_script:
-    - apk add --no-cache codespell
+    - cp -r /openemr/vendor .
+    - apk add --no-cache py3-pip
+    - pip3 install --break-system-packages codespell
   script:
     - composer codespell

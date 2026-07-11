@@ -24,17 +24,23 @@ only some of them present.
 ## Stages
 
 1. **lint** — style and static analysis. Runs against the `openemr-ci`
-   image `build:ci-image` just pushed, so phpstan sees the real extension
+   image `build:ci-image` just built, so phpstan sees the real extension
    set (`ext-ldap`, `ext-soap`, `ext-xsl`, ...) rather than false negatives
    from a host toolchain missing those extensions.
-2. **build** — `build:ci-image` builds and pushes the `openemr-ci` Dockerfile
-   target (full dev dependencies) to this project's Container Registry,
-   tagged with the commit SHA; lint and test pull it rather than rebuilding.
-   `build:production-image` builds the real deploy target as a pure
-   validation gate — it's not consumed anywhere downstream, it just fails
-   the pipeline immediately if the Dockerfile itself is broken (buildkit
-   cache-mount syntax, `VOLUME` directives, CRLF-corrupted `COPY`'d
-   scripts — this class of bug has hit this repo more than once).
+2. **build** — `build:ci-image` builds and locally tags the `openemr-ci`
+   Dockerfile target (full dev dependencies) with the commit SHA; lint and
+   test reference that tag directly (`pull_policy: never`) rather than
+   rebuilding or pulling from a registry — this GitLab instance doesn't
+   have a Container Registry configured (`CI_REGISTRY`/`CI_REGISTRY_IMAGE`
+   come back empty), and since every job runs through the same single
+   self-hosted runner sharing one Docker daemon (Docker-outside-of-Docker,
+   see `build.yml`), the image built here is already there locally for
+   lint/test to use. `build:production-image` builds the real deploy
+   target as a pure validation gate — it's not consumed anywhere
+   downstream, it just fails the pipeline immediately if the Dockerfile
+   itself is broken (buildkit cache-mount syntax, `VOLUME` directives,
+   CRLF-corrupted `COPY`'d scripts — this class of bug has hit this repo
+   more than once).
 3. **test** — `phpunit-isolated` (no database required). DB-backed suites
    (`unit`/`api`/`e2e`/`services`) need the full docker-compose stack
    (MySQL, OpenLDAP, Selenium, ...) that this pipeline doesn't provision, so

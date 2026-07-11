@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-$launchUri = getenv('AGENTFORGE_LAUNCH_URI') ?: 'https://copilot.example.com/launch';
-$issuer = getenv('AGENTFORGE_ISSUER') ?: 'https://openemr.example.com/fhir';
-$patientId = $_GET['patient'] ?? null;
+$launchUri = getenv('AGENTFORGE_LAUNCH_URI');
+$issuer = getenv('AGENTFORGE_ISSUER');
+$patientId = filter_input(INPUT_GET, 'patient') ?: null;
 
-if (empty($launchUri) || empty($issuer)) {
+if (!is_string($launchUri) || $launchUri === '' || !is_string($issuer) || $issuer === '') {
     http_response_code(500);
     exit('Launch configuration is missing.');
 }
 
 $query = http_build_query([
-    'launch' => $_GET['launch'] ?? '',
+    'launch' => filter_input(INPUT_GET, 'launch') ?: '',
     'iss' => $issuer,
     'aud' => $issuer,
     'patient' => $patientId,
