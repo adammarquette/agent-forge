@@ -1,5 +1,9 @@
 # Deployment Runbook: GitLab CI/CD → Railway
 
+For a quick-reference service table and architecture diagram, see
+[`RAILWAY.md`](../RAILWAY.md) at the repo root. This doc is the full
+step-by-step setup and troubleshooting runbook.
+
 This project deploys two applications from GitLab (`labs.gauntletai.com`) to
 [Railway](https://railway.com):
 
