@@ -846,6 +846,19 @@ if [[ "${AUTHORITY}" = "yes" ]]; then
             echo "${installed_version}" > "${OE_ROOT}/docker-version" 2>/dev/null || true
             echo "Version marker created: ${installed_version}"
         fi
+
+        # Register, install, and enable bundled custom modules (agent-forge#16).
+        # Nothing else does this - a module present in custom_modules/ is inert
+        # until it has a `modules` table row with mod_active=1, which previously
+        # required the Modules -> Manage Modules admin UI by hand on every fresh
+        # deploy. openemr:register --mtype=custom is idempotent (register()
+        # no-ops on an already-registered directory), so this is safe to extend
+        # to future bundled modules by adding another line here.
+        if [[ -d "${OE_ROOT}/interface/modules/custom_modules/oe-module-agentforge" ]]; then
+            echo "Registering oe-module-agentforge..."
+            run_php_as_apache php "${OE_ROOT}/bin/console" openemr:register --mtype=custom --modname=oe-module-agentforge \
+                || echo "WARNING: failed to auto-register oe-module-agentforge (agent-forge#16)" >&2
+        fi
     fi
 fi
 [[ "${AUTHORITY}" = "yes" ]] && update_leader_heartbeat
