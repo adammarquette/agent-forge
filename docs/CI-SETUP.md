@@ -15,9 +15,10 @@ For the Railway/GitLab account setup this depends on, see
   test.yml                 # phpunit-isolated
   deploy.yml                # railway up: staging (auto on push to main)
   verify.yml                # post-deploy smoke test against staging
+  cleanup.yml               # prunes stale Docker images on the runner
 ```
 
-Commit all six files together — `include:` fails the whole pipeline if any
+Commit all seven files together — `include:` fails the whole pipeline if any
 referenced file is missing, so there's no working intermediate state with
 only some of them present.
 
@@ -58,6 +59,13 @@ only some of them present.
    Railway accepted the source upload — `openemr.sh`'s first-boot
    `auto_configure.php` run can take several minutes before the app
    actually answers requests.
+6. **cleanup** — prunes Docker images idle for 48h+ from the runner's shared
+   daemon (`docker image prune -af --filter until=48h`). Runs at the end of
+   every pipeline regardless of earlier-stage outcomes (`rules: - when:
+   always`) — `build:ci-image`/`build:production-image` each leave a
+   uniquely SHA-tagged image behind that nothing else ever pulls or removes,
+   so without this the runner's local image store grows unbounded over time
+   (agent-forge#12).
 
 ## GitLab merge-check settings to enable
 

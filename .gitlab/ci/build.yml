@@ -42,8 +42,23 @@ build:ci-image:
   script:
     - docker build -f docker/railway/Dockerfile --target openemr-ci -t "openemr-ci:$CI_COMMIT_SHORT_SHA" .
 
+# rules:changes: paths mirror docker/railway/Dockerfile's own COPY
+# instructions exactly (agent-forge#12) - anything that can't reach a COPY'd
+# path can't change the build result, so a docs-only or pure-PHP-logic MR
+# skips this rebuild entirely. Kept as a hard gate (no allow_failure) for any
+# MR that *does* touch these paths - it exists specifically to catch
+# build-breaking regressions (agent-forge#3, #6, #7 were all found live on
+# Railway before this job existed).
 build:production-image:
   stage: build
   <<: *docker_build
+  rules:
+    - changes:
+        - docker/railway/Dockerfile
+        - docker/release/**/*
+        - composer.json
+        - composer.lock
+        - package.json
+        - package-lock.json
   script:
     - docker build -f docker/railway/Dockerfile -t "openemr-production:$CI_COMMIT_SHORT_SHA" .

@@ -1,0 +1,44 @@
+# -----------------------------------------------------------------------------
+# CLEANUP stage - prunes stale Docker images from the runner's shared daemon
+# (agent-forge#12). build:ci-image and build:production-image each leave a
+# uniquely SHA-tagged image (openemr-ci:$SHA, openemr-production:$SHA)
+# behind - neither is a GitLab artifact and neither is ever pulled back out
+# by a later job or pipeline, so nothing else ever removes them. Every job on
+# this runner shares one Docker daemon (Docker-outside-of-Docker, see
+# build.yml's own comment), so left unchecked this is unbounded disk growth
+# on the runner host, one pipeline run at a time.
+#
+# rules: - when: always: runs at the end of every pipeline regardless of
+# earlier-stage outcomes, specifically so a failed build:production-image
+# (Dockerfile regression) still gets its dangling/partial layers swept up
+# instead of only cleaning up after successful runs.
+#
+# A scheduled pipeline (GitLab Settings -> CI/CD -> Schedules) was the other
+# option raised in agent-forge#12, but a schedule targeting `main` sets
+# $CI_COMMIT_BRANCH to `main` same as a real push - deploy:staging's rule
+# (`if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH`) would fire on every
+# scheduled run too, meaning every other job's rules would need reworking to
+# explicitly exclude $CI_PIPELINE_SOURCE == "schedule" to avoid an unwanted
+# redeploy each time the cleanup schedule ticks. Running inline at the end of
+# every real pipeline avoids that blast radius entirely, at the cost of
+# pruning slightly more often than strictly necessary - `docker image prune`
+# itself is a sub-second no-op when there's nothing stale to remove, so the
+# extra runs are effectively free.
+#
+# -a (not just dangling) + --filter until=48h: targets any image unused for
+# 48h, not only openemr-production:*/openemr-ci:* by name - avoids fragile
+# per-repository-name matching, at the cost of also evicting incidental
+# tool images (docker:27, curlimages/curl:latest) once they go stale, which
+# just re-pull on next use. The 48h floor protects images still relevant to
+# any pipeline that started recently.
+# -----------------------------------------------------------------------------
+
+cleanup:prune-images:
+  stage: cleanup
+  image: docker:27
+  variables:
+    DOCKER_HOST: "unix:///var/run/docker.sock"
+  rules:
+    - when: always
+  script:
+    - docker image prune -af --filter "until=48h"

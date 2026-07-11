@@ -31,6 +31,7 @@ stages:
   - test
   - deploy
   - verify
+  - cleanup
 
 variables:
   # Name of the Railway service that receives this repo's deploys. Must match
@@ -53,3 +54,4 @@ include:
   - local: ".gitlab/ci/test.yml"
   - local: ".gitlab/ci/deploy.yml"
   - local: ".gitlab/ci/verify.yml"
+  - local: ".gitlab/ci/cleanup.yml"
