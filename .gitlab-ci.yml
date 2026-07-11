@@ -6,21 +6,20 @@
 # Per-stage jobs live under .gitlab/ci/, mirroring agent-forge-copilot's
 # structure (agent-forge#8).
 #
-# Promotion model:
-#   push to main  --auto-->  development
-#                 --manual-> sdet        (one-click in the pipeline UI)
-#                 --manual-> production  (only after sdet has deployed)
+# Single-environment model (mirrors agent-forge-copilot): push to main
+# auto-deploys to Railway's "staging" environment. An earlier version of
+# this file described a three-tier development/sdet/production promotion
+# model, but Railway's project only ever had two environments
+# (staging/development) - collapsed to the one that's actually real, see
+# agent-forge#8's 2026-07-10 update.
 #
 # Required CI/CD variables (Settings -> CI/CD -> Variables, masked):
-#   RAILWAY_TOKEN_DEVELOPMENT  - Railway project token scoped to "development"
-#   RAILWAY_TOKEN_SDET         - Railway project token scoped to "sdet"
-#   RAILWAY_TOKEN_PRODUCTION   - Railway project token scoped to "production"
-#   OE_PASS, MYSQL_PASS        - environment-scoped (Settings -> CI/CD ->
-#                                Variables -> set "Environment scope" per
-#                                value to development/sdet/production)
-#   DEVELOPMENT_URL            - plain (not masked) - the development
-#                                environment's Railway domain, used only by
-#                                the verify stage's post-deploy smoke test
+#   RAILWAY_TOKEN_STAGING  - Railway project token scoped to "staging"
+#   OE_PASS, MYSQL_PASS    - environment-scoped (Settings -> CI/CD ->
+#                            Variables -> set "Environment scope" to staging)
+#   STAGING_URL            - plain (not masked) - the staging environment's
+#                            Railway domain, used only by the verify stage's
+#                            post-deploy smoke test
 #
 # See docs/DEPLOYMENT.md for the full Railway setup runbook and
 # docs/CI-SETUP.md for this pipeline's structure and rationale.
@@ -35,13 +34,11 @@ stages:
 
 variables:
   # Name of the Railway service that receives this repo's deploys. Must match
-  # the actual service name in the Railway dashboard exactly -- "openemr-Uubp"
-  # here, not "openemr" as docs/DEPLOYMENT.md's setup instructions name it;
-  # a mismatch here fails every deploy job with "Service not found".
-  RAILWAY_SERVICE: openemr-Uubp
+  # the actual service name in the Railway dashboard exactly.
+  RAILWAY_SERVICE: openemr
 
 # Pipelines run on merge requests (lint/build/test feedback before merge) and
-# on pushes to the default branch (full suite + auto-deploy to development).
+# on pushes to the default branch (full suite + auto-deploy to staging).
 # Without this, every feature-branch push would ALSO trigger a pipeline that
 # then runs again once the MR opens - the same commits tested twice on every
 # change (see agent-forge-copilot's .gitlab-ci.yml comment re: their issue #40).
