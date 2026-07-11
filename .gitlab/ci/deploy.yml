@@ -1,0 +1,68 @@
+# -----------------------------------------------------------------------------
+# DEPLOY stage - promotes main to Railway across three environments. See
+# docs/DEPLOYMENT.md for the one-time Railway/GitLab setup this depends on.
+#
+# Promotion model:
+#   push to main  --auto-->  development
+#                 --manual-> sdet        (one-click in the pipeline UI)
+#                 --manual-> production  (only after sdet has deployed)
+#
+# Variable reassertion: PORT and SWARM_MODE are fixed, non-secret deploy
+# requirements (docs/DEPLOYMENT.md #1.3/#5) - hardcoded here rather than
+# stored as CI/CD variables so there's nothing to keep in sync. OE_PASS and
+# MYSQL_PASS are real secrets and stay in GitLab's environment-scoped CI/CD
+# variables; `railway variable set --skip-deploys` reasserts them
+# immediately before `railway up` so a value edited only in the Railway
+# dashboard (and not back-ported to GitLab) can't silently drift out of
+# sync between the two places - the discrepancy this is a workaround for is
+# in agent-forge-copilot's deploy.yml (Llm__ApiKey drift caused a full
+# session of 401s).
+# -----------------------------------------------------------------------------
+
+.railway_deploy: &railway_deploy
+  stage: deploy
+  image: ghcr.io/railwayapp/cli:latest
+  variables:
+    GIT_DEPTH: "1"
+  script:
+    - railway variable set PORT=80 --service "$RAILWAY_SERVICE" --skip-deploys
+    - railway variable set SWARM_MODE=yes --service "$RAILWAY_SERVICE" --skip-deploys
+    - railway variable set "OE_PASS=$OE_PASS" --service "$RAILWAY_SERVICE" --skip-deploys
+    - railway variable set "MYSQL_PASS=$MYSQL_PASS" --service "$RAILWAY_SERVICE" --skip-deploys
+    - railway up --service "$RAILWAY_SERVICE" --ci
+
+deploy:development:
+  <<: *railway_deploy
+  variables:
+    RAILWAY_TOKEN: $RAILWAY_TOKEN_DEVELOPMENT
+    GIT_DEPTH: "1"
+  environment:
+    name: development
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+deploy:sdet:
+  <<: *railway_deploy
+  variables:
+    RAILWAY_TOKEN: $RAILWAY_TOKEN_SDET
+    GIT_DEPTH: "1"
+  environment:
+    name: sdet
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+      allow_failure: true
+
+deploy:production:
+  <<: *railway_deploy
+  variables:
+    RAILWAY_TOKEN: $RAILWAY_TOKEN_PRODUCTION
+    GIT_DEPTH: "1"
+  environment:
+    name: production
+  needs:
+    - deploy:sdet
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+      allow_failure: true

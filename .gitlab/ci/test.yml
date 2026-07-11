@@ -1,0 +1,34 @@
+# -----------------------------------------------------------------------------
+# TEST stage - runs the isolated PHPUnit suite (no database needed) against
+# the openemr-ci image build:ci-image pushed. DB-backed suites (unit/api/
+# e2e/services) require the full docker-compose stack (mysql, openldap,
+# selenium, ...) that this pipeline does not provision, so they are
+# intentionally out of scope here rather than half-wired against a stack
+# that doesn't exist - see docs/CI-SETUP.md for the tradeoff.
+# -----------------------------------------------------------------------------
+
+phpunit-isolated:
+  stage: test
+  needs: ["build:ci-image"]
+  image: "$CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHORT_SHA"
+  script:
+    # pipefail so a nonzero phpunit exit isn't masked by tee's own (always
+    # 0) exit status - without it, a real test failure would still pass
+    # this job.
+    - set -o pipefail
+    # composer phpunit-isolated has no memory-limit override and reliably
+    # exhausts the default 128M limit on PHPStan's RuleTestCase-based
+    # isolated tests (agent-forge#8 triage) - invoke phpunit directly so
+    # -d memory_limit can be set.
+    - php -d memory_limit=1G vendor/bin/phpunit -c phpunit-isolated.xml 2>&1 | tee phpunit-isolated.log
+    # Guard against a config/autoload regression silently collecting zero
+    # tests and exiting 0 (agent-forge-copilot#21 was exactly this: a
+    # missing cache made `dotnet test` run nothing while reporting success).
+    # PHPUnit's own exit code doesn't distinguish "0 tests ran" from "all
+    # tests passed", so check the summary line explicitly.
+    - 'grep -qE "Tests: [1-9][0-9]*," phpunit-isolated.log || (echo "No tests were executed - failing explicitly" && exit 1)'
+  artifacts:
+    when: always
+    paths:
+      - phpunit-isolated.log
+    expire_in: 1 week

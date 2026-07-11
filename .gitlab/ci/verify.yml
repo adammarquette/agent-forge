@@ -1,0 +1,40 @@
+# -----------------------------------------------------------------------------
+# VERIFY stage - post-deploy smoke test. Confirms the freshly deployed
+# development environment is actually serving requests (mirrors
+# agent-forge-copilot's verify.yml /health retry-loop pattern), rather than
+# treating a green `railway up` as proof the app is reachable - openemr.sh's
+# first-boot auto_configure.php run can take several minutes, and a deploy
+# job returning success only means Railway accepted the upload.
+#
+# sdet/production are intentionally NOT verified here: their Railway
+# domains have changed unexpectedly during this project's setup (see
+# agent-forge issue discussion), so there's no URL yet stable enough to
+# hardcode or rely on. Add verify:sdet/verify:production once those
+# environments' domains are confirmed durable.
+#
+# Requires a `DEVELOPMENT_URL` CI/CD variable (plain, not masked - it's a
+# public login page URL, not a secret) set to the development environment's
+# Railway domain. See docs/CI-SETUP.md.
+# -----------------------------------------------------------------------------
+
+verify:development:
+  stage: verify
+  image: curlimages/curl:latest
+  needs: ["deploy:development"]
+  environment:
+    name: development
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  script:
+    - |
+      for i in $(seq 1 30); do
+        code=$(curl -s -o /dev/null -w "%{http_code}" "${DEVELOPMENT_URL}/interface/login/login.php?site=default")
+        if [ "$code" = "200" ]; then
+          echo "Login page reachable (HTTP $code) after $i attempt(s)"
+          exit 0
+        fi
+        echo "Attempt $i/30: HTTP $code, retrying in 10s..."
+        sleep 10
+      done
+      echo "Login page never became reachable after 30 attempts"
+      exit 1

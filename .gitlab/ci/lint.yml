@@ -1,0 +1,38 @@
+# -----------------------------------------------------------------------------
+# LINT stage - style/static-analysis/spelling gates, run inside the CI image
+# build:ci-image just pushed (PHP 8.5 + the full extension list, matching
+# production - phpstan in particular needs the real extension set to analyze
+# code that references ext-ldap/ext-soap/ext-xsl/etc without false negatives).
+# -----------------------------------------------------------------------------
+
+.lint_job: &lint_job
+  stage: lint
+  needs: ["build:ci-image"]
+  image: "$CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHORT_SHA"
+
+psr12:
+  <<: *lint_job
+  script:
+    - composer phpcs
+
+phpstan:
+  <<: *lint_job
+  script:
+    - composer phpstan
+
+rector:
+  <<: *lint_job
+  script:
+    - composer rector-check
+
+# composer codespell no-ops (prints a warning, exits 0) if the `codespell`
+# binary isn't on PATH - it's a Python tool, not something Composer
+# installs. openemr-ci is Alpine-based and doesn't ship it, so it's
+# installed here specifically rather than left to silently pass without
+# checking anything.
+codespell:
+  <<: *lint_job
+  before_script:
+    - apk add --no-cache codespell
+  script:
+    - composer codespell

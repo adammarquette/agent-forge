@@ -1,0 +1,37 @@
+# -----------------------------------------------------------------------------
+# BUILD stage - builds the fork's actual deploy image once (docker/railway/
+# Dockerfile) and pushes the CI tooling image (the openemr-ci target, full
+# dev dependencies included) to this project's Container Registry, tagged
+# with the commit SHA. lint and test pull this image rather than rebuilding
+# it, so every stage runs against byte-identical PHP 8.5 + extension parity
+# with what actually deploys.
+#
+# build:production-image is a pure validation gate, not an artifact any
+# later stage consumes - deploy still lets Railway build its own copy
+# server-side (railway up uploads source; Railway's Metal builder rebuilds
+# it independently). This job exists so a Dockerfile regression (buildkit
+# cache-mount syntax, VOLUME directives, CRLF-corrupted COPY'd scripts - see
+# agent-forge#3, #6, #7) fails the pipeline the moment it's pushed, instead
+# of being discovered live on Railway hours later.
+# -----------------------------------------------------------------------------
+
+.docker_build: &docker_build
+  image: docker:27
+  services:
+    - docker:27-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+
+build:ci-image:
+  stage: build
+  <<: *docker_build
+  script:
+    - docker build -f docker/railway/Dockerfile --target openemr-ci -t "$CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHORT_SHA" .
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker push "$CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHORT_SHA"
+
+build:production-image:
+  stage: build
+  <<: *docker_build
+  script:
+    - docker build -f docker/railway/Dockerfile -t "$CI_REGISTRY_IMAGE/production:$CI_COMMIT_SHORT_SHA" .
