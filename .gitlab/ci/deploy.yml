@@ -23,6 +23,12 @@
 # places - the discrepancy this is a workaround for is in
 # agent-forge-copilot's deploy.yml (Llm__ApiKey drift caused a full session
 # of 401s).
+#
+# RAILWAY_TOKEN is a plain project-level CI/CD variable (scope: *), not
+# reassigned here - this used to read RAILWAY_TOKEN_STAGING, a name that
+# was never actually created in GitLab (only the plain RAILWAY_TOKEN was),
+# so every deploy since the staging collapse ran with an empty token.
+# Single-environment model means no per-environment suffix is needed.
 # -----------------------------------------------------------------------------
 
 deploy:staging:
@@ -31,7 +37,6 @@ deploy:staging:
   interruptible: false
   variables:
     GIT_DEPTH: "1"
-    RAILWAY_TOKEN: $RAILWAY_TOKEN_STAGING
   environment:
     name: staging
   rules:
