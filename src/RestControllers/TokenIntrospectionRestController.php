@@ -359,7 +359,7 @@ class TokenIntrospectionRestController {
                     throw new OAuthServerException('Invalid client app type', 0, 'invalid_request', Response::HTTP_BAD_REQUEST);
                 }
                 // lets verify secret to prevent bad guys.
-                if (intval($client['is_enabled'] !== 1)) {
+                if (intval($client['is_enabled']) !== 1) {
                     // client is disabled and we don't allow introspection of tokens for disabled clients.
                     throw new OAuthServerException('Client failed security', 0, 'invalid_request', Response::HTTP_UNAUTHORIZED);
                 }
