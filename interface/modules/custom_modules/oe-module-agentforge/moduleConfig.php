@@ -10,7 +10,7 @@ return [
     'email' => 'support@gauntletai.com',
     'license' => 'GPL-3.0',
     'acl_category' => 'patients',
-    'acl_section' => 'demographics',
+    'acl_section' => 'demo',
     'require' => [
         'openemr' => '>=7.0.0',
     ],
