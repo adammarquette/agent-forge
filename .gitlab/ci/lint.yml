@@ -7,6 +7,14 @@
 # image: references the tag by name with pull_policy: never rather than
 # always - there's no registry to pull from (see build.yml), and every job
 # runs through the same runner/Docker daemon that just built it locally.
+#
+# before_script copies vendor/ out of the image: GitLab always checks the
+# repo out fresh into $CI_PROJECT_DIR regardless of what the image's own
+# Dockerfile put at its WORKDIR, so the job's actual working directory
+# never has vendor/ (it's gitignored) even though openemr-ci's /openemr/
+# vendor was populated by `composer install` at build time. Copying it in
+# reuses that pre-built install instead of re-running composer install
+# (and its network fetch) inside every lint job.
 # -----------------------------------------------------------------------------
 
 .lint_job: &lint_job
@@ -15,6 +23,8 @@
   image:
     name: "openemr-ci:$CI_COMMIT_SHORT_SHA"
     pull_policy: never
+  before_script:
+    - cp -r /openemr/vendor .
 
 psr12:
   <<: *lint_job
@@ -39,6 +49,7 @@ rector:
 codespell:
   <<: *lint_job
   before_script:
+    - cp -r /openemr/vendor .
     - apk add --no-cache codespell
   script:
     - composer codespell

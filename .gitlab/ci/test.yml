@@ -16,6 +16,12 @@ phpunit-isolated:
   image:
     name: "openemr-ci:$CI_COMMIT_SHORT_SHA"
     pull_policy: never
+  before_script:
+    # GitLab checks the repo out fresh into $CI_PROJECT_DIR regardless of
+    # the image's own WORKDIR, so vendor/ (gitignored) isn't there even
+    # though openemr-ci's /openemr/vendor was populated by `composer
+    # install` at build time - copy it in rather than re-running install.
+    - cp -r /openemr/vendor .
   script:
     # pipefail so a nonzero phpunit exit isn't masked by tee's own (always
     # 0) exit status - without it, a real test failure would still pass
