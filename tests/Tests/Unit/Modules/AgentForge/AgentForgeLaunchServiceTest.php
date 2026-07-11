@@ -21,34 +21,44 @@ class AgentForgeLaunchServiceTest extends TestCase
         unset($GLOBALS['disable_translation']);
     }
 
-    public function testBuildLaunchButtonMarkupOpensSidecarInModalIframe(): void
+    public function testBuildLaunchActionButtonCarriesLaunchUrlAsDataAttribute(): void
     {
         $service = new AgentForgeLaunchService();
 
         $launchUrl = 'https://copilot.example.com/launch'
             . '?launch=test-token&iss=https%3A%2F%2Fopenemr.example.com%2Ffhir';
-        $markup = $service->buildLaunchButtonMarkup($launchUrl);
+        $button = $service->buildLaunchActionButton($launchUrl);
 
-        self::assertStringContainsString('id="agentforge-launch-btn"', $markup);
-        self::assertStringContainsString('dlgopen(', $markup);
-        self::assertStringContainsString('allowExternal: true', $markup);
-        self::assertStringContainsString('https:\/\/copilot.example.com\/launch', $markup);
-        self::assertStringNotContainsString(
-            '<a ',
-            $markup,
-            'launch trigger must not be a plain full-page redirect link'
-        );
+        self::assertSame('agentforge-launch-btn', $button->getID());
+        self::assertSame('agentforgeHeaderLaunch', $button->getClickHandlerFunctionName());
+        self::assertSame(['data-launch-url' => $launchUrl], $button->getAttributes());
     }
 
-    public function testBuildLaunchButtonMarkupIncludesLoadFailureFallback(): void
+    public function testBuildLaunchHeaderScriptOpensSidecarInModalIframe(): void
     {
         $service = new AgentForgeLaunchService();
 
-        $markup = $service->buildLaunchButtonMarkup('https://copilot.example.com/launch');
+        $script = $service->buildLaunchHeaderScript();
 
-        self::assertStringContainsString('id="agentforge-launch-warning"', $markup);
-        self::assertStringContainsString('display:none', $markup, 'warning must start hidden');
-        self::assertStringContainsString('8000', $markup, 'must arm the load-failure timeout');
+        self::assertStringContainsString('function agentforgeHeaderLaunch()', $script);
+        self::assertStringContainsString('dlgopen(', $script);
+        self::assertStringContainsString('allowExternal: true', $script);
+        self::assertStringContainsString(
+            'getAttribute("data-launch-url")',
+            $script,
+            'launch URL must be read off the button element, not a plain full-page redirect link'
+        );
+    }
+
+    public function testBuildLaunchHeaderScriptIncludesLoadFailureFallback(): void
+    {
+        $service = new AgentForgeLaunchService();
+
+        $script = $service->buildLaunchHeaderScript();
+
+        self::assertStringContainsString('id="agentforge-launch-warning"', $script);
+        self::assertStringContainsString('display:none', $script, 'warning must start hidden');
+        self::assertStringContainsString('8000', $script, 'must arm the load-failure timeout');
     }
 
     public function testBuildLaunchUrlUsesLaunchAndIssuerParameters(): void
