@@ -99,6 +99,21 @@ class OEGlobalsBag extends ParameterBag
     }
 
     /**
+     * Get the ModulesApplication instance (set in interface/globals.php once the
+     * `modules` table exists)
+     *
+     * @throws \RuntimeException if ModulesApplication is not initialized
+     */
+    public function getModulesApplication(): ModulesApplication
+    {
+        $modulesApplication = $this->get('modules_application');
+        if (!$modulesApplication instanceof ModulesApplication) {
+            throw new \RuntimeException('OpenEMR ModulesApplication not initialized');
+        }
+        return $modulesApplication;
+    }
+
+    /**
      * Get the project directory, falling back to the 'fileroot' global
      * when the Kernel is not initialized (e.g. CLI --skip-globals).
      */

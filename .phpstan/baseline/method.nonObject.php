@@ -4829,21 +4829,6 @@ $ignoreErrors[] = [
 $ignoreErrors[] = [
     'message' => '#^Cannot call method build\\(\\) on mixed\\.$#',
     'count' => 1,
-    'path' => __DIR__ . '/../../src/Common/Command/Register.php',
-];
-$ignoreErrors[] = [
-    'message' => '#^Cannot call method getServiceManager\\(\\) on mixed\\.$#',
-    'count' => 1,
-    'path' => __DIR__ . '/../../src/Common/Command/Register.php',
-];
-$ignoreErrors[] = [
-    'message' => '#^Cannot call method register\\(\\) on mixed\\.$#',
-    'count' => 1,
-    'path' => __DIR__ . '/../../src/Common/Command/Register.php',
-];
-$ignoreErrors[] = [
-    'message' => '#^Cannot call method build\\(\\) on mixed\\.$#',
-    'count' => 1,
     'path' => __DIR__ . '/../../src/Common/Command/ZfcModule.php',
 ];
 $ignoreErrors[] = [

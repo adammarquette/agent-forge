@@ -13882,11 +13882,6 @@ $ignoreErrors[] = [
     'path' => __DIR__ . '/../../src/Common/Command/GenerateAccessTokenCommand.php',
 ];
 $ignoreErrors[] = [
-    'message' => '#^Binary operation "\\." between \'public/\' and mixed results in an error\\.$#',
-    'count' => 1,
-    'path' => __DIR__ . '/../../src/Common/Command/Register.php',
-];
-$ignoreErrors[] = [
     'message' => '#^Binary operation "\\." between \'OpenEMR\\\\\\\\Common…\' and list\\<mixed\\>\\|string\\|false results in an error\\.$#',
     'count' => 1,
     'path' => __DIR__ . '/../../src/Common/Command/Runner/CommandRunner.php',
