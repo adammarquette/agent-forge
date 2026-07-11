@@ -57,9 +57,14 @@ return RectorConfig::configure()
     ])
     ->withDeadCodeLevel(5)
     // https://getrector.com/documentation/troubleshooting-parallel
+    // maxNumberOfProcess kept low and timeoutSeconds generous: CI runs on a
+    // single self-hosted machine where up to 4 other jobs (lint/build) are
+    // already competing for CPU, and 12 rector workers on top of that
+    // starved individual children past their own timeout ("Child process
+    // timed out after 120 seconds" x50, aborting the whole run).
     ->withParallel(
-        timeoutSeconds: 120,
-        maxNumberOfProcess: 12,
+        timeoutSeconds: 300,
+        maxNumberOfProcess: 4,
         jobSize: 12
     )
     // FIXME rector should pick the php version from composer.json

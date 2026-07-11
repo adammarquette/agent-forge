@@ -31,25 +31,34 @@ psr12:
   script:
     - composer phpcs
 
+# Invoked as the raw vendor/bin command, not `composer phpstan` - Composer
+# wraps script execution in its own subprocess with a 300s default
+# process-timeout, which killed phpstan mid-run at 79% (level 10 on the
+# full codebase legitimately takes longer than that here). Calling the
+# binary directly has no such wrapper.
 phpstan:
   <<: *lint_job
   script:
-    - composer phpstan
+    - vendor/bin/phpstan analyze --memory-limit=4G --configuration=phpstan.neon.dist
 
+# Same reasoning as phpstan above - invoke rector directly instead of
+# through `composer rector-check` to avoid Composer's process-timeout.
 rector:
   <<: *lint_job
   script:
-    - composer rector-check
+    - php -d memory_limit=4g ./vendor/bin/rector process --dry-run
 
-# composer codespell no-ops (prints a warning, exits 0) if the `codespell`
-# binary isn't on PATH - it's a Python tool, not something Composer
-# installs. openemr-ci is Alpine-based and doesn't ship it, so it's
-# installed here specifically rather than left to silently pass without
-# checking anything.
+# codespell isn't an apk package on this Alpine version (confirmed: "no
+# such package" even against the community repo explicitly) - it's a
+# Python tool, installed via pip instead. composer codespell would
+# otherwise silently no-op (prints a warning, exits 0) if the binary isn't
+# on PATH, so this is installed explicitly rather than left to silently
+# pass without checking anything.
 codespell:
   <<: *lint_job
   before_script:
     - cp -r /openemr/vendor .
-    - apk add --no-cache codespell
+    - apk add --no-cache py3-pip
+    - pip3 install --break-system-packages codespell
   script:
     - composer codespell
