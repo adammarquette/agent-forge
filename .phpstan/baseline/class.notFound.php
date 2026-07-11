@@ -781,20 +781,5 @@ $ignoreErrors[] = [
     'count' => 1,
     'path' => __DIR__ . '/../../tests/Tests/Services/FHIR/FhirPatientServiceMappingTest.php',
 ];
-// OpenEMR\Modules\ClaimRevConnector is a separate, optional package this
-// module integrates with when installed - not a composer dependency of
-// this repo, so the classes genuinely don't exist here. Pre-existing gap,
-// unrelated to agent-forge#8's CI work; baselined rather than guessed at
-// without context on whether/how that package should be required.
-$ignoreErrors[] = [
-    'message' => '#^Call to static method makeFromGlobals\\(\\) on an unknown class OpenEMR\\\\Modules\\\\ClaimRevConnector\\\\ClaimRevApi\\.$#',
-    'count' => 1,
-    'path' => __DIR__ . '/../../interface/modules/custom_modules/oe-module-dorn/src/ConnectorApi.php',
-];
-$ignoreErrors[] = [
-    'message' => '#^Caught class OpenEMR\\\\Modules\\\\ClaimRevConnector\\\\ClaimRevAuthenticationException not found\\.$#',
-    'count' => 1,
-    'path' => __DIR__ . '/../../interface/modules/custom_modules/oe-module-dorn/src/ConnectorApi.php',
-];
 
 return ['parameters' => ['ignoreErrors' => $ignoreErrors]];
