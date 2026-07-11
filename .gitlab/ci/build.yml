@@ -13,14 +13,20 @@
 # cache-mount syntax, VOLUME directives, CRLF-corrupted COPY'd scripts - see
 # agent-forge#3, #6, #7) fails the pipeline the moment it's pushed, instead
 # of being discovered live on Railway hours later.
+#
+# Docker-outside-of-Docker, not Docker-in-Docker: the runner's self-hosted
+# Windows/Docker-Desktop host doesn't reliably create the per-build network
+# GitLab Runner needs to auto-alias a `docker:27-dind` service ("lookup
+# docker ... no such host" against Docker Desktop's own VM subnet, not the
+# per-job network). Talking to the host's own Docker daemon via the bind-
+# mounted socket (config.toml's [runners.docker] volumes) skips that layer
+# entirely instead of debugging DinD's networking on this platform.
 # -----------------------------------------------------------------------------
 
 .docker_build: &docker_build
   image: docker:27
-  services:
-    - docker:27-dind
   variables:
-    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_HOST: "unix:///var/run/docker.sock"
 
 build:ci-image:
   stage: build
