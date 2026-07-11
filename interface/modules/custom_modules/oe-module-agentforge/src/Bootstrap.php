@@ -8,6 +8,7 @@ use OpenEMR\Common\Acl\AclMain;
 use OpenEMR\Events\PatientDemographics\RenderEvent;
 use OpenEMR\FHIR\Config\ServerConfig;
 use OpenEMR\FHIR\SMART\SMARTLaunchToken;
+use OpenEMR\Modules\AgentForge\Config\AgentForgeGlobalConfig;
 use OpenEMR\Modules\AgentForge\Launch\AgentForgeLaunchService;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -16,6 +17,7 @@ final readonly class Bootstrap
     public function __construct(
         private EventDispatcherInterface $eventDispatcher,
         private AgentForgeLaunchService $launchService = new AgentForgeLaunchService(),
+        private AgentForgeGlobalConfig $config = new AgentForgeGlobalConfig(),
     ) {
     }
 
@@ -47,9 +49,9 @@ final readonly class Bootstrap
             return;
         }
 
-        $issuer = (new ServerConfig())->getFhirUrl();
-        $launchUri = getenv('AGENTFORGE_LAUNCH_URI')
-            ?: '/interface/modules/custom_modules/oe-module-agentforge/public/launch.php';
+        $issuer = $this->config->getIssuer() ?? (new ServerConfig())->getFhirUrl();
+        $launchUri = $this->config->getLaunchUri()
+            ?? '/interface/modules/custom_modules/oe-module-agentforge/public/launch.php';
         $launchUrl = $this->launchService->buildLaunchUrl($serializedToken, $issuer, $launchUri, (string) $pid);
 
         // Modal-with-iframe via dlgopen(..., {allowExternal: true}) instead of a

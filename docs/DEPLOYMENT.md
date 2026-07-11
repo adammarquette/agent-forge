@@ -172,3 +172,21 @@ GitLab's **Operate → Environments** page tracks what commit is live in
 - Build OOM/timeout → the webpack + composer build is heavy; retry, or
   build the image in GitLab CI and `railway up` an artifact instead (not
   currently needed).
+
+## 7. AgentForge launch configuration
+
+The "Launch AgentForge" button (`interface/modules/custom_modules/oe-module-agentforge`)
+needs two values: the sidecar's launch-consumption URL and the FHIR issuer to
+validate the launch against. These are **not** Railway or GitLab CI/CD
+variables — configure them through the app itself:
+
+**Administration → Modules → Manage Modules → Custom Modules → AgentForge
+Launch Integration → gear icon** — enter the Launch URI and Issuer and save.
+Values are stored in the `globals` table and take effect immediately, no
+redeploy or container restart needed.
+
+Leaving a field blank falls back to the `AGENTFORGE_LAUNCH_URI` /
+`AGENTFORGE_ISSUER` environment variables if set, and otherwise to a
+not-configured state (the button will error when clicked). There's
+currently no reason to set those env vars on the Railway `openemr` service
+for a normal deploy — use the settings form instead.
