@@ -1,14 +1,20 @@
 # -----------------------------------------------------------------------------
 # LINT stage - style/static-analysis/spelling gates, run inside the CI image
-# build:ci-image just pushed (PHP 8.5 + the full extension list, matching
+# build:ci-image just built (PHP 8.5 + the full extension list, matching
 # production - phpstan in particular needs the real extension set to analyze
 # code that references ext-ldap/ext-soap/ext-xsl/etc without false negatives).
+#
+# image: references the tag by name with pull_policy: never rather than
+# always - there's no registry to pull from (see build.yml), and every job
+# runs through the same runner/Docker daemon that just built it locally.
 # -----------------------------------------------------------------------------
 
 .lint_job: &lint_job
   stage: lint
   needs: ["build:ci-image"]
-  image: "$CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHORT_SHA"
+  image:
+    name: "openemr-ci:$CI_COMMIT_SHORT_SHA"
+    pull_policy: never
 
 psr12:
   <<: *lint_job

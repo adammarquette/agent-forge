@@ -1,16 +1,21 @@
 # -----------------------------------------------------------------------------
 # TEST stage - runs the isolated PHPUnit suite (no database needed) against
-# the openemr-ci image build:ci-image pushed. DB-backed suites (unit/api/
+# the openemr-ci image build:ci-image built. DB-backed suites (unit/api/
 # e2e/services) require the full docker-compose stack (mysql, openldap,
 # selenium, ...) that this pipeline does not provision, so they are
 # intentionally out of scope here rather than half-wired against a stack
 # that doesn't exist - see docs/CI-SETUP.md for the tradeoff.
+#
+# image: references the tag by name with pull_policy: never - see
+# lint.yml's comment; no registry exists to pull from on this instance.
 # -----------------------------------------------------------------------------
 
 phpunit-isolated:
   stage: test
   needs: ["build:ci-image"]
-  image: "$CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHORT_SHA"
+  image:
+    name: "openemr-ci:$CI_COMMIT_SHORT_SHA"
+    pull_policy: never
   script:
     # pipefail so a nonzero phpunit exit isn't masked by tee's own (always
     # 0) exit status - without it, a real test failure would still pass

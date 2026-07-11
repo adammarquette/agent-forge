@@ -1,10 +1,9 @@
 # -----------------------------------------------------------------------------
 # BUILD stage - builds the fork's actual deploy image once (docker/railway/
-# Dockerfile) and pushes the CI tooling image (the openemr-ci target, full
-# dev dependencies included) to this project's Container Registry, tagged
-# with the commit SHA. lint and test pull this image rather than rebuilding
-# it, so every stage runs against byte-identical PHP 8.5 + extension parity
-# with what actually deploys.
+# Dockerfile) and tags the CI tooling image (the openemr-ci target, full dev
+# dependencies included) locally, so lint and test can reference it by name
+# instead of rebuilding, and every stage runs against byte-identical PHP 8.5
+# + extension parity with what actually deploys.
 #
 # build:production-image is a pure validation gate, not an artifact any
 # later stage consumes - deploy still lets Railway build its own copy
@@ -21,6 +20,15 @@
 # per-job network). Talking to the host's own Docker daemon via the bind-
 # mounted socket (config.toml's [runners.docker] volumes) skips that layer
 # entirely instead of debugging DinD's networking on this platform.
+#
+# No Container Registry push/pull: this GitLab instance doesn't have one
+# configured (CI_REGISTRY/CI_REGISTRY_IMAGE come back empty even though the
+# project's own container_registry_enabled flag is true - an instance-admin
+# gap, not fixable from here). Since every job in this pipeline runs through
+# the same single self-hosted runner sharing one Docker daemon (the DooD
+# socket above), the image built here already stays in that daemon's local
+# store - lint/test reference it by name directly (see lint.yml/test.yml's
+# pull_policy: never) instead of round-tripping through a registry.
 # -----------------------------------------------------------------------------
 
 .docker_build: &docker_build
@@ -32,13 +40,10 @@ build:ci-image:
   stage: build
   <<: *docker_build
   script:
-    - echo "CI_REGISTRY=[$CI_REGISTRY] CI_REGISTRY_IMAGE=[$CI_REGISTRY_IMAGE] CI_REGISTRY_USER=[$CI_REGISTRY_USER]"
-    - docker build -f docker/railway/Dockerfile --target openemr-ci -t "$CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHORT_SHA" .
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
-    - docker push "$CI_REGISTRY_IMAGE/ci:$CI_COMMIT_SHORT_SHA"
+    - docker build -f docker/railway/Dockerfile --target openemr-ci -t "openemr-ci:$CI_COMMIT_SHORT_SHA" .
 
 build:production-image:
   stage: build
   <<: *docker_build
   script:
-    - docker build -f docker/railway/Dockerfile -t "$CI_REGISTRY_IMAGE/production:$CI_COMMIT_SHORT_SHA" .
+    - docker build -f docker/railway/Dockerfile -t "openemr-production:$CI_COMMIT_SHORT_SHA" .
