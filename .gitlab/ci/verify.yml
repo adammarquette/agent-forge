@@ -10,6 +10,12 @@
 # login page URL, not a secret) set to the staging environment's Railway
 # domain for the `openemr` service. See docs/CI-SETUP.md and
 # docs/DEPLOYMENT.md.
+#
+# curl -L: Railway's edge / OpenEMR itself redirects the bare request
+# (confirmed live: HTTP 301 on every attempt without -L) before reaching the
+# actual login page, so following redirects is required to see the real
+# final status instead of always observing the redirect's own 3xx.
+# --max-redirs bounds it so a redirect loop fails fast instead of hanging.
 # -----------------------------------------------------------------------------
 
 verify:staging:
@@ -24,7 +30,7 @@ verify:staging:
   script:
     - |
       for i in $(seq 1 30); do
-        code=$(curl -s -o /dev/null -w "%{http_code}" "${STAGING_URL}/interface/login/login.php?site=default")
+        code=$(curl -s -L --max-redirs 5 -o /dev/null -w "%{http_code}" "${STAGING_URL}/interface/login/login.php?site=default")
         if [ "$code" = "200" ]; then
           echo "Login page reachable (HTTP $code) after $i attempt(s)"
           exit 0
