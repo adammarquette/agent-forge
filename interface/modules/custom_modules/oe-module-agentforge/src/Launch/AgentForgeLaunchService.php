@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OpenEMR\Modules\AgentForge\Launch;
 
 use OpenEMR\Events\UserInterface\BaseActionButtonHelper;
+use OpenEMR\FHIR\SMART\SMARTLaunchToken;
 
 final class AgentForgeLaunchService
 {
@@ -22,6 +23,30 @@ final class AgentForgeLaunchService
         ], '', '&', PHP_QUERY_RFC3986);
 
         return $launchUri . '?' . rtrim($query, '&');
+    }
+
+    /**
+     * Builds the launch URL for the "Day's Agenda" entry point: a
+     * main.tab-intent launch with no patient scoped. The sidecar resolves
+     * the day's roster itself (FHIR Appointment search filtered to the
+     * launching clinician's own identity), so unlike the per-patient launch
+     * this carries no patient/roster data in the token at all - just enough
+     * for the sidecar to know it's a main-tab, not-patient-scoped launch.
+     *
+     * Pure string/token templating (no ACL/session/DB dependency), same
+     * rationale as buildLaunchUrl() - unit-testable without a live session.
+     */
+    public function buildAgendaLaunchUrl(string $issuer, string $launchUri): ?string
+    {
+        $launchToken = new SMARTLaunchToken();
+        $launchToken->setIntent(SMARTLaunchToken::INTENT_MAIN_TAB);
+
+        $serializedToken = $launchToken->serialize();
+        if (!is_string($serializedToken)) {
+            return null;
+        }
+
+        return $this->buildLaunchUrl($serializedToken, $issuer, $launchUri);
     }
 
     /**

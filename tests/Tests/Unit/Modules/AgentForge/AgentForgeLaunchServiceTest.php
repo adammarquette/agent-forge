@@ -91,4 +91,22 @@ class AgentForgeLaunchServiceTest extends TestCase
 
         self::assertStringContainsString('patient=patient-123', $launchUrl);
     }
+
+    public function testBuildAgendaLaunchUrlCarriesNoPatientContext(): void
+    {
+        $service = new AgentForgeLaunchService();
+
+        $launchUrl = $service->buildAgendaLaunchUrl(
+            'https://openemr.example.com/fhir',
+            'https://copilot.example.com/launch'
+        );
+
+        self::assertNotNull($launchUrl);
+        self::assertStringStartsWith('https://copilot.example.com/launch?launch=', $launchUrl);
+        self::assertStringNotContainsString(
+            'patient=',
+            $launchUrl,
+            'the day\'s-agenda launch must not scope to a single patient - the sidecar resolves the roster itself'
+        );
+    }
 }
