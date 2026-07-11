@@ -14,7 +14,7 @@
 # agent-forge#8's 2026-07-10 update.
 #
 # Required CI/CD variables (Settings -> CI/CD -> Variables, masked):
-#   RAILWAY_TOKEN_STAGING  - Railway project token scoped to "staging"
+#   RAILWAY_TOKEN          - Railway project token scoped to "staging"
 #   OE_PASS, MYSQL_PASS    - environment-scoped (Settings -> CI/CD ->
 #                            Variables -> set "Environment scope" to staging)
 #   STAGING_URL            - plain (not masked) - the staging environment's
