@@ -60,11 +60,11 @@ $launchMode = $config->getLaunchMode();
 <!DOCTYPE html>
 <html>
 <head>
-    <title><?php echo xlt('AgentForge Configuration'); ?></title>
+    <title><?php echo xlt('AgentForge Copilot Configuration'); ?></title>
     <?php Header::setupHeader(); ?>
 </head>
 <body class="p-3">
-<h4><?php echo xlt('AgentForge Launch Configuration'); ?></h4>
+<h4><?php echo xlt('AgentForge Copilot Launch Configuration'); ?></h4>
 <p class="text-muted">
     <?php echo xlt('These settings control the "Launch AgentForge" button shown on the patient chart.'); ?>
     <?php echo xlt('Leave a field blank to fall back to its environment variable'); ?>
@@ -87,7 +87,7 @@ $launchMode = $config->getLaunchMode();
             placeholder="<?php echo attr($effectiveLaunchUri); ?>"
         />
         <small class="form-text text-muted">
-            <?php echo xlt('The AgentForge sidecar\'s launch-consumption endpoint.'); ?>
+            <?php echo xlt('AgentForge Copilot\'s launch-consumption endpoint.'); ?>
             <?php echo xlt('Currently effective value:'); ?> <?php echo text($effectiveLaunchUri); ?>
         </small>
     </div>
@@ -102,7 +102,7 @@ $launchMode = $config->getLaunchMode();
             placeholder="<?php echo attr($effectiveIssuer); ?>"
         />
         <small class="form-text text-muted">
-            <?php echo xlt('The FHIR issuer/audience the sidecar validates the launch against.'); ?>
+            <?php echo xlt('The FHIR issuer/audience AgentForge Copilot validates the launch against.'); ?>
             <?php echo xlt('Currently effective value:'); ?> <?php echo text($effectiveIssuer); ?>
         </small>
     </div>
@@ -121,7 +121,7 @@ $launchMode = $config->getLaunchMode();
                 <?php echo xlt('New browser tab (default)'); ?>
             </label>
             <small class="form-text text-muted">
-                <?php echo xlt('Opens the sidecar in a real top-level browser tab. Works regardless of whether the sidecar is deployed same-site with OpenEMR.'); ?>
+                <?php echo xlt('Opens AgentForge Copilot in a real top-level browser tab. Works regardless of whether AgentForge Copilot is deployed same-site with OpenEMR.'); ?>
             </small>
         </div>
         <div class="form-check">
@@ -137,7 +137,7 @@ $launchMode = $config->getLaunchMode();
                 <?php echo xlt('Embedded iframe modal'); ?>
             </label>
             <small class="form-text text-muted">
-                <?php echo xlt('Opens the sidecar inline in a modal on the patient chart. Only use this if the sidecar is deployed same-site with OpenEMR - otherwise the OAuth login will fail inside the iframe (agent-forge#21).'); ?>
+                <?php echo xlt('Opens AgentForge Copilot inline in a modal on the patient chart. Only use this if AgentForge Copilot is deployed same-site with OpenEMR - otherwise the OAuth login will fail inside the iframe (experimental).'); ?>
             </small>
         </div>
     </div>
