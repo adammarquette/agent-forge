@@ -208,6 +208,16 @@ validated (FR-CHAT-3); the clinician's own OAuth identity is used, not a service
 (FR-AUTH-1); the launch path must be auditable and observable (FR-OBS-1); the system must degrade
 clearly if the module, deployment, or sidecar launch path is unavailable (NFR-REL-1).
 
+### 9.7 Cross-origin iframe / SameSite cookie constraint
+
+Embedding the sidecar in a cross-origin `<iframe>` (the original design here) breaks the OAuth
+authorize round-trip's session recovery, since the redirect back to OpenEMR's
+`/oauth2/default/authorize` is cross-site-initiated and excludes the `SameSite=Strict` core session
+cookie — see `agent-forge#21`. A same-origin/same-site sidecar deployment (in progress in
+`agent-forge-copilot`) avoids this constraint entirely and is the preferred long-term direction; see
+[`IFRAME_REVERT.md`](IFRAME_REVERT.md) for exactly what reverts once that's live, and what must be
+verified first.
+
 ---
 
 *Companion `AUDIT.md` §8 tracks the residual risk on this dependency chain.*
