@@ -7,14 +7,19 @@
  * OpenEMR's own iframe-based tab framework - not the per-patient chart
  * button.
  *
- * This page must NOT redirect that iframe cross-origin itself. The EHR-launch
- * OAuth round-trip relies on a SameSite=Lax bridge cookie
- * (SessionUtil::setEhrLaunchBridgeCookie()) to recover the session across
- * the sidecar's redirect back to OpenEMR, and Lax's cross-site exception
- * only covers top-level navigations, not iframes - the same reason a plain
- * server-side redirect here would land right back in the login-page bug
- * this replaces. Instead, it opens a real top-level browser tab via
- * window.open().
+ * In tab mode (default), this page must NOT redirect that iframe
+ * cross-origin itself. The EHR-launch OAuth round-trip relies on a
+ * SameSite=Lax bridge cookie (SessionUtil::setEhrLaunchBridgeCookie()) to
+ * recover the session across the sidecar's redirect back to OpenEMR, and
+ * Lax's cross-site exception only covers top-level navigations, not
+ * iframes - the same reason a plain server-side redirect here would land
+ * right back in the login-page bug this replaces. Instead, it opens a real
+ * top-level browser tab via window.open().
+ *
+ * In iframe mode, the bridge cookie is irrelevant (the sidecar is assumed
+ * same-site with OpenEMR - see Documentation/agent-forge/IFRAME_REVERT.md),
+ * so this just does a plain redirect and lets OpenEMR's own tab iframe
+ * navigate directly to the sidecar, same as before agent-forge#21's fix.
  *
  * @package   OpenEMR
  * @link      https://www.open-emr.org
@@ -54,6 +59,11 @@ $launchUrl = $launchService->buildAgendaLaunchUrl($issuer, $launchUri);
 if ($launchUrl === null) {
     http_response_code(500);
     exit('Unable to build the AgentForge agenda launch.');
+}
+
+if ($config->getLaunchMode() === AgentForgeGlobalConfig::LAUNCH_MODE_IFRAME) {
+    header('Location: ' . $launchUrl);
+    exit;
 }
 
 // Set fresh at launch time (not login time) - see

@@ -21,34 +21,56 @@ class AgentForgeLaunchServiceTest extends TestCase
         unset($GLOBALS['disable_translation']);
     }
 
-    public function testBuildLaunchActionButtonCarriesLaunchUrlAndWindowNameAsDataAttributes(): void
+    public function testBuildLaunchActionButtonCarriesLaunchUrlModeAndWindowNameAsDataAttributesInTabMode(): void
     {
         $service = new AgentForgeLaunchService();
 
         $launchUrl = 'https://copilot.example.com/launch'
             . '?launch=test-token&iss=https%3A%2F%2Fopenemr.example.com%2Ffhir';
-        $button = $service->buildLaunchActionButton($launchUrl, 'agentforge-launch-123');
+        $button = $service->buildLaunchActionButton($launchUrl, 'tab', 'agentforge-launch-123');
 
         self::assertSame('agentforge-launch-btn', $button->getID());
         self::assertSame('agentforgeHeaderLaunch', $button->getClickHandlerFunctionName());
         self::assertSame(
-            ['data-launch-url' => $launchUrl, 'data-window-name' => 'agentforge-launch-123'],
+            [
+                'data-launch-url' => $launchUrl,
+                'data-launch-mode' => 'tab',
+                'data-window-name' => 'agentforge-launch-123',
+            ],
             $button->getAttributes()
         );
     }
 
-    public function testBuildLaunchHeaderScriptOpensSidecarInRealBrowserTab(): void
+    public function testBuildLaunchActionButtonOmitsWindowNameInIframeMode(): void
+    {
+        $service = new AgentForgeLaunchService();
+
+        $launchUrl = 'https://copilot.example.com/launch?launch=test-token';
+        $button = $service->buildLaunchActionButton($launchUrl, 'iframe');
+
+        self::assertSame(
+            ['data-launch-url' => $launchUrl, 'data-launch-mode' => 'iframe'],
+            $button->getAttributes()
+        );
+    }
+
+    public function testBuildLaunchHeaderScriptBranchesBetweenIframeAndTabAtClickTime(): void
     {
         $service = new AgentForgeLaunchService();
 
         $script = $service->buildLaunchHeaderScript();
 
         self::assertStringContainsString('function agentforgeHeaderLaunch()', $script);
-        self::assertStringContainsString('window.open(', $script);
-        self::assertStringNotContainsString(
+        self::assertStringContainsString(
             'dlgopen(',
             $script,
-            'must not use the modal-iframe launcher - iframes exclude the SameSite=Lax bridge cookie'
+            'iframe mode still needs dlgopen() available - the mode is chosen at click time, not build time'
+        );
+        self::assertStringContainsString('window.open(', $script);
+        self::assertStringContainsString(
+            'getAttribute("data-launch-mode")',
+            $script,
+            'must branch on the mode set by buildLaunchActionButton()'
         );
         self::assertStringContainsString(
             'getAttribute("data-launch-url")',
@@ -62,7 +84,7 @@ class AgentForgeLaunchServiceTest extends TestCase
         );
     }
 
-    public function testBuildLaunchHeaderScriptIncludesPopupBlockedFallback(): void
+    public function testBuildLaunchHeaderScriptIncludesBothFailureWarnings(): void
     {
         $service = new AgentForgeLaunchService();
 
@@ -73,7 +95,12 @@ class AgentForgeLaunchServiceTest extends TestCase
         self::assertStringContainsString(
             'win.closed',
             $script,
-            'must detect a blocked popup, not a stale iframe-loading timeout'
+            'tab mode must detect a blocked popup'
+        );
+        self::assertStringContainsString(
+            '8000',
+            $script,
+            'iframe mode must still arm the load-failure timeout'
         );
     }
 

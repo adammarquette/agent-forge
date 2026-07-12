@@ -22,6 +22,7 @@ class AgentForgeGlobalConfigTest extends TestCase
             $GLOBALS['disable_translation'],
             $GLOBALS[AgentForgeGlobalConfig::LAUNCH_URI],
             $GLOBALS[AgentForgeGlobalConfig::ISSUER],
+            $GLOBALS[AgentForgeGlobalConfig::LAUNCH_MODE],
         );
         putenv('AGENTFORGE_LAUNCH_URI');
         putenv('AGENTFORGE_ISSUER');
@@ -79,5 +80,30 @@ class AgentForgeGlobalConfigTest extends TestCase
         $config = new AgentForgeGlobalConfig();
 
         self::assertSame('https://db.example.com/fhir', $config->getStoredIssuer());
+    }
+
+    public function testGetLaunchModeDefaultsToTabWhenUnset(): void
+    {
+        $config = new AgentForgeGlobalConfig();
+
+        self::assertSame(AgentForgeGlobalConfig::LAUNCH_MODE_TAB, $config->getLaunchMode());
+    }
+
+    public function testGetLaunchModeReturnsStoredIframeValue(): void
+    {
+        $GLOBALS[AgentForgeGlobalConfig::LAUNCH_MODE] = AgentForgeGlobalConfig::LAUNCH_MODE_IFRAME;
+
+        $config = new AgentForgeGlobalConfig();
+
+        self::assertSame(AgentForgeGlobalConfig::LAUNCH_MODE_IFRAME, $config->getLaunchMode());
+    }
+
+    public function testGetLaunchModeFailsClosedToTabOnUnrecognizedValue(): void
+    {
+        $GLOBALS[AgentForgeGlobalConfig::LAUNCH_MODE] = 'some-unrecognized-value';
+
+        $config = new AgentForgeGlobalConfig();
+
+        self::assertSame(AgentForgeGlobalConfig::LAUNCH_MODE_TAB, $config->getLaunchMode());
     }
 }
