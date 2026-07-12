@@ -21,36 +21,48 @@ class AgentForgeLaunchServiceTest extends TestCase
         unset($GLOBALS['disable_translation']);
     }
 
-    public function testBuildLaunchActionButtonCarriesLaunchUrlAsDataAttribute(): void
+    public function testBuildLaunchActionButtonCarriesLaunchUrlAndWindowNameAsDataAttributes(): void
     {
         $service = new AgentForgeLaunchService();
 
         $launchUrl = 'https://copilot.example.com/launch'
             . '?launch=test-token&iss=https%3A%2F%2Fopenemr.example.com%2Ffhir';
-        $button = $service->buildLaunchActionButton($launchUrl);
+        $button = $service->buildLaunchActionButton($launchUrl, 'agentforge-launch-123');
 
         self::assertSame('agentforge-launch-btn', $button->getID());
         self::assertSame('agentforgeHeaderLaunch', $button->getClickHandlerFunctionName());
-        self::assertSame(['data-launch-url' => $launchUrl], $button->getAttributes());
+        self::assertSame(
+            ['data-launch-url' => $launchUrl, 'data-window-name' => 'agentforge-launch-123'],
+            $button->getAttributes()
+        );
     }
 
-    public function testBuildLaunchHeaderScriptOpensSidecarInModalIframe(): void
+    public function testBuildLaunchHeaderScriptOpensSidecarInRealBrowserTab(): void
     {
         $service = new AgentForgeLaunchService();
 
         $script = $service->buildLaunchHeaderScript();
 
         self::assertStringContainsString('function agentforgeHeaderLaunch()', $script);
-        self::assertStringContainsString('dlgopen(', $script);
-        self::assertStringContainsString('allowExternal: true', $script);
+        self::assertStringContainsString('window.open(', $script);
+        self::assertStringNotContainsString(
+            'dlgopen(',
+            $script,
+            'must not use the modal-iframe launcher - iframes exclude the SameSite=Lax bridge cookie'
+        );
         self::assertStringContainsString(
             'getAttribute("data-launch-url")',
             $script,
-            'launch URL must be read off the button element, not a plain full-page redirect link'
+            'launch URL must be read off the button element'
+        );
+        self::assertStringContainsString(
+            'getAttribute("data-window-name")',
+            $script,
+            'window name must be read off the button element so each patient gets its own tab'
         );
     }
 
-    public function testBuildLaunchHeaderScriptIncludesLoadFailureFallback(): void
+    public function testBuildLaunchHeaderScriptIncludesPopupBlockedFallback(): void
     {
         $service = new AgentForgeLaunchService();
 
@@ -58,7 +70,11 @@ class AgentForgeLaunchServiceTest extends TestCase
 
         self::assertStringContainsString('id="agentforge-launch-warning"', $script);
         self::assertStringContainsString('display:none', $script, 'warning must start hidden');
-        self::assertStringContainsString('8000', $script, 'must arm the load-failure timeout');
+        self::assertStringContainsString(
+            'win.closed',
+            $script,
+            'must detect a blocked popup, not a stale iframe-loading timeout'
+        );
     }
 
     public function testBuildLaunchUrlUsesLaunchAndIssuerParameters(): void

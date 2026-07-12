@@ -7,10 +7,7 @@ namespace OpenEMR\Modules\AgentForge;
 use OpenEMR\Common\Acl\AclMain;
 use OpenEMR\Common\Session\SessionWrapperFactory;
 use OpenEMR\Events\UserInterface\PageHeadingRenderEvent;
-use OpenEMR\FHIR\Config\ServerConfig;
-use OpenEMR\FHIR\SMART\SMARTLaunchToken;
 use OpenEMR\Menu\MenuEvent;
-use OpenEMR\Modules\AgentForge\Config\AgentForgeGlobalConfig;
 use OpenEMR\Modules\AgentForge\Launch\AgentForgeLaunchService;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
@@ -35,7 +32,6 @@ final readonly class Bootstrap
     public function __construct(
         private EventDispatcherInterface $eventDispatcher,
         private AgentForgeLaunchService $launchService = new AgentForgeLaunchService(),
-        private AgentForgeGlobalConfig $config = new AgentForgeGlobalConfig(),
     ) {
     }
 
@@ -97,6 +93,16 @@ final readonly class Bootstrap
         return $event;
     }
 
+    /**
+     * Renders the button, pointing it at public/patient-launch.php rather
+     * than building the sidecar launch URL (or setting the EHR-launch
+     * bridge cookie) here directly. Both of those need a clean HTTP
+     * response with no prior output - setcookie() silently fails once
+     * headers are sent, which is exactly what's already happened by the
+     * time a PageHeadingRenderEvent listener runs this deep into page
+     * rendering. patient-launch.php runs as its own fresh request instead
+     * (see its doc comment), same pattern as public/agenda-launch.php.
+     */
     public function renderLaunchButton(PageHeadingRenderEvent $event): PageHeadingRenderEvent
     {
         if ($event->getPageId() !== self::DEMOGRAPHICS_PAGE_ID) {
@@ -112,38 +118,22 @@ final readonly class Bootstrap
             return $event;
         }
 
-        $launchToken = new SMARTLaunchToken();
-        $launchToken->setPatient((string) $pid);
-        $launchToken->setIntent(SMARTLaunchToken::INTENT_PATIENT_DEMOGRAPHICS_DIALOG);
+        // Real top-level tab via window.open() instead of dlgopen()'s modal
+        // iframe: the EHR-launch OAuth round-trip relies on a SameSite=Lax
+        // bridge cookie (set by patient-launch.php) to recover the session,
+        // and Lax's cross-site exception only applies to top-level
+        // navigations, not iframes - matching OpenEMR's own historical fix
+        // for the OAuth session cookie needing to escape iframe-based SMART
+        // launches (see SessionUtil.php's class doc comment). One tab per
+        // patient: the window name is scoped by pid so switching patients
+        // opens a new tab rather than replacing an already-open
+        // conversation, and re-launching the same patient refocuses their
+        // existing tab.
+        $windowName = 'agentforge-launch-' . $pid;
+        $launchTriggerUrl = '/interface/modules/custom_modules/oe-module-agentforge/public/patient-launch.php';
 
-        $serializedToken = $launchToken->serialize();
-        if (!is_string($serializedToken)) {
-            return $event;
-        }
-
-        $issuer = $this->config->getIssuer() ?? (new ServerConfig())->getFhirUrl();
-        $launchUri = $this->config->getLaunchUri()
-            ?? '/interface/modules/custom_modules/oe-module-agentforge/public/launch.php';
-        $launchUrl = $this->launchService->buildLaunchUrl($serializedToken, $issuer, $launchUri, (string) $pid);
-
-        // Modal-with-iframe via dlgopen(..., {allowExternal: true}) instead of a
-        // plain <a href> full-page redirect, matching the same pattern OpenEMR's
-        // own native SMART launch button uses (library/js/utility.js's
-        // .smart-launch-btn handler) - the cross-origin hop happens inside the
-        // iframe, the top-level OpenEMR page is never navigated away from.
-        //
-        // Load-failure detection: dlgopen has no built-in signal for iframe
-        // content failing to load (checked library/dialog.js - only script/link
-        // dependency loading has onerror handling, not the content iframe
-        // itself), and cross-origin navigation inside the iframe means this
-        // page's JS can't inspect what actually rendered there once the
-        // redirect leaves same-origin. buildLaunchHeaderScript()'s timeout is a
-        // generic, origin-agnostic safety net - it fires purely on "still open
-        // after N seconds", not on detecting the specific failure - so it still
-        // helps even when the failure is a silent one (e.g. sidecar CSP
-        // frame-ancestors rejecting the frame outright, agent-forge#10).
         $actions = $event->getActions();
-        $actions[] = $this->launchService->buildLaunchActionButton($launchUrl);
+        $actions[] = $this->launchService->buildLaunchActionButton($launchTriggerUrl, $windowName);
         $event->setActions($actions);
         $event->appendTitleNavContent($this->launchService->buildLaunchHeaderScript());
 
