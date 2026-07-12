@@ -19,6 +19,25 @@ cross-site-*initiated*, and OpenEMR's core session cookie
 is excluded from it — so OpenEMR can't tell the browser is already logged
 in, and the iframe shows a login form instead of the sidecar.
 
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Browser as Clinician's browser
+    participant Iframe as Sidecar &lt;iframe&gt;
+    participant OpenEMR
+    participant Sidecar
+
+    Browser->>OpenEMR: Load patient chart (sets core session cookie, SameSite=Strict)
+    Browser->>Iframe: Click "Launch AgentForge" (opens modal iframe)
+    Iframe->>OpenEMR: GET launch.php (same-origin - cookie sent fine)
+    OpenEMR-->>Iframe: 302 to sidecar launch URL
+    Iframe->>Sidecar: GET (cross-origin)
+    Sidecar-->>Iframe: 302 back to /oauth2/default/authorize
+    Iframe->>OpenEMR: GET /oauth2/default/authorize
+    Note over Iframe,OpenEMR: Redirect is cross-site-initiated.<br/>SameSite=Strict cookie excluded regardless<br/>of iframe vs. top-level tab.
+    OpenEMR-->>Iframe: Login form shown (agent-forge#21 bug)<br/>instead of the sidecar's chat UI
+```
+
 MR !23 (`fix/agentforge-samesite-launch-bridge`, **not yet merged as of this
 writing**) worked around this from the OpenEMR side: a narrow, short-lived,
 `SameSite=Lax` "bridge cookie" plus escaping both launch flows into real
@@ -37,6 +56,25 @@ escapes) is needed. This also opens the door to load-balancing the sidecar
 behind that same proxy layer, which the bridge-cookie/new-tab approach
 didn't provide any path toward.
 
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Browser as Clinician's browser
+    participant Iframe as Sidecar &lt;iframe&gt;
+    participant Proxy as Shared reverse proxy / load balancer<br/>(same site as OpenEMR)
+    participant OpenEMR
+    participant Sidecar as Sidecar instance(s)
+
+    Browser->>OpenEMR: Load patient chart (sets core session cookie, SameSite=Strict)
+    Browser->>Iframe: Click "Launch AgentForge" (opens modal iframe)
+    Iframe->>Proxy: GET sidecar launch URL (same site as OpenEMR)
+    Proxy->>Sidecar: Forwards request (load-balanced across instances)
+    Sidecar-->>Iframe: 302 back to /oauth2/default/authorize
+    Iframe->>OpenEMR: GET /oauth2/default/authorize
+    Note over Iframe,OpenEMR: Redirect is same-site.<br/>SameSite=Strict cookie included normally -<br/>no bridge cookie or window.open() escape needed.
+    OpenEMR-->>Iframe: OAuth flow continues; sidecar's chat UI loads
+```
+
 That work is happening in `agent-forge-copilot`, not this repo.
 
 ## Prerequisite gate — do not skip this
@@ -52,6 +90,19 @@ straight back. Verify same-site delivery first:
 2. Click "Launch AgentForge" on staging and confirm the iframe/modal shows
    the sidecar's actual chat UI, not OpenEMR's login form.
 3. Only then proceed with the revert below.
+
+```mermaid
+flowchart TD
+    A["agent-forge-copilot same-origin<br/>proxy work lands"] --> B{"Sidecar launch URL<br/>same-site as OpenEMR?"}
+    B -- No --> C["Not ready.<br/>Keep MR !23 open / merge it instead -<br/>cross-origin iframes still need the<br/>bridge cookie + window.open() workaround"]
+    B -- Yes --> D["Click 'Launch AgentForge' on staging"]
+    D --> E{"Sidecar chat UI loads<br/>(not OpenEMR's login form)?"}
+    E -- No --> C
+    E -- Yes --> F["Gate passed - close MR !23,<br/>proceed with the file-by-file<br/>revert below"]
+    F --> G["Re-run tests, PHPStan, PSR-12"]
+    G --> H["Live-verify both flows again<br/>post-revert"]
+    H --> I["Close agent-forge#21<br/>referencing this doc"]
+```
 
 ## Current state (as of this writing)
 
