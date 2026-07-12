@@ -1816,6 +1816,16 @@ class AuthorizationController
         // Get the OAuth session ID before we do anything
         $oauthSessionId = $request->cookies->get(SessionUtil::OAUTH_SESSION_ID, '');
         $coreSessionId = $request->cookies->get(SessionUtil::CORE_SESSION_ID, '');
+        // The primary core session cookie is SameSite=Strict, so it's excluded
+        // when this request arrives via a cross-site-initiated redirect (an
+        // EHR-launch consumer completing its OAuth exchange). Fall back to the
+        // narrow, short-lived, SameSite=Lax bridge cookie set by whichever
+        // module initiated the launch - see SessionUtil::setEhrLaunchBridgeCookie().
+        $usedBridgeCookie = false;
+        if ($coreSessionId === '') {
+            $coreSessionId = SessionUtil::getEhrLaunchBridgeCookie() ?? '';
+            $usedBridgeCookie = $coreSessionId !== '';
+        }
         // can't do much without a core session id
         if (empty($coreSessionId)) {
             return null;
@@ -1858,6 +1868,11 @@ class AuthorizationController
             return null;
         }
         $this->restoreOAuthSession($request, $oauthSessionId);
+        // One-time use: a captured bridge cookie can't be replayed once it's
+        // successfully identified a user.
+        if ($usedBridgeCookie) {
+            SessionUtil::clearEhrLaunchBridgeCookie();
+        }
         return $user['uuid'];
     }
 

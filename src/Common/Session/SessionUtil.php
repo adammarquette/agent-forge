@@ -72,6 +72,7 @@ use OpenEMR\Common\Session\Predis\SentinelUtil;
 use OpenEMR\Common\Session\Storage\ReadAndCloseNativeSessionStorage;
 use SessionHandlerInterface;
 use Symfony\Component\HttpFoundation\Cookie;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpFoundation\Session\Storage\NativeSessionStorage;
@@ -88,6 +89,25 @@ class SessionUtil
     public const SETUP_SESSION_ID = 'setupOpenEMR';
 
     public const APP_COOKIE_NAME = 'App';
+
+    /**
+     * A narrow, short-lived, single-use bridge cookie that lets an EHR-launch
+     * OAuth authorize request recover the core session id when the primary
+     * core session cookie (SameSite=Strict) is excluded because the request
+     * arrived via a cross-site-initiated redirect (see
+     * AuthorizationController::getLoggedInCoreUserUuid()). SameSite=Lax so it
+     * survives a cross-site top-level-navigation redirect chain; it is set
+     * fresh at launch time (not login time) by whichever module initiates a
+     * launch, carries only an encrypted session id (no identity claims), and
+     * is invalidated immediately after one successful use.
+     */
+    public const EHR_LAUNCH_BRIDGE_COOKIE_NAME = 'oe_ehr_launch_bridge';
+
+    /**
+     * Only needs to survive one OAuth redirect round trip, not a login
+     * session - kept short to bound the exposure window if captured.
+     */
+    public const EHR_LAUNCH_BRIDGE_TTL = 300; // 5 minutes
 
     public const API_WEBROOT = '/apis/';
 
@@ -272,6 +292,74 @@ class SessionUtil
     public static function getAppCookie(): string
     {
         return $_COOKIE['App'] ?? '';
+    }
+
+    /**
+     * Sets the EHR-launch bridge cookie (see EHR_LAUNCH_BRIDGE_COOKIE_NAME
+     * doc comment). Callers should set this immediately before redirecting
+     * into an EHR launch, not at login time - it must reflect whichever
+     * login is active in the tab that's actually initiating the launch,
+     * not stale data from another window (see restoreSession() in
+     * library/restoreSession.php for why a login-time-only value would
+     * drift in multi-window/multi-login scenarios).
+     */
+    public static function setEhrLaunchBridgeCookie(string $coreSessionId): void
+    {
+        $encrypted = ServiceContainer::getCrypto()->encryptStandard($coreSessionId);
+        setcookie(
+            self::EHR_LAUNCH_BRIDGE_COOKIE_NAME,
+            base64_encode($encrypted),
+            [
+                'expires' => time() + self::EHR_LAUNCH_BRIDGE_TTL,
+                'path' => '/',
+                'secure' => true,
+                'httponly' => true,
+                'samesite' => Cookie::SAMESITE_LAX
+            ]
+        );
+    }
+
+    /**
+     * Decrypts and returns the core session id carried by the EHR-launch
+     * bridge cookie, or null if it's absent, malformed, or fails to
+     * decrypt (fails closed - never trust a value that doesn't verify).
+     */
+    public static function getEhrLaunchBridgeCookie(): ?string
+    {
+        $raw = Request::createFromGlobals()->cookies->get(self::EHR_LAUNCH_BRIDGE_COOKIE_NAME, '');
+        if ($raw === '') {
+            return null;
+        }
+        $decoded = base64_decode($raw, true);
+        if ($decoded === false) {
+            return null;
+        }
+        $decrypted = ServiceContainer::getCrypto()->decryptStandard($decoded);
+        if ($decrypted === false || $decrypted === '') {
+            return null;
+        }
+        return $decrypted;
+    }
+
+    /**
+     * Expires the EHR-launch bridge cookie immediately. Called both after a
+     * single successful use (one-time-use: a captured cookie can't be
+     * replayed) and at logout (defense in depth for a launch that was
+     * started but never completed).
+     */
+    public static function clearEhrLaunchBridgeCookie(): void
+    {
+        setcookie(
+            self::EHR_LAUNCH_BRIDGE_COOKIE_NAME,
+            '',
+            [
+                'expires' => time() - 42000,
+                'path' => '/',
+                'secure' => true,
+                'httponly' => true,
+                'samesite' => Cookie::SAMESITE_LAX
+            ]
+        );
     }
 
     /**

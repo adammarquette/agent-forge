@@ -19,6 +19,7 @@
 use OpenEMR\Common\Auth\AuthUtils;
 use OpenEMR\Common\Logging\EventAuditLogger;
 use OpenEMR\Common\Session\SessionTracker;
+use OpenEMR\Common\Session\SessionUtil;
 use OpenEMR\Common\Session\SessionWrapperFactory;
 use OpenEMR\Core\OEGlobalsBag;
 
@@ -132,6 +133,11 @@ function authCloseSession(): void
     global $incoming_site_id;
     $session = SessionWrapperFactory::getInstance()->getActiveSession();
     $incoming_site_id = $session->get('site_id') ?? '';
+    // Defense in depth: clears any dangling EHR-launch bridge cookie left
+    // over from a launch that was started but never completed (the cookie
+    // is short-lived and single-use on its own, but no reason to leave it
+    // sitting around past logout).
+    SessionUtil::clearEhrLaunchBridgeCookie();
     SessionWrapperFactory::getInstance()->destroyCoreSession();
 }
 
