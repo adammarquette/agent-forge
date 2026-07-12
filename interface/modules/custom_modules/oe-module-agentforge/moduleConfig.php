@@ -43,7 +43,8 @@ if (filter_input(INPUT_SERVER, 'REQUEST_METHOD') === 'POST') {
     CsrfUtils::checkCsrfInput(INPUT_POST, dieOnFail: true);
     $launchUri = trim((string) filter_input(INPUT_POST, 'agentforge_launch_uri'));
     $issuer = trim((string) filter_input(INPUT_POST, 'agentforge_issuer'));
-    $config->save($launchUri, $issuer);
+    $launchMode = trim((string) filter_input(INPUT_POST, 'agentforge_launch_mode'));
+    $config->save($launchUri, $issuer, $launchMode);
     $saved = true;
 }
 
@@ -54,6 +55,7 @@ $storedLaunchUri = $config->getStoredLaunchUri();
 $storedIssuer = $config->getStoredIssuer();
 $effectiveLaunchUri = $config->getLaunchUri() ?? xl('not configured');
 $effectiveIssuer = $config->getIssuer() ?? xl('not configured');
+$launchMode = $config->getLaunchMode();
 ?>
 <!DOCTYPE html>
 <html>
@@ -103,6 +105,41 @@ $effectiveIssuer = $config->getIssuer() ?? xl('not configured');
             <?php echo xlt('The FHIR issuer/audience the sidecar validates the launch against.'); ?>
             <?php echo xlt('Currently effective value:'); ?> <?php echo text($effectiveIssuer); ?>
         </small>
+    </div>
+    <div class="form-group">
+        <label><?php echo xlt('Launch Mode'); ?></label>
+        <div class="form-check">
+            <input
+                type="radio"
+                class="form-check-input"
+                id="agentforge_launch_mode_tab"
+                name="agentforge_launch_mode"
+                value="<?php echo attr(AgentForgeGlobalConfig::LAUNCH_MODE_TAB); ?>"
+                <?php echo ($launchMode === AgentForgeGlobalConfig::LAUNCH_MODE_TAB) ? 'checked' : ''; ?>
+            />
+            <label class="form-check-label" for="agentforge_launch_mode_tab">
+                <?php echo xlt('New browser tab (default)'); ?>
+            </label>
+            <small class="form-text text-muted">
+                <?php echo xlt('Opens the sidecar in a real top-level browser tab. Works regardless of whether the sidecar is deployed same-site with OpenEMR.'); ?>
+            </small>
+        </div>
+        <div class="form-check">
+            <input
+                type="radio"
+                class="form-check-input"
+                id="agentforge_launch_mode_iframe"
+                name="agentforge_launch_mode"
+                value="<?php echo attr(AgentForgeGlobalConfig::LAUNCH_MODE_IFRAME); ?>"
+                <?php echo ($launchMode === AgentForgeGlobalConfig::LAUNCH_MODE_IFRAME) ? 'checked' : ''; ?>
+            />
+            <label class="form-check-label" for="agentforge_launch_mode_iframe">
+                <?php echo xlt('Embedded iframe modal'); ?>
+            </label>
+            <small class="form-text text-muted">
+                <?php echo xlt('Opens the sidecar inline in a modal on the patient chart. Only use this if the sidecar is deployed same-site with OpenEMR - otherwise the OAuth login will fail inside the iframe (agent-forge#21).'); ?>
+            </small>
+        </div>
     </div>
     <button type="submit" class="btn btn-primary"><?php echo xlt('Save'); ?></button>
 </form>
