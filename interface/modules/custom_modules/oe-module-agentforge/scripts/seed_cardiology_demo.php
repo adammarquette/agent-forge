@@ -42,10 +42,31 @@ $ignoreAuth = true;
 $sessionAllowWrite = true;
 require_once __DIR__ . "/../../../../globals.php";
 
+use OpenEMR\Common\Database\QueryUtils;
 use OpenEMR\Services\AppointmentService;
 use OpenEMR\Services\ListService;
 use OpenEMR\Services\PatientService;
 use OpenEMR\Services\PrescriptionService;
+
+/**
+ * DB rows are `mixed` to static analysis; narrow a single-row query result to an
+ * int by key (0 when absent/non-scalar). Keeps the seed inside the fork's strict
+ * PHPStan rules (no sqlQuery(), no empty(), no casting mixed).
+ */
+function af_row_int(mixed $row, string $key): int
+{
+    return (is_array($row) && isset($row[$key]) && is_scalar($row[$key])) ? (int) $row[$key] : 0;
+}
+
+/** Same, for the first row of a ProcessingResult::getData() list. */
+function af_first_row_int(mixed $rows, string $key): int
+{
+    if (is_array($rows) && isset($rows[0]) && is_array($rows[0]) && isset($rows[0][$key]) && is_scalar($rows[0][$key])) {
+        return (int) $rows[0][$key];
+    }
+
+    return 0;
+}
 
 $options = getopt('', ['provider:', 'dry-run']);
 $providerUsername = $options['provider'] ?? null;
@@ -58,18 +79,18 @@ if (!is_string($providerUsername) || $providerUsername === '') {
 
 // Resolve the cardiologist's users.id — appointments (pc_aid) and prescriptions
 // (provider_id) reference it, and the Daily Agenda filters the roster by it.
-$providerRow = sqlQuery("SELECT id FROM users WHERE username = ? AND active = 1", [$providerUsername]);
-if (empty($providerRow['id'])) {
+$providerRow = QueryUtils::querySingleRow("SELECT id FROM users WHERE username = ? AND active = 1", [$providerUsername]);
+$providerId = af_row_int($providerRow, 'id');
+if ($providerId === 0) {
     fwrite(STDERR, "Provider user '$providerUsername' not found or inactive. Create it in Admin -> Users first.\n");
     exit(1);
 }
-$providerId = (int) $providerRow['id'];
 
-$facilityRow = sqlQuery("SELECT id FROM facility ORDER BY id LIMIT 1");
-$facilityId = (int) ($facilityRow['id'] ?? 3);
+$facilityRow = QueryUtils::querySingleRow("SELECT id FROM facility ORDER BY id LIMIT 1");
+$facilityId = af_row_int($facilityRow, 'id') ?: 3;
 
-$catRow = sqlQuery("SELECT pc_catid FROM openemr_postcalendar_categories WHERE pc_catname LIKE 'Office Visit' LIMIT 1");
-$officeVisitCatId = (int) ($catRow['pc_catid'] ?? 5);
+$catRow = QueryUtils::querySingleRow("SELECT pc_catid FROM openemr_postcalendar_categories WHERE pc_catname LIKE 'Office Visit' LIMIT 1");
+$officeVisitCatId = af_row_int($catRow, 'pc_catid') ?: 5;
 
 /**
  * Synthetic cardiology cohort. Each problem/allergy is an ICD-10-coded lists row;
@@ -191,9 +212,10 @@ $skipped = 0;
 foreach ($cohort as $index => $p) {
     $pubpid = sprintf('AF-DEMO-%02d', $index + 1);
 
-    $existing = sqlQuery("SELECT pid FROM patient_data WHERE pubpid = ?", [$pubpid]);
-    if (!empty($existing['pid'])) {
-        echo "skip  $pubpid — already present (pid {$existing['pid']})\n";
+    $existing = QueryUtils::querySingleRow("SELECT pid FROM patient_data WHERE pubpid = ?", [$pubpid]);
+    $existingPid = af_row_int($existing, 'pid');
+    if ($existingPid > 0) {
+        echo "skip  $pubpid — already present (pid $existingPid)\n";
         $skipped++;
         continue;
     }
@@ -222,9 +244,8 @@ foreach ($cohort as $index => $p) {
         'postal_code' => '62704',
         'pubpid' => $pubpid,
     ]);
-    $data = $result->getData();
-    $pid = $data[0]['pid'] ?? null;
-    if (empty($pid)) {
+    $pid = af_first_row_int($result->getData(), 'pid');
+    if ($pid === 0) {
         fwrite(STDERR, "FAILED $pubpid patient insert: " . json_encode($result->getValidationMessages()) . "\n");
         continue;
     }
