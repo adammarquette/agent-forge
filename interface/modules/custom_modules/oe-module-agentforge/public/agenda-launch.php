@@ -52,7 +52,10 @@ $config = new AgentForgeGlobalConfig();
 $launchService = new AgentForgeLaunchService();
 
 $issuer = $config->getIssuer() ?? (new ServerConfig())->getFhirUrl();
-$launchUri = $config->getLaunchUri()
+// Roster launch has its own endpoint (.../agentforge/agenda/launch). Fall back to the shared
+// single-patient launch URI when unset so an unconfigured install behaves as it did before.
+$launchUri = $config->getAgendaLaunchUri()
+    ?? $config->getLaunchUri()
     ?? '/interface/modules/custom_modules/oe-module-agentforge/public/launch.php';
 
 $launchUrl = $launchService->buildAgendaLaunchUrl($issuer, $launchUri);

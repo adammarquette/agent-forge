@@ -42,9 +42,10 @@ $saved = false;
 if (filter_input(INPUT_SERVER, 'REQUEST_METHOD') === 'POST') {
     CsrfUtils::checkCsrfInput(INPUT_POST, dieOnFail: true);
     $launchUri = trim((string) filter_input(INPUT_POST, 'agentforge_launch_uri'));
+    $agendaLaunchUri = trim((string) filter_input(INPUT_POST, 'agentforge_agenda_launch_uri'));
     $issuer = trim((string) filter_input(INPUT_POST, 'agentforge_issuer'));
     $launchMode = trim((string) filter_input(INPUT_POST, 'agentforge_launch_mode'));
-    $config->save($launchUri, $issuer, $launchMode);
+    $config->save($launchUri, $agendaLaunchUri, $issuer, $launchMode);
     $saved = true;
 }
 
@@ -52,8 +53,10 @@ if (filter_input(INPUT_SERVER, 'REQUEST_METHOD') === 'POST') {
 // unmodified env-var-derived value never gets silently written back into
 // the globals table as a permanent override.
 $storedLaunchUri = $config->getStoredLaunchUri();
+$storedAgendaLaunchUri = $config->getStoredAgendaLaunchUri();
 $storedIssuer = $config->getStoredIssuer();
 $effectiveLaunchUri = $config->getLaunchUri() ?? xl('not configured');
+$effectiveAgendaLaunchUri = $config->getAgendaLaunchUri() ?? $config->getLaunchUri() ?? xl('not configured');
 $effectiveIssuer = $config->getIssuer() ?? xl('not configured');
 $launchMode = $config->getLaunchMode();
 ?>
@@ -68,7 +71,7 @@ $launchMode = $config->getLaunchMode();
 <p class="text-muted">
     <?php echo xlt('These settings control the "Launch AgentForge" button shown on the patient chart.'); ?>
     <?php echo xlt('Leave a field blank to fall back to its environment variable'); ?>
-    (AGENTFORGE_LAUNCH_URI / AGENTFORGE_ISSUER).
+    (AGENTFORGE_LAUNCH_URI / AGENTFORGE_AGENDA_LAUNCH_URI / AGENTFORGE_ISSUER).
 </p>
 <?php if ($saved) : ?>
     <div class="alert alert-success"><?php echo xlt('Settings saved.'); ?></div>
@@ -87,8 +90,23 @@ $launchMode = $config->getLaunchMode();
             placeholder="<?php echo attr($effectiveLaunchUri); ?>"
         />
         <small class="form-text text-muted">
-            <?php echo xlt('AgentForge Copilot\'s launch-consumption endpoint.'); ?>
+            <?php echo xlt('AgentForge Copilot\'s single-patient launch-consumption endpoint (the per-patient "Launch AgentForge" button).'); ?>
             <?php echo xlt('Currently effective value:'); ?> <?php echo text($effectiveLaunchUri); ?>
+        </small>
+    </div>
+    <div class="form-group">
+        <label for="agentforge_agenda_launch_uri"><?php echo xlt('Agenda Launch URI'); ?></label>
+        <input
+            type="text"
+            class="form-control"
+            id="agentforge_agenda_launch_uri"
+            name="agentforge_agenda_launch_uri"
+            value="<?php echo attr($storedAgendaLaunchUri); ?>"
+            placeholder="<?php echo attr($effectiveAgendaLaunchUri); ?>"
+        />
+        <small class="form-text text-muted">
+            <?php echo xlt('The Daily Agenda (roster) launch endpoint - usually the same host as the Launch URI but the .../agenda/launch path. Leave blank to reuse the Launch URI above.'); ?>
+            <?php echo xlt('Currently effective value:'); ?> <?php echo text($effectiveAgendaLaunchUri); ?>
         </small>
     </div>
     <div class="form-group">

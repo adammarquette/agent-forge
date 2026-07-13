@@ -10,6 +10,7 @@ use OpenEMR\Core\OEGlobalsBag;
 final class AgentForgeGlobalConfig
 {
     public const LAUNCH_URI = 'agentforge_launch_uri';
+    public const AGENDA_LAUNCH_URI = 'agentforge_agenda_launch_uri';
     public const ISSUER = 'agentforge_issuer';
     public const LAUNCH_MODE = 'agentforge_launch_mode';
 
@@ -34,6 +35,21 @@ final class AgentForgeGlobalConfig
         return $this->resolve(self::LAUNCH_URI, 'AGENTFORGE_LAUNCH_URI');
     }
 
+    /**
+     * The roster/Daily-Agenda launch endpoint - distinct from getLaunchUri()
+     * because the sidecar serves the single-patient launch and the roster
+     * launch from different paths (.../agentforge/launch vs
+     * .../agentforge/agenda/launch); one shared URI would send the per-patient
+     * "Launch AgentForge" button to the roster endpoint (which ignores patient
+     * context), rendering the Daily Agenda instead of the patient chat.
+     * agenda-launch.php falls back to getLaunchUri() when this is unset, so an
+     * unconfigured install keeps its previous single-URI behavior.
+     */
+    public function getAgendaLaunchUri(): ?string
+    {
+        return $this->resolve(self::AGENDA_LAUNCH_URI, 'AGENTFORGE_AGENDA_LAUNCH_URI');
+    }
+
     public function getIssuer(): ?string
     {
         return $this->resolve(self::ISSUER, 'AGENTFORGE_ISSUER');
@@ -55,14 +71,20 @@ final class AgentForgeGlobalConfig
         return OEGlobalsBag::getInstance()->getString(self::LAUNCH_URI);
     }
 
+    public function getStoredAgendaLaunchUri(): string
+    {
+        return OEGlobalsBag::getInstance()->getString(self::AGENDA_LAUNCH_URI);
+    }
+
     public function getStoredIssuer(): string
     {
         return OEGlobalsBag::getInstance()->getString(self::ISSUER);
     }
 
-    public function save(string $launchUri, string $issuer, string $launchMode): void
+    public function save(string $launchUri, string $agendaLaunchUri, string $issuer, string $launchMode): void
     {
         $this->upsert(self::LAUNCH_URI, $launchUri);
+        $this->upsert(self::AGENDA_LAUNCH_URI, $agendaLaunchUri);
         $this->upsert(self::ISSUER, $issuer);
         $this->upsert(
             self::LAUNCH_MODE,
