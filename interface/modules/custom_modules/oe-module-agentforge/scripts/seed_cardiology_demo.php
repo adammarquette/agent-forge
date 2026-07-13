@@ -53,9 +53,7 @@ use OpenEMR\Services\PrescriptionService;
 // static analysis, so these narrow a single-row query result to an int by key
 // (0 when absent/non-scalar), keeping the seed inside the strict ruleset
 // (no sqlQuery(), no empty(), no casting mixed).
-$afRowInt = static function (mixed $row, string $key): int {
-    return (is_array($row) && isset($row[$key]) && is_scalar($row[$key])) ? (int) $row[$key] : 0;
-};
+$afRowInt = (static fn(mixed $row, string $key): int => (is_array($row) && isset($row[$key]) && is_scalar($row[$key])) ? (int) $row[$key] : 0);
 
 // Same, for the first row of a ProcessingResult::getData() list.
 $afFirstRowInt = static function (mixed $rows, string $key): int {
