@@ -48,25 +48,23 @@ use OpenEMR\Services\ListService;
 use OpenEMR\Services\PatientService;
 use OpenEMR\Services\PrescriptionService;
 
-/**
- * DB rows are `mixed` to static analysis; narrow a single-row query result to an
- * int by key (0 when absent/non-scalar). Keeps the seed inside the fork's strict
- * PHPStan rules (no sqlQuery(), no empty(), no casting mixed).
- */
-function af_row_int(mixed $row, string $key): int
-{
+// Closures, not named functions: the fork's PHPStan forbids declaring functions
+// in the global namespace (openemr.noGlobalNsFunctions). DB rows are `mixed` to
+// static analysis, so these narrow a single-row query result to an int by key
+// (0 when absent/non-scalar), keeping the seed inside the strict ruleset
+// (no sqlQuery(), no empty(), no casting mixed).
+$afRowInt = static function (mixed $row, string $key): int {
     return (is_array($row) && isset($row[$key]) && is_scalar($row[$key])) ? (int) $row[$key] : 0;
-}
+};
 
-/** Same, for the first row of a ProcessingResult::getData() list. */
-function af_first_row_int(mixed $rows, string $key): int
-{
+// Same, for the first row of a ProcessingResult::getData() list.
+$afFirstRowInt = static function (mixed $rows, string $key): int {
     if (is_array($rows) && isset($rows[0]) && is_array($rows[0]) && isset($rows[0][$key]) && is_scalar($rows[0][$key])) {
         return (int) $rows[0][$key];
     }
 
     return 0;
-}
+};
 
 $options = getopt('', ['provider:', 'dry-run']);
 $providerUsername = $options['provider'] ?? null;
@@ -80,17 +78,17 @@ if (!is_string($providerUsername) || $providerUsername === '') {
 // Resolve the cardiologist's users.id — appointments (pc_aid) and prescriptions
 // (provider_id) reference it, and the Daily Agenda filters the roster by it.
 $providerRow = QueryUtils::querySingleRow("SELECT id FROM users WHERE username = ? AND active = 1", [$providerUsername]);
-$providerId = af_row_int($providerRow, 'id');
+$providerId = $afRowInt($providerRow, 'id');
 if ($providerId === 0) {
     fwrite(STDERR, "Provider user '$providerUsername' not found or inactive. Create it in Admin -> Users first.\n");
     exit(1);
 }
 
 $facilityRow = QueryUtils::querySingleRow("SELECT id FROM facility ORDER BY id LIMIT 1");
-$facilityId = af_row_int($facilityRow, 'id') ?: 3;
+$facilityId = $afRowInt($facilityRow, 'id') ?: 3;
 
 $catRow = QueryUtils::querySingleRow("SELECT pc_catid FROM openemr_postcalendar_categories WHERE pc_catname LIKE 'Office Visit' LIMIT 1");
-$officeVisitCatId = af_row_int($catRow, 'pc_catid') ?: 5;
+$officeVisitCatId = $afRowInt($catRow, 'pc_catid') ?: 5;
 
 /**
  * Synthetic cardiology cohort. Each problem/allergy is an ICD-10-coded lists row;
@@ -213,7 +211,7 @@ foreach ($cohort as $index => $p) {
     $pubpid = sprintf('AF-DEMO-%02d', $index + 1);
 
     $existing = QueryUtils::querySingleRow("SELECT pid FROM patient_data WHERE pubpid = ?", [$pubpid]);
-    $existingPid = af_row_int($existing, 'pid');
+    $existingPid = $afRowInt($existing, 'pid');
     if ($existingPid > 0) {
         echo "skip  $pubpid — already present (pid $existingPid)\n";
         $skipped++;
@@ -244,7 +242,7 @@ foreach ($cohort as $index => $p) {
         'postal_code' => '62704',
         'pubpid' => $pubpid,
     ]);
-    $pid = af_first_row_int($result->getData(), 'pid');
+    $pid = $afFirstRowInt($result->getData(), 'pid');
     if ($pid === 0) {
         fwrite(STDERR, "FAILED $pubpid patient insert: " . json_encode($result->getValidationMessages()) . "\n");
         continue;
