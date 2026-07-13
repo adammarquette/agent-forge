@@ -21,10 +21,12 @@ class AgentForgeGlobalConfigTest extends TestCase
         unset(
             $GLOBALS['disable_translation'],
             $GLOBALS[AgentForgeGlobalConfig::LAUNCH_URI],
+            $GLOBALS[AgentForgeGlobalConfig::AGENDA_LAUNCH_URI],
             $GLOBALS[AgentForgeGlobalConfig::ISSUER],
             $GLOBALS[AgentForgeGlobalConfig::LAUNCH_MODE],
         );
         putenv('AGENTFORGE_LAUNCH_URI');
+        putenv('AGENTFORGE_AGENDA_LAUNCH_URI');
         putenv('AGENTFORGE_ISSUER');
     }
 
@@ -52,6 +54,53 @@ class AgentForgeGlobalConfigTest extends TestCase
         $config = new AgentForgeGlobalConfig();
 
         self::assertSame('https://db.example.com/launch', $config->getLaunchUri());
+    }
+
+    public function testGetAgendaLaunchUriReturnsNullWhenNothingConfigured(): void
+    {
+        $config = new AgentForgeGlobalConfig();
+
+        self::assertNull($config->getAgendaLaunchUri());
+    }
+
+    public function testGetAgendaLaunchUriIsIndependentOfLaunchUri(): void
+    {
+        // The whole point of the split (issue #32): a set single-patient Launch
+        // URI must NOT leak into the agenda launch URI - that shared value is
+        // exactly what sent the per-patient button to the roster endpoint.
+        $GLOBALS[AgentForgeGlobalConfig::LAUNCH_URI] = 'https://db.example.com/agentforge/launch';
+
+        $config = new AgentForgeGlobalConfig();
+
+        self::assertNull($config->getAgendaLaunchUri());
+    }
+
+    public function testGetAgendaLaunchUriFallsBackToEnvVarWhenGlobalUnset(): void
+    {
+        putenv('AGENTFORGE_AGENDA_LAUNCH_URI=https://env.example.com/agentforge/agenda/launch');
+
+        $config = new AgentForgeGlobalConfig();
+
+        self::assertSame('https://env.example.com/agentforge/agenda/launch', $config->getAgendaLaunchUri());
+    }
+
+    public function testGetAgendaLaunchUriPrefersStoredGlobalOverEnvVar(): void
+    {
+        putenv('AGENTFORGE_AGENDA_LAUNCH_URI=https://env.example.com/agenda/launch');
+        $GLOBALS[AgentForgeGlobalConfig::AGENDA_LAUNCH_URI] = 'https://db.example.com/agenda/launch';
+
+        $config = new AgentForgeGlobalConfig();
+
+        self::assertSame('https://db.example.com/agenda/launch', $config->getAgendaLaunchUri());
+    }
+
+    public function testGetStoredAgendaLaunchUriIgnoresEnvVarFallback(): void
+    {
+        putenv('AGENTFORGE_AGENDA_LAUNCH_URI=https://env.example.com/agenda/launch');
+
+        $config = new AgentForgeGlobalConfig();
+
+        self::assertSame('', $config->getStoredAgendaLaunchUri());
     }
 
     public function testGetIssuerPrefersStoredGlobalOverEnvVar(): void
