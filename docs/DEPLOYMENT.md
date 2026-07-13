@@ -194,3 +194,39 @@ Leaving a field blank falls back to the `AGENTFORGE_LAUNCH_URI` /
 not-configured state (the button will error when clicked). There's
 currently no reason to set those env vars on the Railway `openemr` service
 for a normal deploy — use the settings form instead.
+
+## 8. SMART-launch setup through the reverse-proxy front door
+
+The AgentForge launch runs through the `agent-forge-reverse-proxy` service so
+the browser and OpenEMR share one origin. A fresh OpenEMR install needs the
+following one-time Admin-UI config before any launch will succeed — none of it
+is in code or CI:
+
+1. **Site Address Override** (Admin → Config → Connectors, `site_addr_oath`) =
+   the reverse-proxy front door, e.g.
+   `https://agent-forge-reverse-proxy-staging.up.railway.app`. This is the base
+   URL OpenEMR advertises for FHIR/OAuth and the `aud` it validates the SMART
+   launch against; left wrong (or at the bare `http://` default) every launch
+   fails before a login form. It must match the module Launch URIs / Issuer in
+   §7.
+
+2. **OAuth2 EHR-Launch Authorization Flow Skip** (same Connectors tab) — enable
+   it. This *global* gate is what lets an in-EHR launch reuse the existing
+   OpenEMR session instead of re-prompting for login. Off by default.
+
+3. **Launch OAuth clients** — register one per flow via
+   `POST /oauth2/default/registration` against the **front door**, confidential
+   (`token_endpoint_auth_method: client_secret_post`):
+   - per-patient — redirect `…/agentforge/callback`, patient scopes;
+   - roster/agenda — redirect `…/agentforge/agenda/callback`, `user/` scopes.
+
+   Each lands **disabled**: Admin → System → API Clients → **Enable** it, and
+   (with the step-2 global on) turn on that client's **"Skip EHR Launch
+   Authorization Flow"** toggle. The `…/callback` redirect URIs must be the
+   front door too, or the OAuth callback loses the session cookie cross-domain.
+   The client ids/secrets go in the copilot service's `OpenEmr__ClientId`/
+   `Secret` and `OpenEmrAgenda__ClientId`/`Secret` (managed in that repo — see
+   its `documentation/RAILWAY.md`).
+
+Full end-to-end debugging trail and the reproducibility checklist:
+agent-forge-copilot#67.
