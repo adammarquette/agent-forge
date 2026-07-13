@@ -22,8 +22,10 @@ declare(strict_types=1);
 require_once __DIR__ . "/../../../../globals.php";
 
 use OpenEMR\Common\Acl\AclMain;
+use OpenEMR\Common\Database\QueryUtils;
 use OpenEMR\Common\Session\SessionUtil;
 use OpenEMR\Common\Session\SessionWrapperFactory;
+use OpenEMR\Common\Uuid\UuidRegistry;
 use OpenEMR\FHIR\Config\ServerConfig;
 use OpenEMR\FHIR\SMART\SMARTLaunchToken;
 use OpenEMR\Modules\AgentForge\Config\AgentForgeGlobalConfig;
@@ -48,8 +50,18 @@ if (!is_numeric($pid) || (int) $pid <= 0) {
     exit('No active patient context.');
 }
 
+// The SMART launch context (and FHIR) key on the patient's UUID, not the internal
+// pid - passing the pid makes the sidecar read Patient/<pid>, which OpenEMR rejects
+// 400 ("UUID columns must be a valid UUID string").
+$patientRow = QueryUtils::querySingleRow('SELECT uuid FROM patient_data WHERE pid = ?', [$pid]);
+if (!is_array($patientRow) || !isset($patientRow['uuid'])) {
+    http_response_code(404);
+    exit('No active patient context.');
+}
+$patientUuid = UuidRegistry::uuidToString($patientRow['uuid']);
+
 $launchToken = new SMARTLaunchToken();
-$launchToken->setPatient((string) $pid);
+$launchToken->setPatient($patientUuid);
 $launchToken->setIntent(SMARTLaunchToken::INTENT_PATIENT_DEMOGRAPHICS_DIALOG);
 
 $serializedToken = $launchToken->serialize();
@@ -64,7 +76,7 @@ $launchService = new AgentForgeLaunchService();
 $issuer = $config->getIssuer() ?? (new ServerConfig())->getFhirUrl();
 $launchUri = $config->getLaunchUri()
     ?? '/interface/modules/custom_modules/oe-module-agentforge/public/launch.php';
-$launchUrl = $launchService->buildLaunchUrl($serializedToken, $issuer, $launchUri, (string) $pid);
+$launchUrl = $launchService->buildLaunchUrl($serializedToken, $issuer, $launchUri, $patientUuid);
 
 // Set fresh at launch time (not login time, and not mid-page-render) - see
 // SessionUtil::setEhrLaunchBridgeCookie()'s doc comment for why.
