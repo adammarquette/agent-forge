@@ -179,18 +179,35 @@ GitLab's **Operate → Environments** page tracks what commit is live in
 
 ## 7. AgentForge launch configuration
 
-The "Launch AgentForge" button (`interface/modules/custom_modules/oe-module-agentforge`)
-needs two values: the sidecar's launch-consumption URL and the FHIR issuer to
-validate the launch against. These are **not** Railway or GitLab CI/CD
-variables — configure them through the app itself:
+The AgentForge module (`interface/modules/custom_modules/oe-module-agentforge`)
+has two launch flows, each consumed by a different sidecar endpoint, plus the
+FHIR issuer to validate launches against:
+
+- **Launch URI** — the per-patient "Launch AgentForge" button (single-patient
+  endpoint, `.../agentforge/launch`).
+- **Agenda Launch URI** — the Daily Agenda / roster tab (roster endpoint,
+  `.../agentforge/agenda/launch`). Leave blank to reuse the Launch URI
+  (backward-compatible). A single shared URI can't serve both: point it at the
+  roster endpoint and the per-patient button opens the Daily Agenda instead of
+  the patient chat — which is exactly why this second field exists (#32).
+- **Issuer** — the FHIR issuer/audience.
+
+**All three must point at the reverse-proxy front door** (e.g.
+`https://agent-forge-reverse-proxy-staging.up.railway.app/...`), never the
+sidecar's or OpenEMR's own Railway host: a launch whose `/launch` and OAuth
+`/callback` land on different hosts loses the session cookie ("No pending SMART
+launch"), and the issuer must match OpenEMR's `site_addr_oath`.
+
+These are **not** Railway or GitLab CI/CD variables — configure them through the
+app itself:
 
 **Administration → Modules → Manage Modules → Custom Modules → AgentForge
-Launch Integration → gear icon** — enter the Launch URI and Issuer and save.
-Values are stored in the `globals` table and take effect immediately, no
-redeploy or container restart needed.
+Launch Integration → gear icon** — enter the Launch URI, Agenda Launch URI, and
+Issuer and save. Values are stored in the `globals` table and take effect
+immediately, no redeploy or container restart needed.
 
 Leaving a field blank falls back to the `AGENTFORGE_LAUNCH_URI` /
-`AGENTFORGE_ISSUER` environment variables if set, and otherwise to a
-not-configured state (the button will error when clicked). There's
-currently no reason to set those env vars on the Railway `openemr` service
-for a normal deploy — use the settings form instead.
+`AGENTFORGE_AGENDA_LAUNCH_URI` / `AGENTFORGE_ISSUER` environment variables if
+set, and otherwise to a not-configured state (the button will error when
+clicked). There's currently no reason to set those env vars on the Railway
+`openemr` service for a normal deploy — use the settings form instead.
