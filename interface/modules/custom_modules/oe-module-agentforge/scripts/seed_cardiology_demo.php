@@ -49,8 +49,10 @@ if (PHP_SAPI !== 'cli') {
 // (see contrib/util/*). Run this as the web user, e.g.
 // `su -s /bin/sh apache -c 'php <this script> --provider=<user>'` - NOT root,
 // which OpenEMR's RootCliGuard aborts.
+// @phpstan-ignore openemr.forbiddenRequestGlobals
 $_GET['site'] = 'default';
-$_SERVER['HTTP_HOST'] ??= 'localhost';
+// @phpstan-ignore openemr.forbiddenRequestGlobals
+$_SERVER['HTTP_HOST'] = 'localhost';
 $ignoreAuth = true;
 $sessionAllowWrite = true;
 require_once __DIR__ . "/../../../../globals.php";
