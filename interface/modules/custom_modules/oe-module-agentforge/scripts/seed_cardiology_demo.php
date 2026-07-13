@@ -23,9 +23,10 @@
  * messages (printed to STDERR) before trusting it for a demo — a wrong column or
  * an unmet validator requirement fails as a silent empty chart, not a crash.
  *
- * Usage (inside the OpenEMR container):
- *   php interface/modules/custom_modules/oe-module-agentforge/scripts/seed_cardiology_demo.php \
- *       --provider=<username>            # the cardiologist you created in Admin -> Users
+ * Usage (inside the OpenEMR container, as the web user - NOT root):
+ *   su -s /bin/sh apache -c 'php \
+ *     interface/modules/custom_modules/oe-module-agentforge/scripts/seed_cardiology_demo.php \
+ *     --provider=<username>'             # the cardiologist created in Admin -> Users
  *   optional: --dry-run                  # print what would be created, write nothing
  *
  * reference: gitlab#36 (fork), agent-forge-copilot USERS.md UC-1/UC-6
@@ -37,7 +38,21 @@
 
 declare(strict_types=1);
 
-// CLI bootstrap: no interactive login. Run inside the container as a trusted script.
+// CLI only - never web-reachable.
+if (PHP_SAPI !== 'cli') {
+    http_response_code(404);
+    exit;
+}
+
+// globals.php is a web entry point: give it a site (and a host) so it does not
+// reject the run as siteless ("invalid site id"), per OpenEMR's CLI convention
+// (see contrib/util/*). Run this as the web user, e.g.
+// `su -s /bin/sh apache -c 'php <this script> --provider=<user>'` - NOT root,
+// which OpenEMR's RootCliGuard aborts.
+// @phpstan-ignore openemr.forbiddenRequestGlobals
+$_GET['site'] = 'default';
+// @phpstan-ignore openemr.forbiddenRequestGlobals
+$_SERVER['HTTP_HOST'] = 'localhost';
 $ignoreAuth = true;
 $sessionAllowWrite = true;
 require_once __DIR__ . "/../../../../globals.php";
