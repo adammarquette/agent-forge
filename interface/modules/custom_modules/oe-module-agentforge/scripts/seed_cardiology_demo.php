@@ -21,9 +21,11 @@
  * gitlab#36 / gitlab#39): problems + allergies -> `lists`; medications ->
  * `prescriptions` (NOT the medication list — FhirMedicationRequestService reads
  * PrescriptionService); encounters -> `form_encounter` (+ `forms`) and
- * vital-signs -> `form_vitals`, both via EncounterService; appointment ->
- * openemr_postcalendar_events with pc_aid = the provider's users.id, which is
- * what the Daily Agenda filters on.
+ * vital-signs -> `form_vitals`, both via EncounterService; laboratory results ->
+ * the `procedure_order` -> `procedure_order_code` -> `procedure_report` ->
+ * `procedure_result` chain (what the FHIR Observation[laboratory] and
+ * DiagnosticReport services read); appointment -> openemr_postcalendar_events
+ * with pc_aid = the provider's users.id, which is what the Daily Agenda filters on.
  *
  * VALIDATION REQUIRED: this has not been run against a live OpenEMR DB. Run once
  * against a throwaway/staging instance and reconcile any service validation
@@ -258,6 +260,59 @@ $afVitalsForVisit = static fn(array $base, bool $isOlder): array => [
     'temperature' => $base['temp'],
 ];
 
+// One laboratory panel per patient (index-aligned with $cohort), tuned to each
+// patient's conditions. Each result carries a LOINC result code, display name,
+// value, unit and reference range; values sit deliberately in or out of range to
+// paint a coherent picture (elevated NT-proBNP in HF, therapeutic INR on warfarin,
+// reduced eGFR in CKD, above-goal A1c in uncontrolled diabetes, etc.).
+$labProviderName = 'AgentForge Demo Lab';
+$labPanelCode = '24323-8';   // LOINC: comprehensive metabolic panel (order umbrella)
+$labPanelName = 'Cardiology follow-up panel';
+$labPanels = [
+    [ // Marcus — AFib/HTN/DM
+        ['code' => '4548-4',  'name' => 'Hemoglobin A1c',  'value' => '7.4',  'unit' => '%',       'range' => '4.0-5.6'],
+        ['code' => '2160-0',  'name' => 'Creatinine',      'value' => '1.1',  'unit' => 'mg/dL',   'range' => '0.7-1.3'],
+        ['code' => '2823-3',  'name' => 'Potassium',       'value' => '4.2',  'unit' => 'mmol/L',  'range' => '3.5-5.1'],
+        ['code' => '18262-6', 'name' => 'LDL cholesterol', 'value' => '96',   'unit' => 'mg/dL',   'range' => '0-99'],
+    ],
+    [ // Eleanor — HFrEF
+        ['code' => '33762-6', 'name' => 'NT-proBNP',       'value' => '1850', 'unit' => 'pg/mL',   'range' => '0-125'],
+        ['code' => '2160-0',  'name' => 'Creatinine',      'value' => '1.6',  'unit' => 'mg/dL',   'range' => '0.7-1.3'],
+        ['code' => '33914-3', 'name' => 'eGFR',            'value' => '42',   'unit' => 'mL/min',  'range' => '>60'],
+        ['code' => '2823-3',  'name' => 'Potassium',       'value' => '4.8',  'unit' => 'mmol/L',  'range' => '3.5-5.1'],
+    ],
+    [ // Raymond — CAD s/p PCI
+        ['code' => '18262-6', 'name' => 'LDL cholesterol', 'value' => '62',   'unit' => 'mg/dL',   'range' => '0-99'],
+        ['code' => '2085-9',  'name' => 'HDL cholesterol', 'value' => '44',   'unit' => 'mg/dL',   'range' => '>40'],
+        ['code' => '4548-4',  'name' => 'Hemoglobin A1c',  'value' => '5.5',  'unit' => '%',       'range' => '4.0-5.6'],
+        ['code' => '2160-0',  'name' => 'Creatinine',      'value' => '1.0',  'unit' => 'mg/dL',   'range' => '0.7-1.3'],
+    ],
+    [ // Yolanda — resistant HTN / CKD3
+        ['code' => '2160-0',  'name' => 'Creatinine',      'value' => '1.5',  'unit' => 'mg/dL',   'range' => '0.7-1.3'],
+        ['code' => '33914-3', 'name' => 'eGFR',            'value' => '45',   'unit' => 'mL/min',  'range' => '>60'],
+        ['code' => '2823-3',  'name' => 'Potassium',       'value' => '4.6',  'unit' => 'mmol/L',  'range' => '3.5-5.1'],
+        ['code' => '2951-2',  'name' => 'Sodium',          'value' => '139',  'unit' => 'mmol/L',  'range' => '136-145'],
+    ],
+    [ // Gerald — chronic AFib on warfarin / HFpEF
+        ['code' => '6301-6',  'name' => 'INR',             'value' => '2.5',  'unit' => 'ratio',   'range' => '2.0-3.0'],
+        ['code' => '33762-6', 'name' => 'NT-proBNP',       'value' => '780',  'unit' => 'pg/mL',   'range' => '0-125'],
+        ['code' => '2160-0',  'name' => 'Creatinine',      'value' => '1.2',  'unit' => 'mg/dL',   'range' => '0.7-1.3'],
+        ['code' => '2823-3',  'name' => 'Potassium',       'value' => '4.4',  'unit' => 'mmol/L',  'range' => '3.5-5.1'],
+    ],
+    [ // Priya — HFpEF / DM / obesity
+        ['code' => '33762-6', 'name' => 'NT-proBNP',       'value' => '620',  'unit' => 'pg/mL',   'range' => '0-125'],
+        ['code' => '4548-4',  'name' => 'Hemoglobin A1c',  'value' => '8.1',  'unit' => '%',       'range' => '4.0-5.6'],
+        ['code' => '2160-0',  'name' => 'Creatinine',      'value' => '0.9',  'unit' => 'mg/dL',   'range' => '0.7-1.3'],
+        ['code' => '18262-6', 'name' => 'LDL cholesterol', 'value' => '118',  'unit' => 'mg/dL',   'range' => '0-99'],
+    ],
+    [ // Curtis — post-cardioversion / on amiodarone
+        ['code' => '3016-3',  'name' => 'TSH',             'value' => '3.2',  'unit' => 'mIU/L',   'range' => '0.4-4.0'],
+        ['code' => '2823-3',  'name' => 'Potassium',       'value' => '4.3',  'unit' => 'mmol/L',  'range' => '3.5-5.1'],
+        ['code' => '2160-0',  'name' => 'Creatinine',      'value' => '1.0',  'unit' => 'mg/dL',   'range' => '0.7-1.3'],
+        ['code' => '18262-6', 'name' => 'LDL cholesterol', 'value' => '88',   'unit' => 'mg/dL',   'range' => '0-99'],
+    ],
+];
+
 $patientService = new PatientService();
 $listService = new ListService();
 $prescriptionService = new PrescriptionService();
@@ -267,6 +322,7 @@ $encounterService = new EncounterService();
 $seeded = 0;
 $skipped = 0;
 $encountersAdded = 0;
+$labsAdded = 0;
 
 foreach ($cohort as $index => $p) {
     $pubpid = sprintf('AF-DEMO-%02d', $index + 1);
@@ -363,67 +419,113 @@ foreach ($cohort as $index => $p) {
         $skipped++;
     }
 
-    // Clinical timeline (encounters + vital-signs). Idempotent on "already has
-    // an encounter" so a re-run never stacks duplicate visits onto a patient.
+    // Clinical timeline (encounters + vital-signs). Idempotent on "already has an
+    // encounter" so a re-run never stacks duplicate visits. Guarded with if/else
+    // (not an early `continue`) so the lab panel below still backfills onto an
+    // already-encountered patient.
     $hasEncounter = $afRowInt(
         QueryUtils::querySingleRow("SELECT encounter FROM form_encounter WHERE pid = ? LIMIT 1", [$pid]),
         'encounter'
     );
-    if ($hasEncounter > 0) {
-        echo "      timeline already present — skipping encounters/vitals\n";
-        continue;
-    }
-
     // insertEncounter keys on the patient UUID, not the pid.
     $puuidRow = QueryUtils::querySingleRow("SELECT uuid FROM patient_data WHERE pid = ?", [$pid]);
     $puuidBin = (is_array($puuidRow) && isset($puuidRow['uuid']) && is_string($puuidRow['uuid'])) ? $puuidRow['uuid'] : '';
-    if ($puuidBin === '') {
-        fwrite(STDERR, "SKIP $pubpid timeline — no patient uuid for pid $pid\n");
-        continue;
+    if ($hasEncounter > 0) {
+        echo "      encounters already present — skipping\n";
+    } elseif ($puuidBin === '') {
+        fwrite(STDERR, "SKIP $pubpid encounters — no patient uuid for pid $pid\n");
+    } else {
+        $puuid = UuidRegistry::uuidToString($puuidBin);
+        $base = $vitalsBaseline[$index] ?? $vitalsBaseline[0];
+
+        foreach ($encounterDaysAgo as $vi => $daysAgo) {
+            $visitTs = strtotime("-$daysAgo days");
+            $visitDate = date('Y-m-d H:i:s', $visitTs);
+
+            $encResult = $encounterService->insertEncounter($puuid, [
+                'date' => $visitDate,
+                'reason' => $p['reason'],
+                'facility' => $facilityName,
+                'facility_id' => $facilityId,
+                'billing_facility' => $facilityId,
+                'pc_catid' => $officeVisitCatId,
+                'class_code' => 'AMB',
+                'provider_id' => $providerId,
+                'user' => $providerUsername,
+                'group' => 'Default',
+            ]);
+            if (!$encResult->isValid() || !$encResult->hasData()) {
+                fwrite(STDERR, "FAILED $pubpid encounter ({$daysAgo}d ago): " . json_encode($encResult->getValidationMessages()) . "\n");
+                continue;
+            }
+            $encId = $afFirstRowInt($encResult->getData(), 'encounter');
+            if ($encId === 0) {
+                fwrite(STDERR, "FAILED $pubpid encounter ({$daysAgo}d ago): no encounter id returned\n");
+                continue;
+            }
+
+            // Saving vitals fires the FHIR module's calculated-observation subscriber
+            // (mean-BP derivation). On a patient with >1 vitals it logs a benign
+            // "Failed to save calculated record" (a duplicate on its own join table) -
+            // harmless here: the raw vital-signs the brief reads still save, and the
+            // derived mean-BP observation is not one AgentForge consumes.
+            $vitals = $afVitalsForVisit($base, $vi === 0);
+            $vitals['date'] = $visitDate;
+            $encounterService->insertVital($pid, $encId, $vitals);
+            $encountersAdded++;
+
+            echo "      encounter $encId @ " . date('Y-m-d', $visitTs)
+                . " · BP {$vitals['bps']}/{$vitals['bpd']} HR {$vitals['pulse']} Wt {$vitals['weight']}lb\n";
+        }
     }
-    $puuid = UuidRegistry::uuidToString($puuidBin);
-    $base = $vitalsBaseline[$index] ?? $vitalsBaseline[0];
 
-    foreach ($encounterDaysAgo as $vi => $daysAgo) {
-        $visitTs = strtotime("-$daysAgo days");
-        $visitDate = date('Y-m-d H:i:s', $visitTs);
+    // Laboratory panel. Idempotent on "patient already has a procedure order".
+    // Mirrors OpenEMR's own CDA-import lab chain: procedure_order -> _order_code ->
+    // procedure_report -> procedure_result. The FHIR Observation(laboratory) and
+    // DiagnosticReport services read straight from these tables (order activity=1)
+    // and ProcedureService auto-creates the uuids they key on, so none are set here
+    // and no `forms` row is needed. reference: gitlab#39
+    $labs = $labPanels[$index] ?? [];
+    $hasOrder = $afRowInt(
+        QueryUtils::querySingleRow("SELECT procedure_order_id FROM procedure_order WHERE patient_id = ? LIMIT 1", [$pid]),
+        'procedure_order_id'
+    );
+    if ($labs !== [] && $hasOrder === 0) {
+        // Attach to (and date at) the most recent encounter - the "last visit".
+        $encRow = QueryUtils::querySingleRow("SELECT encounter, date FROM form_encounter WHERE pid = ? ORDER BY date DESC LIMIT 1", [$pid]);
+        $labEncId = $afRowInt($encRow, 'encounter');
+        $labDate = (is_array($encRow) && isset($encRow['date']) && is_string($encRow['date'])) ? $encRow['date'] : date('Y-m-d H:i:s');
 
-        $encResult = $encounterService->insertEncounter($puuid, [
-            'date' => $visitDate,
-            'reason' => $p['reason'],
-            'facility' => $facilityName,
-            'facility_id' => $facilityId,
-            'billing_facility' => $facilityId,
-            'pc_catid' => $officeVisitCatId,
-            'class_code' => 'AMB',
-            'provider_id' => $providerId,
-            'user' => $providerUsername,
-            'group' => 'Default',
-        ]);
-        if (!$encResult->isValid() || !$encResult->hasData()) {
-            fwrite(STDERR, "FAILED $pubpid encounter ({$daysAgo}d ago): " . json_encode($encResult->getValidationMessages()) . "\n");
-            continue;
-        }
-        $encId = $afFirstRowInt($encResult->getData(), 'encounter');
-        if ($encId === 0) {
-            fwrite(STDERR, "FAILED $pubpid encounter ({$daysAgo}d ago): no encounter id returned\n");
-            continue;
+        $labProviderId = $afRowInt(QueryUtils::querySingleRow("SELECT ppid FROM procedure_providers WHERE name = ?", [$labProviderName]), 'ppid');
+        if ($labProviderId === 0) {
+            $labProviderId = (int) QueryUtils::sqlInsert("INSERT INTO procedure_providers (name) VALUES (?)", [$labProviderName]);
         }
 
-        // Saving vitals fires the FHIR module's calculated-observation subscriber
-        // (mean-BP derivation). On a patient with >1 vitals it logs a benign
-        // "Failed to save calculated record" (a duplicate on its own join table) -
-        // harmless here: the raw vital-signs the brief reads still save, and the
-        // derived mean-BP observation is not one AgentForge consumes.
-        $vitals = $afVitalsForVisit($base, $vi === 0);
-        $vitals['date'] = $visitDate;
-        $encounterService->insertVital($pid, $encId, $vitals);
-        $encountersAdded++;
-
-        echo "      encounter $encId @ " . date('Y-m-d', $visitTs)
-            . " · BP {$vitals['bps']}/{$vitals['bpd']} HR {$vitals['pulse']} Wt {$vitals['weight']}lb\n";
+        $orderId = (int) QueryUtils::sqlInsert(
+            "INSERT INTO procedure_order (provider_id,patient_id,encounter_id,date_collected,date_ordered,order_priority,order_status,activity,lab_id,procedure_order_type)
+             VALUES (?,?,?,?,?,?,?,?,?,'laboratory_test')",
+            [$providerId, $pid, $labEncId, $labDate, $labDate, 'normal', 'complete', 1, $labProviderId]
+        );
+        QueryUtils::sqlStatementThrowException(
+            "INSERT INTO procedure_order_code (procedure_order_id,procedure_order_seq,procedure_code,procedure_name,diagnoses,procedure_order_title,procedure_type)
+             VALUES (?,?,?,?,?,?,?)",
+            [$orderId, 1, $labPanelCode, $labPanelName, '', 'laboratory_test', 'laboratory_test']
+        );
+        $reportId = (int) QueryUtils::sqlInsert(
+            "INSERT INTO procedure_report (procedure_order_id,date_collected,date_report,report_status,review_status) VALUES (?,?,?,?,?)",
+            [$orderId, $labDate, $labDate, 'final', 'reviewed']
+        );
+        foreach ($labs as $lab) {
+            QueryUtils::sqlStatementThrowException(
+                "INSERT INTO procedure_result (procedure_report_id,result_code,date,units,result,`range`,result_text,result_status)
+                 VALUES (?,?,?,?,?,?,?,?)",
+                [$reportId, $lab['code'], $labDate, $lab['unit'], $lab['value'], $lab['range'], $lab['name'], 'final']
+            );
+        }
+        $labsAdded += count($labs);
+        echo "      labs: order $orderId · " . count($labs) . " results @ " . substr($labDate, 0, 10) . "\n";
     }
 }
 
-echo "\nDone. seeded=$seeded backfilled/skipped=$skipped encounters=$encountersAdded provider=$providerUsername (users.id $providerId)\n";
+echo "\nDone. seeded=$seeded backfilled/skipped=$skipped encounters=$encountersAdded labs=$labsAdded provider=$providerUsername (users.id $providerId)\n";
 exit(0);
