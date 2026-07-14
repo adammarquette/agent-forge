@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace OpenEMR\Modules\AgentForge;
 
 use OpenEMR\Common\Acl\AclMain;
+use OpenEMR\Common\Database\QueryUtils;
 use OpenEMR\Common\Session\SessionWrapperFactory;
+use OpenEMR\Common\Uuid\UuidRegistry;
 use OpenEMR\Events\UserInterface\PageHeadingRenderEvent;
 use OpenEMR\FHIR\Config\ServerConfig;
 use OpenEMR\FHIR\SMART\SMARTLaunchToken;
@@ -163,8 +165,19 @@ final readonly class Bootstrap
      */
     private function buildDirectPatientLaunchUrl(string $pid): ?string
     {
+        // The SMART launch context (and FHIR) key on the patient's UUID, not the internal pid -
+        // passing the pid makes the sidecar read Patient/<pid>, which OpenEMR rejects 400 ("UUID
+        // columns must be a valid UUID string"). Same conversion patient-launch.php does; the two
+        // token-builders stay separate (see this method's doc comment) so the fix lives in both.
+        // reference: gitlab#38
+        $patientRow = QueryUtils::querySingleRow('SELECT uuid FROM patient_data WHERE pid = ?', [$pid]);
+        if (!is_array($patientRow) || !isset($patientRow['uuid'])) {
+            return null;
+        }
+        $patientUuid = UuidRegistry::uuidToString($patientRow['uuid']);
+
         $launchToken = new SMARTLaunchToken();
-        $launchToken->setPatient($pid);
+        $launchToken->setPatient($patientUuid);
         $launchToken->setIntent(SMARTLaunchToken::INTENT_PATIENT_DEMOGRAPHICS_DIALOG);
 
         $serializedToken = $launchToken->serialize();
@@ -176,6 +189,6 @@ final readonly class Bootstrap
         $launchUri = $this->config->getLaunchUri()
             ?? '/interface/modules/custom_modules/oe-module-agentforge/public/launch.php';
 
-        return $this->launchService->buildLaunchUrl($serializedToken, $issuer, $launchUri, $pid);
+        return $this->launchService->buildLaunchUrl($serializedToken, $issuer, $launchUri, $patientUuid);
     }
 }
