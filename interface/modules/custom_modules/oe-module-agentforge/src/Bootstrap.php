@@ -62,6 +62,12 @@ final readonly class Bootstrap
      */
     public function addAgendaMenuItem(MenuEvent $event): MenuEvent
     {
+        // Hidden when the module's "Show Daily Agenda tab" setting is off - the
+        // per-patient chart button is unaffected. reference: gitlab#41
+        if (!$this->config->isAgendaMenuEnabled()) {
+            return $event;
+        }
+
         $menuItem = new \stdClass();
         $menuItem->requirement = 0;
         $menuItem->target = self::AGENDA_TAB_TARGET;

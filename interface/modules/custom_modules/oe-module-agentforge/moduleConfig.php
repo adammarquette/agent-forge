@@ -45,7 +45,9 @@ if (filter_input(INPUT_SERVER, 'REQUEST_METHOD') === 'POST') {
     $agendaLaunchUri = trim((string) filter_input(INPUT_POST, 'agentforge_agenda_launch_uri'));
     $issuer = trim((string) filter_input(INPUT_POST, 'agentforge_issuer'));
     $launchMode = trim((string) filter_input(INPUT_POST, 'agentforge_launch_mode'));
-    $config->save($launchUri, $agendaLaunchUri, $issuer, $launchMode);
+    // Unchecked checkboxes are simply absent from the POST, so presence = enabled.
+    $showAgendaMenu = filter_input(INPUT_POST, 'agentforge_show_agenda_menu') !== null;
+    $config->save($launchUri, $agendaLaunchUri, $issuer, $launchMode, $showAgendaMenu);
     $saved = true;
 }
 
@@ -59,6 +61,7 @@ $effectiveLaunchUri = $config->getLaunchUri() ?? xl('not configured');
 $effectiveAgendaLaunchUri = $config->getAgendaLaunchUri() ?? $config->getLaunchUri() ?? xl('not configured');
 $effectiveIssuer = $config->getIssuer() ?? xl('not configured');
 $launchMode = $config->getLaunchMode();
+$showAgendaMenu = $config->isAgendaMenuEnabled();
 ?>
 <!DOCTYPE html>
 <html>
@@ -156,6 +159,25 @@ $launchMode = $config->getLaunchMode();
             </label>
             <small class="form-text text-muted">
                 <?php echo xlt('Opens AgentForge Copilot inline in a modal on the patient chart. Only use this if AgentForge Copilot is deployed same-site with OpenEMR - otherwise the OAuth login will fail inside the iframe (experimental).'); ?>
+            </small>
+        </div>
+    </div>
+    <div class="form-group">
+        <label><?php echo xlt('Daily Agenda tab'); ?></label>
+        <div class="form-check">
+            <input
+                type="checkbox"
+                class="form-check-input"
+                id="agentforge_show_agenda_menu"
+                name="agentforge_show_agenda_menu"
+                value="1"
+                <?php echo $showAgendaMenu ? 'checked' : ''; ?>
+            />
+            <label class="form-check-label" for="agentforge_show_agenda_menu">
+                <?php echo xlt('Show the "Daily Agenda" tab in the top navigation'); ?>
+            </label>
+            <small class="form-text text-muted">
+                <?php echo xlt('When unchecked, the schedule-level Daily Agenda entry point is hidden. The per-patient "Launch AgentForge" button is unaffected.'); ?>
             </small>
         </div>
     </div>

@@ -14,6 +14,9 @@ final class AgentForgeGlobalConfig
     public const ISSUER = 'agentforge_issuer';
     public const LAUNCH_MODE = 'agentforge_launch_mode';
 
+    /** Whether the module injects the top-nav "Daily Agenda" tab (default on). */
+    public const SHOW_AGENDA_MENU = 'agentforge_show_agenda_menu';
+
     /**
      * Cross-origin iframe modal (dlgopen()) - the original launch mechanism.
      * Only works reliably if the sidecar is same-site with OpenEMR (see
@@ -62,6 +65,16 @@ final class AgentForgeGlobalConfig
     }
 
     /**
+     * Whether to inject the top-nav "Daily Agenda" tab. Defaults to true so an
+     * unconfigured install keeps the tab it has today; only an explicit save of
+     * the (unchecked) toggle hides it.
+     */
+    public function isAgendaMenuEnabled(): bool
+    {
+        return OEGlobalsBag::getInstance()->getBoolean(self::SHOW_AGENDA_MENU, true);
+    }
+
+    /**
      * The raw saved override, ignoring the env var fallback - used to populate
      * the settings form so an unmodified env-var-derived value never gets
      * silently written back into the globals table as a permanent override.
@@ -81,8 +94,13 @@ final class AgentForgeGlobalConfig
         return OEGlobalsBag::getInstance()->getString(self::ISSUER);
     }
 
-    public function save(string $launchUri, string $agendaLaunchUri, string $issuer, string $launchMode): void
-    {
+    public function save(
+        string $launchUri,
+        string $agendaLaunchUri,
+        string $issuer,
+        string $launchMode,
+        bool $showAgendaMenu
+    ): void {
         $this->upsert(self::LAUNCH_URI, $launchUri);
         $this->upsert(self::AGENDA_LAUNCH_URI, $agendaLaunchUri);
         $this->upsert(self::ISSUER, $issuer);
@@ -90,6 +108,7 @@ final class AgentForgeGlobalConfig
             self::LAUNCH_MODE,
             $launchMode === self::LAUNCH_MODE_IFRAME ? self::LAUNCH_MODE_IFRAME : self::LAUNCH_MODE_TAB
         );
+        $this->upsert(self::SHOW_AGENDA_MENU, $showAgendaMenu ? '1' : '0');
     }
 
     private function upsert(string $globalKey, string $value): void
