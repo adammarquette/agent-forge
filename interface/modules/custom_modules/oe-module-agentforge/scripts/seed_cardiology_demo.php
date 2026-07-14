@@ -67,7 +67,7 @@ $sessionAllowWrite = true;
 require_once __DIR__ . "/../../../../globals.php";
 
 use OpenEMR\Common\Database\QueryUtils;
-use OpenEMR\Common\Session\SessionWrapperFactory;
+use OpenEMR\Common\Session\SessionUtil;
 use OpenEMR\Common\Uuid\UuidRegistry;
 use OpenEMR\Services\AppointmentService;
 use OpenEMR\Services\EncounterService;
@@ -113,7 +113,7 @@ if ($providerId === 0) {
 // session's authUserID and hard-types it as int; in this CLI context none is
 // set, so a fresh (DR) seed would throw on every vitals save. Bind the session
 // to the seeding cardiologist so those writes attribute cleanly.
-SessionWrapperFactory::getInstance()->getActiveSession()->set('authUserID', $providerId);
+SessionUtil::setSession('authUserID', $providerId);
 
 $facilityRow = QueryUtils::querySingleRow("SELECT id, name FROM facility ORDER BY id LIMIT 1");
 $facilityId = $afRowInt($facilityRow, 'id') ?: 3;
@@ -247,18 +247,9 @@ $vitalsBaseline = [
 ];
 
 // Two past encounters per patient (days-ago), oldest first; the last element is
-// the "last visit" the brief anchors "what changed" against. The older visit
-// runs slightly higher/heavier so there's a visible trend into the recent one.
+// the "last visit" the brief anchors "what changed" against. Per-visit vitals are
+// derived inline from $vitalsBaseline in the loop below.
 $encounterDaysAgo = [180, 90];
-$afVitalsForVisit = static fn(array $base, bool $isOlder): array => [
-    'bps' => $base['bps'] + ($isOlder ? 8 : 0),
-    'bpd' => $base['bpd'] + ($isOlder ? 4 : 0),
-    'pulse' => $base['pulse'] + ($isOlder ? 6 : 0),
-    'weight' => $base['weight'] + ($isOlder ? 4 : 0),
-    'height' => $base['height'],
-    'respiration' => $base['resp'],
-    'temperature' => $base['temp'],
-];
 
 // One laboratory panel per patient (index-aligned with $cohort), tuned to each
 // patient's conditions. Each result carries a LOINC result code, display name,
@@ -436,7 +427,7 @@ foreach ($cohort as $index => $p) {
         fwrite(STDERR, "SKIP $pubpid encounters — no patient uuid for pid $pid\n");
     } else {
         $puuid = UuidRegistry::uuidToString($puuidBin);
-        $base = $vitalsBaseline[$index] ?? $vitalsBaseline[0];
+        $base = $vitalsBaseline[$index];
 
         foreach ($encounterDaysAgo as $vi => $daysAgo) {
             $visitTs = strtotime("-$daysAgo days");
@@ -469,8 +460,19 @@ foreach ($cohort as $index => $p) {
             // "Failed to save calculated record" (a duplicate on its own join table) -
             // harmless here: the raw vital-signs the brief reads still save, and the
             // derived mean-BP observation is not one AgentForge consumes.
-            $vitals = $afVitalsForVisit($base, $vi === 0);
-            $vitals['date'] = $visitDate;
+            // The older visit runs slightly higher/heavier so there's a visible
+            // trend into the recent one. $base carries typed ints here (no cast).
+            $older = $vi === 0;
+            $vitals = [
+                'bps' => $base['bps'] + ($older ? 8 : 0),
+                'bpd' => $base['bpd'] + ($older ? 4 : 0),
+                'pulse' => $base['pulse'] + ($older ? 6 : 0),
+                'weight' => $base['weight'] + ($older ? 4 : 0),
+                'height' => $base['height'],
+                'respiration' => $base['resp'],
+                'temperature' => $base['temp'],
+                'date' => $visitDate,
+            ];
             $encounterService->insertVital($pid, $encId, $vitals);
             $encountersAdded++;
 
@@ -485,12 +487,12 @@ foreach ($cohort as $index => $p) {
     // DiagnosticReport services read straight from these tables (order activity=1)
     // and ProcedureService auto-creates the uuids they key on, so none are set here
     // and no `forms` row is needed. reference: gitlab#39
-    $labs = $labPanels[$index] ?? [];
+    $labs = $labPanels[$index];
     $hasOrder = $afRowInt(
         QueryUtils::querySingleRow("SELECT procedure_order_id FROM procedure_order WHERE patient_id = ? LIMIT 1", [$pid]),
         'procedure_order_id'
     );
-    if ($labs !== [] && $hasOrder === 0) {
+    if ($hasOrder === 0) {
         // Attach to (and date at) the most recent encounter - the "last visit".
         $encRow = QueryUtils::querySingleRow("SELECT encounter, date FROM form_encounter WHERE pid = ? ORDER BY date DESC LIMIT 1", [$pid]);
         $labEncId = $afRowInt($encRow, 'encounter');
@@ -498,10 +500,10 @@ foreach ($cohort as $index => $p) {
 
         $labProviderId = $afRowInt(QueryUtils::querySingleRow("SELECT ppid FROM procedure_providers WHERE name = ?", [$labProviderName]), 'ppid');
         if ($labProviderId === 0) {
-            $labProviderId = (int) QueryUtils::sqlInsert("INSERT INTO procedure_providers (name) VALUES (?)", [$labProviderName]);
+            $labProviderId = QueryUtils::sqlInsert("INSERT INTO procedure_providers (name) VALUES (?)", [$labProviderName]);
         }
 
-        $orderId = (int) QueryUtils::sqlInsert(
+        $orderId = QueryUtils::sqlInsert(
             "INSERT INTO procedure_order (provider_id,patient_id,encounter_id,date_collected,date_ordered,order_priority,order_status,activity,lab_id,procedure_order_type)
              VALUES (?,?,?,?,?,?,?,?,?,'laboratory_test')",
             [$providerId, $pid, $labEncId, $labDate, $labDate, 'normal', 'complete', 1, $labProviderId]
@@ -511,7 +513,7 @@ foreach ($cohort as $index => $p) {
              VALUES (?,?,?,?,?,?,?)",
             [$orderId, 1, $labPanelCode, $labPanelName, '', 'laboratory_test', 'laboratory_test']
         );
-        $reportId = (int) QueryUtils::sqlInsert(
+        $reportId = QueryUtils::sqlInsert(
             "INSERT INTO procedure_report (procedure_order_id,date_collected,date_report,report_status,review_status) VALUES (?,?,?,?,?)",
             [$orderId, $labDate, $labDate, 'final', 'reviewed']
         );
