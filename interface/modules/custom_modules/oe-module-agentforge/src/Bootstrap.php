@@ -14,6 +14,8 @@ use OpenEMR\FHIR\SMART\SMARTLaunchToken;
 use OpenEMR\Menu\MenuEvent;
 use OpenEMR\Modules\AgentForge\Config\AgentForgeGlobalConfig;
 use OpenEMR\Modules\AgentForge\Launch\AgentForgeLaunchService;
+use OpenEMR\Services\Background\BackgroundServiceDefinition;
+use OpenEMR\Services\Background\BackgroundServiceRegistry;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 final readonly class Bootstrap
@@ -51,6 +53,26 @@ final readonly class Bootstrap
             MenuEvent::MENU_UPDATE,
             $this->addAgendaMenuItem(...)
         );
+    }
+
+    /**
+     * Ensures the document-ingestion Background Service is registered. Called from openemr.bootstrap.php on
+     * module load: register() is a single idempotent upsert that preserves an admin's active toggle, so this
+     * self-heals a missing row (e.g. a fresh deploy) without overriding a deliberate disable. The cron entry
+     * point is the global agentforge_ingest_new_documents() in src/ingest_service.php - the runner calls it by
+     * name (function_exists + $function()), so it stays a global function while registration lives here.
+     */
+    public function registerBackgroundServices(): void
+    {
+        (new BackgroundServiceRegistry())->register(new BackgroundServiceDefinition(
+            name: 'AgentForge_Ingest',
+            title: 'AgentForge document ingestion',
+            function: 'agentforge_ingest_new_documents',
+            requireOnce: '/interface/modules/custom_modules/oe-module-agentforge/src/ingest_service.php',
+            executeInterval: 2,
+            sortOrder: 100,
+            active: true,
+        ));
     }
 
     /**

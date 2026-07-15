@@ -65,14 +65,15 @@ final readonly class DocumentIngestService
             return [];
         }
 
-        // documents<->category is the categories_to_documents join, not a column on documents.
-        // reference: schema verified against staging openemr DB 2026-07-14 - documents(id int PK, foreign_id
-        // bigint, mimetype varchar, name varchar, deleted tinyint) and categories_to_documents(category_id,
-        // document_id) all present as used below.
+        // documents<->category is the categories_to_documents join; patient_data resolves the patient's FHIR
+        // UUID from documents.foreign_id (the internal pid). The sidecar keys derived facts on the UUID, not
+        // the pid, so the join is required, not cosmetic - an INNER JOIN also naturally drops any non-patient
+        // documents. reference: schema verified against staging 2026-07-14; agent-forge-copilot#93.
         $placeholders = implode(',', array_fill(0, count($categoryIds), '?'));
-        $sql = 'SELECT d.`id`, d.`foreign_id`, d.`mimetype`, ctd.`category_id` '
+        $sql = 'SELECT d.`id`, d.`mimetype`, d.`name`, ctd.`category_id`, pd.`uuid` AS `patient_uuid` '
             . 'FROM `documents` d '
             . 'JOIN `categories_to_documents` ctd ON ctd.`document_id` = d.`id` '
+            . 'JOIN `patient_data` pd ON pd.`pid` = d.`foreign_id` '
             . 'WHERE d.`id` > ? AND d.`deleted` = 0 AND ctd.`category_id` IN (' . $placeholders . ') '
             . 'ORDER BY d.`id` ASC';
 
@@ -87,10 +88,16 @@ final readonly class DocumentIngestService
     private function forwardDocument(string $ingestUri, array $row, string $docType): bool
     {
         $documentId = self::toInt($row['id']);
-        // foreign_id is OpenEMR's internal patient pid, NOT the FHIR patient uuid. If the sidecar keys facts
-        // by FHIR patient id this must be resolved via patient_data.uuid (join on pid). VERIFY sidecar expectation.
-        $patientId = self::toStr($row['foreign_id']);
         $mediaType = self::toStr($row['mimetype'] ?? 'application/octet-stream');
+
+        // The sidecar keys derived facts on the patient's FHIR UUID, not the internal pid - passing a pid
+        // makes it read Patient/<pid>, which OpenEMR rejects. Resolved via the patient_data join above.
+        // reference: Bootstrap::buildDirectPatientLaunchUrl (gitlab agent-forge#38), agent-forge-copilot#93.
+        $patientUuid = $row['patient_uuid'] ?? null;
+        if (!is_string($patientUuid) || $patientUuid === '') {
+            return false;
+        }
+        $patientId = \OpenEMR\Common\Uuid\UuidRegistry::uuidToString($patientUuid);
 
         // VERIFY: reading the (decrypted) bytes and the FHIR DocumentReference id (the document uuid) against
         // this fork's Document class API - method names below are the expected shape, confirm them.
