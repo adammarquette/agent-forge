@@ -154,12 +154,24 @@ final class AgentForgeGlobalConfig
         return OEGlobalsBag::getInstance()->getString(self::ISSUER);
     }
 
+    public function getStoredIngestUri(): string
+    {
+        return OEGlobalsBag::getInstance()->getString(self::INGEST_URI);
+    }
+
+    public function getStoredIngestCategoryMap(): string
+    {
+        return OEGlobalsBag::getInstance()->getString(self::INGEST_CATEGORY_MAP);
+    }
+
     public function save(
         string $launchUri,
         string $agendaLaunchUri,
         string $issuer,
         string $launchMode,
-        bool $showAgendaMenu
+        bool $showAgendaMenu,
+        string $ingestUri,
+        string $ingestCategoryMap
     ): void {
         $this->upsert(self::LAUNCH_URI, $launchUri);
         $this->upsert(self::AGENDA_LAUNCH_URI, $agendaLaunchUri);
@@ -169,6 +181,8 @@ final class AgentForgeGlobalConfig
             $launchMode === self::LAUNCH_MODE_IFRAME ? self::LAUNCH_MODE_IFRAME : self::LAUNCH_MODE_TAB
         );
         $this->upsert(self::SHOW_AGENDA_MENU, $showAgendaMenu ? '1' : '0');
+        $this->upsert(self::INGEST_URI, $ingestUri);
+        $this->upsert(self::INGEST_CATEGORY_MAP, $ingestCategoryMap);
     }
 
     private function upsert(string $globalKey, string $value): void

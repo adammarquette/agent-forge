@@ -47,7 +47,9 @@ if (filter_input(INPUT_SERVER, 'REQUEST_METHOD') === 'POST') {
     $launchMode = trim((string) filter_input(INPUT_POST, 'agentforge_launch_mode'));
     // Unchecked checkboxes are simply absent from the POST, so presence = enabled.
     $showAgendaMenu = filter_input(INPUT_POST, 'agentforge_show_agenda_menu') !== null;
-    $config->save($launchUri, $agendaLaunchUri, $issuer, $launchMode, $showAgendaMenu);
+    $ingestUri = trim((string) filter_input(INPUT_POST, 'agentforge_ingest_uri'));
+    $ingestCategoryMap = trim((string) filter_input(INPUT_POST, 'agentforge_ingest_category_map'));
+    $config->save($launchUri, $agendaLaunchUri, $issuer, $launchMode, $showAgendaMenu, $ingestUri, $ingestCategoryMap);
     $saved = true;
 }
 
@@ -62,6 +64,9 @@ $effectiveAgendaLaunchUri = $config->getAgendaLaunchUri() ?? $config->getLaunchU
 $effectiveIssuer = $config->getIssuer() ?? xl('not configured');
 $launchMode = $config->getLaunchMode();
 $showAgendaMenu = $config->isAgendaMenuEnabled();
+$storedIngestUri = $config->getStoredIngestUri();
+$storedIngestCategoryMap = $config->getStoredIngestCategoryMap();
+$effectiveIngestUri = $config->getIngestUri() ?? xl('not configured');
 ?>
 <!DOCTYPE html>
 <html>
@@ -180,6 +185,41 @@ $showAgendaMenu = $config->isAgendaMenuEnabled();
                 <?php echo xlt('When unchecked, the schedule-level Daily Agenda entry point is hidden. The per-patient "Launch AgentForge" button is unaffected.'); ?>
             </small>
         </div>
+    </div>
+    <hr />
+    <h5><?php echo xlt('Document Ingestion (pre-visit)'); ?></h5>
+    <p class="text-muted">
+        <?php echo xlt('The background service forwards newly-uploaded documents to AgentForge Copilot for extraction before the visit.'); ?>
+        <?php echo xlt('Leave a field blank to fall back to its environment variable'); ?>
+        (AGENTFORGE_INGEST_URI / AGENTFORGE_INGEST_CATEGORY_MAP).
+    </p>
+    <div class="form-group">
+        <label for="agentforge_ingest_uri"><?php echo xlt('Ingest URI'); ?></label>
+        <input
+            type="text"
+            class="form-control"
+            id="agentforge_ingest_uri"
+            name="agentforge_ingest_uri"
+            value="<?php echo attr($storedIngestUri); ?>"
+            placeholder="<?php echo attr($effectiveIngestUri); ?>"
+        />
+        <small class="form-text text-muted">
+            <?php echo xlt('AgentForge Copilot\'s document-ingestion endpoint. Use the private-network address, not the public proxy (the endpoint trusts its private origin).'); ?>
+            <?php echo xlt('Currently effective value:'); ?> <?php echo text($effectiveIngestUri); ?>
+        </small>
+    </div>
+    <div class="form-group">
+        <label for="agentforge_ingest_category_map"><?php echo xlt('Category to document-type map'); ?></label>
+        <textarea
+            class="form-control"
+            id="agentforge_ingest_category_map"
+            name="agentforge_ingest_category_map"
+            rows="2"
+            placeholder='{"2":"lab_pdf","4":"intake_form"}'
+        ><?php echo text($storedIngestCategoryMap); ?></textarea>
+        <small class="form-text text-muted">
+            <?php echo xlt('JSON mapping an OpenEMR document category id to a document type (lab_pdf or intake_form). Only documents in a mapped category are forwarded; invalid or empty JSON disables ingestion (fail closed).'); ?>
+        </small>
     </div>
     <button type="submit" class="btn btn-primary"><?php echo xlt('Save'); ?></button>
 </form>
