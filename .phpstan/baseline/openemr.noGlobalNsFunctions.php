@@ -7031,10 +7031,5 @@ $ignoreErrors[] = [
     'count' => 1,
     'path' => __DIR__ . '/../../interface/modules/custom_modules/oe-module-agentforge/src/ingest_service.php',
 ];
-$ignoreErrors[] = [
-    'message' => '#^Function agentforge_register_ingest_service may not be defined in the global namespace\.$#',
-    'count' => 1,
-    'path' => __DIR__ . '/../../interface/modules/custom_modules/oe-module-agentforge/src/ingest_service.php',
-];
 
 return ['parameters' => ['ignoreErrors' => $ignoreErrors]];

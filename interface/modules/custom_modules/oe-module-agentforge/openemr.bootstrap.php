@@ -13,3 +13,4 @@ $classLoader->registerNamespaceIfNotExists('OpenEMR\\Modules\\AgentForge\\', __D
 $eventDispatcher = OEGlobalsBag::getInstance()->getKernel()->getEventDispatcher();
 $bootstrap = new Bootstrap($eventDispatcher);
 $bootstrap->subscribeToEvents();
+$bootstrap->registerBackgroundServices();
