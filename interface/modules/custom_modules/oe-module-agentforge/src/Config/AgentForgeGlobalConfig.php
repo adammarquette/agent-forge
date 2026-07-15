@@ -14,6 +14,19 @@ final class AgentForgeGlobalConfig
     public const ISSUER = 'agentforge_issuer';
     public const LAUNCH_MODE = 'agentforge_launch_mode';
 
+    /** The sidecar's POST /documents/ingest endpoint the ingestion cron calls. */
+    public const INGEST_URI = 'agentforge_ingest_uri';
+
+    /** Last `documents.id` the ingestion cron has forwarded (the scan watermark). */
+    public const INGEST_WATERMARK = 'agentforge_ingest_watermark';
+
+    /**
+     * JSON object mapping an OpenEMR document category id (string) to a sidecar docType
+     * ("lab_pdf" | "intake_form"), e.g. {"12":"lab_pdf","15":"intake_form"}. The cron only
+     * forwards documents whose category is in this map, so unrelated uploads are ignored.
+     */
+    public const INGEST_CATEGORY_MAP = 'agentforge_ingest_category_map';
+
     /** Whether the module injects the top-nav "Daily Agenda" tab (default on). */
     public const SHOW_AGENDA_MENU = 'agentforge_show_agenda_menu';
 
@@ -56,6 +69,51 @@ final class AgentForgeGlobalConfig
     public function getIssuer(): ?string
     {
         return $this->resolve(self::ISSUER, 'AGENTFORGE_ISSUER');
+    }
+
+    /** The sidecar ingest endpoint, e.g. https://.../agentforge/documents/ingest. */
+    public function getIngestUri(): ?string
+    {
+        return $this->resolve(self::INGEST_URI, 'AGENTFORGE_INGEST_URI');
+    }
+
+    /** The highest `documents.id` already forwarded to the sidecar (0 when never run). */
+    public function getIngestWatermark(): int
+    {
+        return (int) OEGlobalsBag::getInstance()->getString(self::INGEST_WATERMARK);
+    }
+
+    public function setIngestWatermark(int $lastDocumentId): void
+    {
+        $this->upsert(self::INGEST_WATERMARK, (string) $lastDocumentId);
+    }
+
+    /**
+     * Category-id => docType map. Returns an empty array when unset or malformed, which makes the
+     * cron a no-op (fail closed) rather than forwarding documents with an unknown schema.
+     *
+     * @return array<string, string>
+     */
+    public function getIngestCategoryMap(): array
+    {
+        $raw = $this->resolve(self::INGEST_CATEGORY_MAP, 'AGENTFORGE_INGEST_CATEGORY_MAP');
+        if ($raw === null) {
+            return [];
+        }
+
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        $map = [];
+        foreach ($decoded as $categoryId => $docType) {
+            if (is_string($docType) && ($docType === 'lab_pdf' || $docType === 'intake_form')) {
+                $map[(string) $categoryId] = $docType;
+            }
+        }
+
+        return $map;
     }
 
     public function getLaunchMode(): string
