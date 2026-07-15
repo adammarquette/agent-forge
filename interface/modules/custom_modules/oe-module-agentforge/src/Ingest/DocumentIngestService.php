@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace OpenEMR\Modules\AgentForge\Ingest;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use OpenEMR\Common\Database\QueryUtils;
 use OpenEMR\Modules\AgentForge\Config\AgentForgeGlobalConfig;
 
@@ -15,9 +17,9 @@ use OpenEMR\Modules\AgentForge\Config\AgentForgeGlobalConfig;
  *
  * DRAFT - not yet exercised against a running OpenEMR. Points needing verification are marked "VERIFY:".
  */
-final class DocumentIngestService
+final readonly class DocumentIngestService
 {
-    public function __construct(private readonly AgentForgeGlobalConfig $config)
+    public function __construct(private AgentForgeGlobalConfig $config)
     {
     }
 
@@ -39,8 +41,8 @@ final class DocumentIngestService
 
         $highestId = $watermark;
         foreach ($rows as $row) {
-            $documentId = (int) $row['id'];
-            $docType = $categoryMap[(string) $row['category_id']] ?? null;
+            $documentId = self::toInt($row['id']);
+            $docType = $categoryMap[self::toStr($row['category_id'])] ?? null;
             if ($docType !== null && $this->forwardDocument($ingestUri, $row, $docType)) {
                 // Only advance past a document once the sidecar has accepted it (or reported it already on
                 // file); a failed forward is retried next run. The sidecar is content-hash idempotent.
@@ -84,11 +86,11 @@ final class DocumentIngestService
      */
     private function forwardDocument(string $ingestUri, array $row, string $docType): bool
     {
-        $documentId = (int) $row['id'];
+        $documentId = self::toInt($row['id']);
         // foreign_id is OpenEMR's internal patient pid, NOT the FHIR patient uuid. If the sidecar keys facts
         // by FHIR patient id this must be resolved via patient_data.uuid (join on pid). VERIFY sidecar expectation.
-        $patientId = (string) $row['foreign_id'];
-        $mediaType = (string) ($row['mimetype'] ?? 'application/octet-stream');
+        $patientId = self::toStr($row['foreign_id']);
+        $mediaType = self::toStr($row['mimetype'] ?? 'application/octet-stream');
 
         // VERIFY: reading the (decrypted) bytes and the FHIR DocumentReference id (the document uuid) against
         // this fork's Document class API - method names below are the expected shape, confirm them.
@@ -99,37 +101,43 @@ final class DocumentIngestService
             return false;
         }
 
-        $body = [
-            'patientId' => $patientId,
-            'documentReferenceId' => $documentReferenceId,
-            'docType' => $docType,
-            // curl multipart: a CURLFile from an in-memory string requires a temp file; simplest is to write
-            // the bytes to a temp path. VERIFY the sidecar accepts the field name 'file'.
-            'file' => $this->asCurlFile($content, (string) ($row['name'] ?? 'document'), $mediaType),
-        ];
-
         // No auth header: the sidecar's /documents/ingest trusts its private-network origin (W2-D17). ingestUri
         // is the sidecar's internal address (agent-forge-api-staging.railway.internal:8080), never public; the
         // reverse proxy does not route this path. reference: agent-forge-copilot#91, W2_ARCHITECTURE.md §15 W2-D17.
-        $curl = curl_init($ingestUri);
-        curl_setopt_array($curl, [
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $body,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 120,
-        ]);
-        curl_exec($curl);
-        $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
-        curl_close($curl);
+        // http_errors off + catch: a non-200 or transport failure is a no-op that gets retried next run, never
+        // aborts the whole scan. The sidecar is content-hash idempotent so a retry is safe.
+        try {
+            $response = (new Client())->request('POST', $ingestUri, [
+                'multipart' => [
+                    ['name' => 'patientId', 'contents' => $patientId],
+                    ['name' => 'documentReferenceId', 'contents' => $documentReferenceId],
+                    ['name' => 'docType', 'contents' => $docType],
+                    [
+                        'name' => 'file',
+                        'contents' => $content,
+                        'filename' => self::toStr($row['name'] ?? 'document'),
+                        'headers' => ['Content-Type' => $mediaType],
+                    ],
+                ],
+                'timeout' => 120,
+                'http_errors' => false,
+            ]);
+        } catch (GuzzleException) {
+            return false;
+        }
 
         // 200 = ingested / already on file; anything else is retried next run.
-        return $status === 200;
+        return $response->getStatusCode() === 200;
     }
 
-    private function asCurlFile(string $content, string $filename, string $mediaType): \CURLFile
+    // QueryUtils::fetchRecords yields mixed cells; narrow before converting - the fork forbids casting mixed.
+    private static function toInt(mixed $value): int
     {
-        $tmp = tempnam(sys_get_temp_dir(), 'agf');
-        file_put_contents($tmp, $content);
-        return new \CURLFile($tmp, $mediaType, $filename);
+        return is_numeric($value) ? (int) $value : 0;
+    }
+
+    private static function toStr(mixed $value): string
+    {
+        return is_scalar($value) ? (string) $value : '';
     }
 }
