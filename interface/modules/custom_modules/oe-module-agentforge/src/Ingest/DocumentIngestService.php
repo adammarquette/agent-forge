@@ -23,19 +23,14 @@ final class DocumentIngestService
 
     /**
      * Scans documents newer than the watermark whose category is mapped to a docType, forwards each to the
-     * sidecar, and advances the watermark. Fails closed: with no ingest URI, no category map, or no token,
-     * it does nothing rather than forwarding documents that cannot be ingested.
+     * sidecar, and advances the watermark. Fails closed: with no ingest URI or no category map, it does
+     * nothing rather than forwarding documents that cannot be ingested.
      */
     public function run(): void
     {
         $ingestUri = $this->config->getIngestUri();
         $categoryMap = $this->config->getIngestCategoryMap();
         if ($ingestUri === null || $categoryMap === []) {
-            return;
-        }
-
-        $token = $this->resolveBearerToken();
-        if ($token === null) {
             return;
         }
 
@@ -46,7 +41,7 @@ final class DocumentIngestService
         foreach ($rows as $row) {
             $documentId = (int) $row['id'];
             $docType = $categoryMap[(string) $row['category_id']] ?? null;
-            if ($docType !== null && $this->forwardDocument($ingestUri, $token, $row, $docType)) {
+            if ($docType !== null && $this->forwardDocument($ingestUri, $row, $docType)) {
                 // Only advance past a document once the sidecar has accepted it (or reported it already on
                 // file); a failed forward is retried next run. The sidecar is content-hash idempotent.
                 $highestId = max($highestId, $documentId);
@@ -69,8 +64,9 @@ final class DocumentIngestService
         }
 
         // documents<->category is the categories_to_documents join, not a column on documents.
-        // VERIFY: table/column names against this fork's schema (documents.id/foreign_id/mimetype/deleted,
-        // categories_to_documents.category_id/document_id).
+        // reference: schema verified against staging openemr DB 2026-07-14 - documents(id int PK, foreign_id
+        // bigint, mimetype varchar, name varchar, deleted tinyint) and categories_to_documents(category_id,
+        // document_id) all present as used below.
         $placeholders = implode(',', array_fill(0, count($categoryIds), '?'));
         $sql = 'SELECT d.`id`, d.`foreign_id`, d.`mimetype`, ctd.`category_id` '
             . 'FROM `documents` d '
@@ -86,9 +82,11 @@ final class DocumentIngestService
     /**
      * @param array<string, mixed> $row
      */
-    private function forwardDocument(string $ingestUri, string $token, array $row, string $docType): bool
+    private function forwardDocument(string $ingestUri, array $row, string $docType): bool
     {
         $documentId = (int) $row['id'];
+        // foreign_id is OpenEMR's internal patient pid, NOT the FHIR patient uuid. If the sidecar keys facts
+        // by FHIR patient id this must be resolved via patient_data.uuid (join on pid). VERIFY sidecar expectation.
         $patientId = (string) $row['foreign_id'];
         $mediaType = (string) ($row['mimetype'] ?? 'application/octet-stream');
 
@@ -110,11 +108,13 @@ final class DocumentIngestService
             'file' => $this->asCurlFile($content, (string) ($row['name'] ?? 'document'), $mediaType),
         ];
 
+        // No auth header: the sidecar's /documents/ingest trusts its private-network origin (W2-D17). ingestUri
+        // is the sidecar's internal address (agent-forge-api-staging.railway.internal:8080), never public; the
+        // reverse proxy does not route this path. reference: agent-forge-copilot#91, W2_ARCHITECTURE.md §15 W2-D17.
         $curl = curl_init($ingestUri);
         curl_setopt_array($curl, [
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => $body,
-            CURLOPT_HTTPHEADER => ['Authorization: Bearer ' . $token],
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 120,
         ]);
@@ -131,20 +131,5 @@ final class DocumentIngestService
         $tmp = tempnam(sys_get_temp_dir(), 'agf');
         file_put_contents($tmp, $content);
         return new \CURLFile($tmp, $mediaType, $filename);
-    }
-
-    /**
-     * The transient bearer token for the sidecar call.
-     *
-     * TODO (agent-forge#44): mint a short-lived OpenEMR access token via the client_credentials grant using
-     * a registered confidential SYSTEM client (private_key_jwt client assertion - OpenEMR's backend-services
-     * flow), cache it for this run, and discard it. Nothing is stored except the client's key material in
-     * config; the token itself stays transient. Until that is wired, an operator-supplied token in
-     * AGENTFORGE_INGEST_TOKEN lets the scan + forward path be exercised end-to-end.
-     */
-    private function resolveBearerToken(): ?string
-    {
-        $token = getenv('AGENTFORGE_INGEST_TOKEN');
-        return is_string($token) && $token !== '' ? $token : null;
     }
 }

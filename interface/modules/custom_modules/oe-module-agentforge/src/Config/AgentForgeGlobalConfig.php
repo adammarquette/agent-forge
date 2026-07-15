@@ -71,7 +71,9 @@ final class AgentForgeGlobalConfig
         return $this->resolve(self::ISSUER, 'AGENTFORGE_ISSUER');
     }
 
-    /** The sidecar ingest endpoint, e.g. https://.../agentforge/documents/ingest. */
+    // The sidecar ingest endpoint. Must be the sidecar's PRIVATE address, not the public proxy, because the
+    // endpoint trusts its private-network origin (no token). e.g. http://agent-forge-api-staging.railway.internal:8080/documents/ingest
+    // reference: agent-forge-copilot#91
     public function getIngestUri(): ?string
     {
         return $this->resolve(self::INGEST_URI, 'AGENTFORGE_INGEST_URI');
