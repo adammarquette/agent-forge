@@ -265,7 +265,7 @@ $effectiveIngestUri = $config->getIngestUri() ?? xl('not configured');
                     <tr>
                         <td><?php echo text($documentCategory['name']); ?></td>
                         <td>
-                            <select class="form-control" name="agentforge_cat_<?php echo attr($documentCategory['id']); ?>">
+                            <select class="form-control" name="agentforge_cat_<?php echo attr((string) $documentCategory['id']); ?>">
                                 <option value=""><?php echo xlt('Ignore'); ?></option>
                                 <option value="lab_pdf" <?php echo $selectedType === 'lab_pdf' ? 'selected' : ''; ?>><?php echo xlt('Lab PDF'); ?></option>
                                 <option value="intake_form" <?php echo $selectedType === 'intake_form' ? 'selected' : ''; ?>><?php echo xlt('Intake form'); ?></option>
