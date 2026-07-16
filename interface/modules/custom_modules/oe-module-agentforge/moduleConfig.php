@@ -92,7 +92,7 @@ $launchMode = $config->getLaunchMode();
 $showAgendaMenu = $config->isAgendaMenuEnabled();
 $storedIngestUri = $config->getStoredIngestUri();
 $storedIngestCategoryMap = $config->getStoredIngestCategoryMap();
-// Decode the stored map so each category's dropdown can be pre-selected. Narrow mixed values before use.
+// Decode the stored map so each category's dropdown shows its saved type. Narrow mixed values before use.
 $storedCategoryMap = [];
 $decodedCategoryMap = json_decode($storedIngestCategoryMap, true);
 if (is_array($decodedCategoryMap)) {
