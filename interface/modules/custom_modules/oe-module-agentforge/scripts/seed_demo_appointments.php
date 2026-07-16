@@ -63,6 +63,9 @@ use OpenEMR\Services\AppointmentService;
 // DB rows are `mixed` to static analysis; narrow a single-row result to int by
 // key (0 when absent/non-scalar), staying inside the fork's strict ruleset.
 $afRowInt = (static fn(mixed $row, string $key): int => (is_array($row) && isset($row[$key]) && is_scalar($row[$key])) ? (int) $row[$key] : 0);
+// Same narrowing for string columns (pubpid/fname/lname): DB rows are `mixed`, and sprintf's %s
+// args must be scalar under the fork's strict ruleset.
+$afRowStr = (static fn(mixed $row, string $key): string => (is_array($row) && isset($row[$key]) && is_scalar($row[$key])) ? (string) $row[$key] : '');
 
 $options = getopt('', ['provider::', 'days::', 'start-hour::', 'dry-run', 'weekdays']);
 $dryRun = array_key_exists('dry-run', $options);
@@ -129,6 +132,9 @@ $offset = 1;
 while (count($dates) < $days) {
     $ts = strtotime("+$offset days");
     $offset++;
+    if ($ts === false) {
+        continue; // controlled input; guard keeps $dates a list<int> for date() below
+    }
     if ($weekdaysOnly) {
         $dow = (int) date('N', $ts); // 6=Sat, 7=Sun
         if ($dow >= 6) {
@@ -153,12 +159,18 @@ foreach ($dates as $ts) {
     $slot = 0; // explicit int counter; foreach keys type as int|string under phpstan
     foreach ($cohort as $p) {
         $pid = $afRowInt($p, 'pid');
+        $pubpid = $afRowStr($p, 'pubpid');
+        $fname = $afRowStr($p, 'fname');
+        $lname = $afRowStr($p, 'lname');
         // Stagger a full clinic: 30-min slots from $startHour. Offset lives in the
         // strtotime() string (not arithmetic on its result) to stay inside the
         // fork's strict phpstan (no binary op on int|false). reference: seed_cardiology_demo.php
         $slotTs = strtotime("$date " . sprintf('%02d:00:00', $startHour) . " +" . ($slot * 30) . " minutes");
-        $startTime = date('H:i:s', $slotTs);
         $slot++;
+        if ($slotTs === false) {
+            continue; // controlled input; guard narrows $slotTs to int for date()
+        }
+        $startTime = date('H:i:s', $slotTs);
 
         // Idempotent on (patient, provider, date).
         $exists = $afRowInt(
@@ -169,13 +181,13 @@ foreach ($dates as $ts) {
             'pc_eid'
         );
         if ($exists > 0) {
-            echo sprintf("  skip  %-12s %s %s %s (already booked)\n", $p['pubpid'], $startTime, $p['fname'], $p['lname']);
+            echo sprintf("  skip  %-12s %s %s %s (already booked)\n", $pubpid, $startTime, $fname, $lname);
             $skipped++;
             continue;
         }
 
         if ($dryRun) {
-            echo sprintf("  would %-12s %s %s %s\n", $p['pubpid'], $startTime, $p['fname'], $p['lname']);
+            echo sprintf("  would %-12s %s %s %s\n", $pubpid, $startTime, $fname, $lname);
             $booked++;
             continue;
         }
@@ -192,7 +204,7 @@ foreach ($dates as $ts) {
             'pc_billing_location' => $facilityId,
             'pc_aid' => $providerId,
         ]);
-        echo sprintf("  book  %-12s %s %s %s\n", $p['pubpid'], $startTime, $p['fname'], $p['lname']);
+        echo sprintf("  book  %-12s %s %s %s\n", $pubpid, $startTime, $fname, $lname);
         $booked++;
     }
     echo "\n";
