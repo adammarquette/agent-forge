@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 use OpenEMR\Common\Acl\AclMain;
 use OpenEMR\Common\Csrf\CsrfUtils;
+use OpenEMR\Common\Database\QueryUtils;
 use OpenEMR\Common\Session\SessionWrapperFactory;
 use OpenEMR\Core\Header;
 use OpenEMR\Core\ModulesClassLoader;
@@ -37,6 +38,21 @@ if (!AclMain::aclCheckCore('admin', 'manage_modules')) {
 
 $session = SessionWrapperFactory::getInstance()->getActiveSession();
 $config = new AgentForgeGlobalConfig();
+
+// Document categories for the ingest-map UI (picked by name, not a numeric id the admin has to know).
+// QueryUtils::fetchRecords yields mixed cells; narrow before converting - the fork forbids casting mixed.
+// reference: agent-forge#46.
+$documentCategories = [];
+foreach (QueryUtils::fetchRecords('SELECT `id`, `name` FROM `categories` ORDER BY `name`', []) as $categoryRow) {
+    $categoryId = is_numeric($categoryRow['id'] ?? null) ? (int) $categoryRow['id'] : 0;
+    if ($categoryId > 0) {
+        $documentCategories[] = [
+            'id' => $categoryId,
+            'name' => is_scalar($categoryRow['name'] ?? null) ? (string) $categoryRow['name'] : '',
+        ];
+    }
+}
+
 $saved = false;
 
 if (filter_input(INPUT_SERVER, 'REQUEST_METHOD') === 'POST') {
@@ -48,7 +64,17 @@ if (filter_input(INPUT_SERVER, 'REQUEST_METHOD') === 'POST') {
     // Unchecked checkboxes are simply absent from the POST, so presence = enabled.
     $showAgendaMenu = filter_input(INPUT_POST, 'agentforge_show_agenda_menu') !== null;
     $ingestUri = trim((string) filter_input(INPUT_POST, 'agentforge_ingest_uri'));
-    $ingestCategoryMap = trim((string) filter_input(INPUT_POST, 'agentforge_ingest_category_map'));
+    // Rebuild the {categoryId: docType} map from the per-category dropdowns; only lab_pdf/intake_form count,
+    // everything else (ignore) is omitted. Stored format is unchanged, so the ingest cron is unaffected.
+    $categoryMap = [];
+    foreach ($documentCategories as $documentCategory) {
+        $selectedType = trim((string) filter_input(INPUT_POST, 'agentforge_cat_' . $documentCategory['id']));
+        if ($selectedType === 'lab_pdf' || $selectedType === 'intake_form') {
+            $categoryMap[(string) $documentCategory['id']] = $selectedType;
+        }
+    }
+    $encodedCategoryMap = json_encode($categoryMap);
+    $ingestCategoryMap = ($categoryMap !== [] && $encodedCategoryMap !== false) ? $encodedCategoryMap : '';
     $config->save($launchUri, $agendaLaunchUri, $issuer, $launchMode, $showAgendaMenu, $ingestUri, $ingestCategoryMap);
     $saved = true;
 }
@@ -66,6 +92,16 @@ $launchMode = $config->getLaunchMode();
 $showAgendaMenu = $config->isAgendaMenuEnabled();
 $storedIngestUri = $config->getStoredIngestUri();
 $storedIngestCategoryMap = $config->getStoredIngestCategoryMap();
+// Decode the stored map so each category's dropdown can be pre-selected. Narrow mixed values before use.
+$storedCategoryMap = [];
+$decodedCategoryMap = json_decode($storedIngestCategoryMap, true);
+if (is_array($decodedCategoryMap)) {
+    foreach ($decodedCategoryMap as $mappedCategoryId => $mappedDocType) {
+        if (is_scalar($mappedDocType)) {
+            $storedCategoryMap[(string) $mappedCategoryId] = (string) $mappedDocType;
+        }
+    }
+}
 $effectiveIngestUri = $config->getIngestUri() ?? xl('not configured');
 ?>
 <!DOCTYPE html>
@@ -209,17 +245,37 @@ $effectiveIngestUri = $config->getIngestUri() ?? xl('not configured');
         </small>
     </div>
     <div class="form-group">
-        <label for="agentforge_ingest_category_map"><?php echo xlt('Category to document-type map'); ?></label>
-        <textarea
-            class="form-control"
-            id="agentforge_ingest_category_map"
-            name="agentforge_ingest_category_map"
-            rows="2"
-            placeholder='{"2":"lab_pdf","4":"intake_form"}'
-        ><?php echo text($storedIngestCategoryMap); ?></textarea>
-        <small class="form-text text-muted">
-            <?php echo xlt('JSON mapping an OpenEMR document category id to a document type (lab_pdf or intake_form). Only documents in a mapped category are forwarded; invalid or empty JSON disables ingestion (fail closed).'); ?>
+        <label><?php echo xlt('Category to document-type map'); ?></label>
+        <small class="form-text text-muted mb-2">
+            <?php echo xlt('Pick a document type for each OpenEMR document category. Only categories set to a type are forwarded to AgentForge Copilot; categories left as Ignore are skipped (fail closed).'); ?>
         </small>
+        <?php if ($documentCategories === []) { ?>
+            <p class="text-muted"><?php echo xlt('No document categories are defined in this installation.'); ?></p>
+        <?php } else { ?>
+        <table class="table table-sm table-bordered">
+            <thead>
+                <tr>
+                    <th><?php echo xlt('Document category'); ?></th>
+                    <th><?php echo xlt('Document type'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($documentCategories as $documentCategory) { ?>
+                    <?php $selectedType = $storedCategoryMap[(string) $documentCategory['id']] ?? ''; ?>
+                    <tr>
+                        <td><?php echo text($documentCategory['name']); ?></td>
+                        <td>
+                            <select class="form-control" name="agentforge_cat_<?php echo attr($documentCategory['id']); ?>">
+                                <option value=""><?php echo xlt('Ignore'); ?></option>
+                                <option value="lab_pdf" <?php echo $selectedType === 'lab_pdf' ? 'selected' : ''; ?>><?php echo xlt('Lab PDF'); ?></option>
+                                <option value="intake_form" <?php echo $selectedType === 'intake_form' ? 'selected' : ''; ?>><?php echo xlt('Intake form'); ?></option>
+                            </select>
+                        </td>
+                    </tr>
+                <?php } ?>
+            </tbody>
+        </table>
+        <?php } ?>
     </div>
     <button type="submit" class="btn btn-primary"><?php echo xlt('Save'); ?></button>
 </form>
