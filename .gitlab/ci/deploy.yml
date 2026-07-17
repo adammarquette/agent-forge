@@ -24,11 +24,18 @@
 # agent-forge-copilot's deploy.yml (Llm__ApiKey drift caused a full session
 # of 401s).
 #
-# RAILWAY_TOKEN is a plain project-level CI/CD variable (scope: *), not
-# reassigned here - this used to read RAILWAY_TOKEN_STAGING, a name that
-# was never actually created in GitLab (only the plain RAILWAY_TOKEN was),
-# so every deploy since the staging collapse ran with an empty token.
-# Single-environment model means no per-environment suffix is needed.
+# RAILWAY_TOKEN_STAGING is the Railway project token scoped to the "staging"
+# environment. The explicit -STAGING suffix is for parity with
+# agent-forge-copilot (which already uses this name) and to leave room for a
+# per-environment dev token. The Railway CLI auto-reads the RAILWAY_TOKEN env
+# var, so the script exports RAILWAY_TOKEN=$RAILWAY_TOKEN_STAGING before any
+# railway call. reference: agent-forge-copilot#112 (dev-tier work driving the
+# naming parity).
+# CAUTION: the RAILWAY_TOKEN_STAGING CI/CD variable MUST exist (same value)
+# before this merges. An earlier version referenced a *_STAGING name that was
+# never created in GitLab, so every deploy silently ran with an empty token -
+# do not merge until the variable is in place, then delete the old bare
+# RAILWAY_TOKEN once a deploy is green.
 # -----------------------------------------------------------------------------
 
 deploy:staging:
@@ -42,6 +49,7 @@ deploy:staging:
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
   script:
+    - export RAILWAY_TOKEN="$RAILWAY_TOKEN_STAGING"
     - railway variable set PORT=80 --service "$RAILWAY_SERVICE" --skip-deploys
     - railway variable set SWARM_MODE=yes --service "$RAILWAY_SERVICE" --skip-deploys
     - railway variable set "OE_PASS=$OE_PASS" --service "$RAILWAY_SERVICE" --skip-deploys
