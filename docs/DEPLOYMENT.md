@@ -107,10 +107,13 @@ protected branch):
 
 | Key | Value |
 |-----|-------|
-| `RAILWAY_TOKEN` | the staging-scoped token |
+| `RAILWAY_TOKEN_STAGING` | the staging-scoped token |
 
-The same Railway token works for both repos — the token selects the
+The same Railway token value works for both repos — the token selects the
 *environment*, the `--service` flag in each repo's CI selects the *service*.
+Both repos store it under the same key (`RAILWAY_TOKEN_STAGING`); the Railway
+CLI auto-reads `RAILWAY_TOKEN`, so each repo's deploy job exports
+`RAILWAY_TOKEN=$RAILWAY_TOKEN_STAGING` before calling `railway`.
 
 In `agent-forge` only, also add (plain — these aren't secrets):
 
@@ -123,8 +126,8 @@ In `agent-forge` only, also add (plain — these aren't secrets):
 `${STAGING_URL}/interface/login/login.php?site=default` until it
 returns HTTP 200.
 
-`agent-forge-copilot` uses its own `RAILWAY_TOKEN`-equivalent variable
-and Railway domain for its `/health`/`/ready` smoke test — see that
+`agent-forge-copilot` uses the same `RAILWAY_TOKEN_STAGING` variable name
+(its own copy) and its own Railway domain for its `/health`/`/ready` smoke test — see that
 repo's `documentation/CI-SETUP.md`.
 
 ## 3. CI pipeline for the copilot repo

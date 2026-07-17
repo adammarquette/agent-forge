@@ -77,7 +77,7 @@ only some of them present.
   from being silently merged past.
 
 **Settings → CI/CD → Variables** — see `docs/DEPLOYMENT.md` for the full
-list (`RAILWAY_TOKEN`, `OE_PASS`/`MYSQL_PASS`, `STAGING_URL`).
+list (`RAILWAY_TOKEN_STAGING`, `OE_PASS`/`MYSQL_PASS`, `STAGING_URL`).
 
 ## Day-to-day workflow
 
