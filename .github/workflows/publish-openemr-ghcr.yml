@@ -1,0 +1,151 @@
+# -----------------------------------------------------------------------------
+# Publish the AgentForge OpenEMR image to GHCR on every successful build of main.
+#
+# This image is THIS FORK, not stock OpenEMR. Alongside the `oe-module-agentforge`
+# custom module it carries core patches the SMART EHR launch depends on —
+# src/Common/Session/SessionUtil.php (the launch-bridge cookie),
+# src/RestControllers/AuthorizationController.php, library/auth.inc.php — so a
+# stock openemr/openemr image plus the module dropped on top will NOT reproduce a
+# working launch. Publishing the built fork is what makes a one-command demo
+# possible for consumers (e.g. agent-forge-copilot's docker-compose).
+#
+# WHY THIS IS SELF-GATING, not `workflow_run` after a CI pipeline:
+# this fork inherited 53 workflows from upstream OpenEMR and every one of them is
+# filtered to `master` / `rel-*`. The fork's default branch is `main`, so none of
+# them has ever run here — there is no green pipeline on `main` to chain from, and
+# a `workflow_run` trigger would simply never fire. Instead this job builds the
+# image, VERIFIES it, and pushes only if both succeed: a broken Dockerfile or an
+# image missing the fork's changes never reaches the registry. If real CI is
+# adopted on `main` later, add it to `needs:` and drop the verify-then-push dance.
+#
+# ONE-TIME MANUAL STEP AFTER THE FIRST SUCCESSFUL RUN: a new GHCR package is
+# PRIVATE by default. Anonymous `docker pull` — the whole point for a public demo
+# — fails until you set it public in
+# Settings -> Packages -> agent-forge -> Package settings -> Change visibility.
+# -----------------------------------------------------------------------------
+
+name: Publish OpenEMR image to GHCR
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Never cancel a publish midway: a half-pushed tag set is worse than a slow queue.
+concurrency:
+  group: ghcr-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  publish:
+    name: build, verify, publish
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build to the local daemon rather than pushing straight away, so the
+      # verification below runs against the EXACT image that will be published.
+      # Single-platform (linux/amd64) on purpose - `load: true` cannot load a
+      # multi-platform manifest, and the deploy target is amd64.
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/railway/Dockerfile
+          load: true
+          push: false
+          tags: ${{ env.IMAGE }}:ci-candidate
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Guard against publishing an image that built fine but is not actually
+      # this fork. `COPY . /openemr` means a wrong build context, or a Dockerfile
+      # that reverts to cloning upstream openemr/openemr (as docker/release does),
+      # would produce a perfectly healthy STOCK OpenEMR image - which fails only
+      # later, at SMART launch, in a way that is painful to trace back to here.
+      - name: Verify the fork's changes are in the image
+        env:
+          # The FINAL image serves from the Apache docroot, not /openemr. The build
+          # stages assemble at /openemr, then `mv openemr /var/www/localhost/htdocs/`
+          # (docker/railway/Dockerfile) relocates it. Asserting against /openemr would
+          # fail on every run and publish nothing - keep this in step with the
+          # Dockerfile's WORKDIR if that ever moves.
+          WEBROOT: /var/www/localhost/htdocs/openemr
+        run: |
+          set -euo pipefail
+          img="${IMAGE}:ci-candidate"
+          fail=0
+
+          check_file() {
+            if docker run --rm --entrypoint sh "$img" -c "test -e '$1'"; then
+              echo "  OK      $1"
+            else
+              echo "  MISSING $1"; fail=1
+            fi
+          }
+
+          echo "AgentForge custom module:"
+          check_file "$WEBROOT/interface/modules/custom_modules/oe-module-agentforge/moduleConfig.php"
+          check_file "$WEBROOT/interface/modules/custom_modules/oe-module-agentforge/public/launch.php"
+
+          echo "Core files the launch depends on:"
+          check_file "$WEBROOT/src/Common/Session/SessionUtil.php"
+          check_file "$WEBROOT/src/RestControllers/AuthorizationController.php"
+
+          # Presence alone proves nothing for the core files - stock OpenEMR ships them
+          # too. Assert the fork's actual modification is present, so an image that
+          # accidentally built from upstream source cannot pass.
+          echo "Fork-specific core patch:"
+          if docker run --rm --entrypoint sh "$img" -c \
+              "grep -q 'EhrLaunchBridge\|ehr_launch_bridge' '$WEBROOT/src/Common/Session/SessionUtil.php'"; then
+            echo "  OK      SessionUtil carries the EHR launch-bridge change"
+          else
+            echo "  MISSING SessionUtil looks like stock OpenEMR - the fork's launch patch is absent"
+            fail=1
+          fi
+
+          if [ "$fail" -ne 0 ]; then
+            echo "::error::Image is missing the fork's changes; refusing to publish."
+            exit 1
+          fi
+          echo "Verified: the image carries this fork's module and core changes."
+
+      # Only reached when the build AND the verification above both pass.
+      - name: Tag and push
+        run: |
+          set -euo pipefail
+          sha_tag="sha-$(echo "${GITHUB_SHA}" | cut -c1-12)"
+          for t in latest main "$sha_tag"; do
+            docker tag "${IMAGE}:ci-candidate" "${IMAGE}:${t}"
+            docker push "${IMAGE}:${t}"
+            echo "pushed ${IMAGE}:${t}"
+          done
+          {
+            echo "### Published"
+            echo ""
+            echo '```'
+            echo "docker pull ${IMAGE}:latest"
+            echo '```'
+            echo ""
+            echo "| Tag | |"
+            echo "|---|---|"
+            echo "| \`latest\` | moves with main |"
+            echo "| \`main\` | moves with main |"
+            echo "| \`${sha_tag}\` | immutable, pin demos to this |"
+          } >> "$GITHUB_STEP_SUMMARY"
