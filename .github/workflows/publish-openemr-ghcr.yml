@@ -1,68 +1,105 @@
 # -----------------------------------------------------------------------------
-# Publish the AgentForge OpenEMR image to GHCR on every successful build of main.
+# main pipeline: verify, then publish the AgentForge OpenEMR image to GHCR.
 #
-# This image is THIS FORK, not stock OpenEMR. Alongside the `oe-module-agentforge`
-# custom module it carries core patches the SMART EHR launch depends on —
-# src/Common/Session/SessionUtil.php (the launch-bridge cookie),
-# src/RestControllers/AuthorizationController.php, library/auth.inc.php — so a
-# stock openemr/openemr image plus the module dropped on top will NOT reproduce a
-# working launch. Publishing the built fork is what makes a one-command demo
-# possible for consumers (e.g. agent-forge-copilot's docker-compose).
+# The published image is THIS FORK, not stock OpenEMR. Alongside the
+# `oe-module-agentforge` custom module it carries core patches the SMART EHR
+# launch depends on - src/Common/Session/SessionUtil.php (the launch-bridge
+# cookie), src/RestControllers/AuthorizationController.php, library/auth.inc.php -
+# so stock openemr/openemr plus the module dropped on top will NOT reproduce a
+# working launch. Publishing the built fork is what lets consumers (notably
+# agent-forge-copilot's docker-compose) stand up a working demo with one command.
 #
-# WHY THIS IS SELF-GATING, not `workflow_run` after a CI pipeline:
+# WHY THE GATE IS JOBS IN ONE WORKFLOW, not `workflow_run` after a separate CI:
 # this fork inherited 53 workflows from upstream OpenEMR and every one of them is
-# filtered to `master` / `rel-*`. The fork's default branch is `main`, so none of
-# them has ever run here — there is no green pipeline on `main` to chain from, and
-# a `workflow_run` trigger would simply never fire. Instead this job builds the
-# image, VERIFIES it, and pushes only if both succeed: a broken Dockerfile or an
-# image missing the fork's changes never reaches the registry. If real CI is
-# adopted on `main` later, add it to `needs:` and drop the verify-then-push dance.
+# filtered to `master` / `rel-*`. The fork's default branch is `main`, so none has
+# ever run here - there was no green pipeline on `main` to chain from. Expressing
+# the gate as `needs:` keeps it in one place and avoids workflow_run's quirks
+# (it only dispatches from the default branch, and silently never fires when the
+# upstream workflow does not run).
 #
-# ONE-TIME MANUAL STEP AFTER THE FIRST SUCCESSFUL RUN: a new GHCR package is
-# PRIVATE by default. Anonymous `docker pull` — the whole point for a public demo
-# — fails until you set it public in
+# WHAT IS AND IS NOT GATED. `php-syntax-check` runs the repo's own composer script
+# and needs no vendor tree, so it is a cheap, reliable hard gate. The heavier
+# gates the retired GitLab pipeline also ran - phpcs (PSR-12), phpstan (level 10),
+# rector --dry-run - are deliberately NOT wired in yet: they need a full
+# `composer install` against ~30 PHP extensions, and phpstan on this codebase
+# legitimately exceeds Composer's 300s process timeout (see .gitlab/ci/lint.yml).
+# Adding them unverified risks a permanently red `main` that never publishes,
+# which would defeat the point. Add them deliberately, one at a time, confirming
+# each is green before it becomes blocking.
+#
+# ONE-TIME MANUAL STEP AFTER THE FIRST SUCCESSFUL PUBLISH: a new GHCR package is
+# PRIVATE by default, so anonymous `docker pull` - the whole point for a public
+# demo - fails until you set it public in
 # Settings -> Packages -> agent-forge -> Package settings -> Change visibility.
 # -----------------------------------------------------------------------------
 
-name: Publish OpenEMR image to GHCR
+name: main pipeline (verify + publish to GHCR)
 
 on:
+  pull_request:
   push:
     branches: [main]
   workflow_dispatch:
 
-# Never cancel a publish midway: a half-pushed tag set is worse than a slow queue.
+# Never cancel a publish midway - a half-pushed tag set is worse than a slow
+# queue. PR runs are cancellable.
 concurrency:
-  group: ghcr-publish-${{ github.ref }}
-  cancel-in-progress: false
+  group: main-pipeline-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
-  packages: write
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
-  publish:
-    name: build, verify, publish
+  # ---------------------------------------------------------------------------
+  # VERIFY - runs on pull requests too, so the gate is exercised before it ever
+  # guards a publish. (The publish job below is the only main-only piece.)
+  # ---------------------------------------------------------------------------
+  php-syntax:
+    name: php syntax
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      # Lint every tracked PHP file. `php -l` checks ONE file per invocation -
+      # passing it several silently lints only the first - so this is strictly
+      # one file per process (the repo's own `php-syntax-check` composer script
+      # batches via `xargs php -l` and therefore only actually checks a handful
+      # of files; not fixed here, but not relied upon either). One-process-per-
+      # file across the whole tree is slow serially, so it runs -P parallel.
+      # No vendor tree or composer install needed - pure `php -l`.
+      - name: Lint every tracked PHP file
+        run: |
+          set -euo pipefail
+          count=$(git ls-files '*.php' | wc -l)
+          echo "Linting ${count} tracked PHP files..."
+          # One `php -l` per file (it only lints the first arg if given several),
+          # run -P parallel because one-process-per-file is slow serially. php -l
+          # exits nonzero on a syntax error and prints the parse error to stderr;
+          # xargs then returns 123, which `set -e` turns into a failed step. stdout
+          # (the per-file "No syntax errors detected" chatter) is dropped as noise.
+          # No vendor tree or composer install needed - pure php -l.
+          git ls-files -z '*.php' \
+            | xargs -0 -P"$(nproc)" -n1 php -d error_reporting=0 -l >/dev/null
+          echo "All ${count} tracked PHP files parse."
 
+  build-verify:
+    name: build image + verify it is the fork
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
       - uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # Build to the local daemon rather than pushing straight away, so the
-      # verification below runs against the EXACT image that will be published.
-      # Single-platform (linux/amd64) on purpose - `load: true` cannot load a
-      # multi-platform manifest, and the deploy target is amd64.
+      # Built to the local daemon, not pushed: the verification below must run
+      # against the exact artifact that would be published. Single-platform on
+      # purpose - `load: true` cannot load a multi-platform manifest, and the
+      # deploy target is amd64.
       - name: Build image
         uses: docker/build-push-action@v6
         with:
@@ -74,18 +111,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Guard against publishing an image that built fine but is not actually
-      # this fork. `COPY . /openemr` means a wrong build context, or a Dockerfile
-      # that reverts to cloning upstream openemr/openemr (as docker/release does),
-      # would produce a perfectly healthy STOCK OpenEMR image - which fails only
-      # later, at SMART launch, in a way that is painful to trace back to here.
       - name: Verify the fork's changes are in the image
         env:
-          # The FINAL image serves from the Apache docroot, not /openemr. The build
-          # stages assemble at /openemr, then `mv openemr /var/www/localhost/htdocs/`
-          # (docker/railway/Dockerfile) relocates it. Asserting against /openemr would
-          # fail on every run and publish nothing - keep this in step with the
-          # Dockerfile's WORKDIR if that ever moves.
+          # The FINAL image serves from the Apache docroot, NOT /openemr: the build
+          # stages assemble at /openemr and then `mv openemr /var/www/localhost/htdocs/`
+          # relocates it (docker/railway/Dockerfile). Asserting /openemr would fail
+          # every run and publish nothing. Keep in step with that Dockerfile's WORKDIR.
           WEBROOT: /var/www/localhost/htdocs/openemr
         run: |
           set -euo pipefail
@@ -108,9 +139,12 @@ jobs:
           check_file "$WEBROOT/src/Common/Session/SessionUtil.php"
           check_file "$WEBROOT/src/RestControllers/AuthorizationController.php"
 
-          # Presence alone proves nothing for the core files - stock OpenEMR ships them
-          # too. Assert the fork's actual modification is present, so an image that
-          # accidentally built from upstream source cannot pass.
+          # Presence alone proves nothing for the core files - stock OpenEMR ships
+          # them too. Assert the fork's actual modification, so an image that was
+          # accidentally built from upstream source cannot pass. docker/release's
+          # Dockerfile clones upstream openemr/openemr rather than using this repo,
+          # and that mistake would otherwise yield a healthy-looking STOCK image
+          # that only fails later, at SMART launch, far from its cause.
           echo "Fork-specific core patch:"
           if docker run --rm --entrypoint sh "$img" -c \
               "grep -q 'EhrLaunchBridge\|ehr_launch_bridge' '$WEBROOT/src/Common/Session/SessionUtil.php'"; then
@@ -126,16 +160,48 @@ jobs:
           fi
           echo "Verified: the image carries this fork's module and core changes."
 
-      # Only reached when the build AND the verification above both pass.
-      - name: Tag and push
+  # ---------------------------------------------------------------------------
+  # PUBLISH - only after the whole pipeline above is green, and only on main.
+  # Rebuilds from the buildx GHA cache the verify job just populated, so this is
+  # a cache hit rather than a second full build.
+  # ---------------------------------------------------------------------------
+  publish:
+    name: publish to GHCR
+    runs-on: ubuntu-24.04
+    needs: [php-syntax, build-verify]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute tags
+        id: tags
+        run: echo "sha=sha-$(echo "${GITHUB_SHA}" | cut -c1-12)" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/railway/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:main
+            ${{ env.IMAGE }}:${{ steps.tags.outputs.sha }}
+          cache-from: type=gha
+
+      - name: Summary
         run: |
-          set -euo pipefail
-          sha_tag="sha-$(echo "${GITHUB_SHA}" | cut -c1-12)"
-          for t in latest main "$sha_tag"; do
-            docker tag "${IMAGE}:ci-candidate" "${IMAGE}:${t}"
-            docker push "${IMAGE}:${t}"
-            echo "pushed ${IMAGE}:${t}"
-          done
           {
             echo "### Published"
             echo ""
@@ -147,5 +213,5 @@ jobs:
             echo "|---|---|"
             echo "| \`latest\` | moves with main |"
             echo "| \`main\` | moves with main |"
-            echo "| \`${sha_tag}\` | immutable, pin demos to this |"
+            echo "| \`${{ steps.tags.outputs.sha }}\` | immutable - pin demos to this |"
           } >> "$GITHUB_STEP_SUMMARY"
