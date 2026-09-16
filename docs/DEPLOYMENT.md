@@ -25,14 +25,22 @@ This repo's OpenEMR fork deploys from GitHub Actions
 `staging` environment. (An earlier version of this doc described a
 development/sdet/production promotion chain; Railway's actual project only
 ever had two environments, and the working deployment has lived in
-`staging` since 2026-07-10 — see `agent-forge#8`'s update. The live project
-is currently named `lucid-clarity` in the Railway dashboard, not
-`agent-forge` — Railway auto-names projects created without an explicit
-name, and this one was never renamed.)
+`staging` since 2026-07-10 — see `agent-forge#8`'s update.)
+
+**Which Railway account.** Staging was rebuilt on 2026-09-16 in project
+**`fearless-abundance`** under the `adam.marquette@challenger.gauntletai.com`
+account, serving at `https://openemr-staging-a41b.up.railway.app`. The previous
+project, `lucid-clarity` under `adam.marquette@gmail.com`, is **trial-expired**
+— every deploy there returns "Your trial has expired" — and its volumes still
+hold the original staging data, unreachable until a plan is selected. Run
+`railway whoami` before trusting anything you read from the CLI; it and the
+Railway MCP integration can be signed in to different accounts at once. Railway
+auto-names projects created without an explicit name, and neither was renamed.
 
 Deploys run from CI using the Railway CLI and an environment-scoped **project
 token**: `railway up` uploads the source and Railway builds it with
-`docker/railway/Dockerfile` per `railway.json`. See
+`docker/railway/Dockerfile` — selected by the `dockerfilePath` set on the
+service, **not** by `railway.json` (see §1.3 step 6). See
 [`CI-SETUP.md`](CI-SETUP.md#why-the-deploy-uploads-source-instead-of-deploying-the-published-image)
 for why the deploy uploads source rather than deploying the image the same
 pipeline publishes to GHCR.
@@ -45,7 +53,7 @@ pipeline publishes to GHCR.
 
 1. In the [Railway dashboard](https://railway.com/dashboard), **New Project**
    → "Empty Project". Name it `agent-forge` (or use an existing project —
-   the live one is currently named `lucid-clarity`).
+   the live one is currently named `fearless-abundance`).
 2. Project **Settings → Environments**. Rename the default environment to
    `staging`, or add a `staging` environment if you'd rather keep the
    default around for something else.
@@ -95,6 +103,43 @@ pipeline publishes to GHCR.
    normally, but the healthcheck never passes ("service unavailable" on
    every retry until the 10-minute timeout) because Railway is probing a
    port nothing is listening on.
+6. **Set the Dockerfile path on the service** (Settings → Build → Dockerfile
+   path) to `docker/railway/Dockerfile`. Do not rely on `railway.json` for
+   this. A service created on 2026-09-16 came up as `builder: railpack`
+   despite `railway.json` declaring `"builder": "DOCKERFILE"` and that same
+   path, and Railpack's PHP provider runs `composer install` before the full
+   source is copied, so the build dies on `Could not scan for classes inside
+   "library/classes" which does not appear to be a file nor a folder` — an
+   error that reads like missing source but means the wrong builder ran.
+   Railway only auto-detects a Dockerfile at the **repo root**, and this one
+   lives under `docker/railway/`, so without this setting there is nothing to
+   detect. Railway has also deprecated config-as-code (`railway.json` /
+   `railway.toml`) in favour of `.railway/railway.ts`, with the old files
+   working only until 2026-12-01, so service-level build config is the
+   durable place for it either way.
+
+   Equivalent via the API, if you prefer the CLI:
+
+   ```bash
+   railway api 'mutation($sid: String!, $eid: String!, $input: ServiceInstanceUpdateInput!) {
+     serviceInstanceUpdate(serviceId: $sid, environmentId: $eid, input: $input) }' \
+     --variables '{"sid":"<service-id>","eid":"<environment-id>",
+                   "input":{"dockerfilePath":"docker/railway/Dockerfile"}}'
+   ```
+
+   Note the `Builder` enum has no `DOCKERFILE` member (`HEROKU`, `NIXPACKS`,
+   `PAKETO`, `RAILPACK`) — a Dockerfile always takes precedence once Railway
+   knows where it is, so `dockerfilePath` is the only lever. Confirm with
+   `railway environment config`, which should then report `builder: dockerfile`.
+7. **Healthcheck.** `railway.json` declares
+   `/interface/login/login.php?site=default` with a 600 s timeout, but
+   `serviceInstanceUpdate` rejects `healthcheckPath` as "Invalid input" both
+   with and without the query string, so the API cannot currently set it — use
+   the dashboard (Settings → Deploy → Healthcheck path). `healthcheckTimeout`
+   and the restart policy do apply via the API. Until a healthcheck is set,
+   Railway routes traffic as soon as the container starts, which on a first
+   boot is several minutes before OpenEMR answers; the pipeline's
+   `verify-staging` job polls the login page and covers that gap.
 
 ### 1.4 Copilot service
 
@@ -129,7 +174,7 @@ Variables (these aren't secrets):
 | Variable | Value |
 |----------|-------|
 | `RAILWAY_STAGING_ENABLED` | `true` to enable deploys. While it is anything else, `deploy-staging` and `verify-staging` are skipped and the pipeline still builds and publishes. |
-| `STAGING_URL` | the staging environment's public Railway domain for the `openemr` service, e.g. `https://openemr-staging-25fc.up.railway.app` |
+| `STAGING_URL` | the staging environment's public Railway domain for the `openemr` service, e.g. `https://openemr-staging-a41b.up.railway.app` |
 
 The token keeps the `-STAGING` suffix it had in GitLab (parity with
 `agent-forge-copilot`, and it leaves the unsuffixed name free for a future
@@ -209,10 +254,12 @@ The repo's **Environments** tab (GitHub) tracks what commit is live in
   `openemr`, MySQL, Postgres, the reverse proxy and the observability stack —
   stopped within four seconds of each other, which is an environment-level
   event, not a bad deploy. Volumes survive this, so the data is still there.
-  Check `railway usage limit status` first (a hit spend limit pauses a
-  workspace); if nothing is over limit, redeploy the services in dependency
-  order — MySQL first, then `openemr` — and let the healthcheck settle before
-  judging the result.
+  The cause in that instance was the **account's trial expiring**, which no
+  amount of redeploying fixes. Check `railway usage limit status` (a hit spend
+  limit pauses a workspace) *and* whether a plan is selected; only then redeploy
+  in dependency order — MySQL first, then `openemr` — and let the app settle
+  before judging the result. First boot runs `auto_configure.php` and took ~7.5
+  minutes from "Deploy complete" to the login page answering 200.
 
 ## 7. AgentForge launch configuration
 

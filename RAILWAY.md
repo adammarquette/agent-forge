@@ -17,8 +17,9 @@ full step-by-step setup runbook and troubleshooting, see
 All three services live in the same Railway project's **`staging`**
 environment (single-environment model — push to `main` in either repo
 auto-deploys via CI). This repo deploys from GitHub Actions; the copilot repo
-keeps its own pipeline. The live project is named `lucid-clarity` in the
-Railway dashboard.
+keeps its own pipeline. The live project is named `fearless-abundance` in the
+Railway dashboard, under the `challenger.gauntletai.com` account — the older
+`lucid-clarity` project is trial-expired. See `docs/DEPLOYMENT.md` for both.
 
 ## Architecture
 

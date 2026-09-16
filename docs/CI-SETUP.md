@@ -37,7 +37,8 @@ ever run on this fork's `main` — there was no green pipeline to chain from wit
 ### Why the deploy uploads source instead of deploying the published image
 
 `deploy-staging` runs `railway up`, which uploads this commit's source for
-Railway to build with `docker/railway/Dockerfile` (per `railway.json`) — the
+Railway to build with `docker/railway/Dockerfile` (selected by the service's
+`dockerfilePath` setting, not `railway.json` — see `DEPLOYMENT.md` §1.3) — the
 same Dockerfile, from the same commit, that produced the image `publish` just
 pushed. Deploying that *exact* image would be better, and is not currently
 possible with a deploy-scoped credential:
@@ -70,7 +71,7 @@ Variables (not secrets):
 | Variable | Value |
 |----------|-------|
 | `RAILWAY_STAGING_ENABLED` | `true` turns the deploy on. Anything else, or unset, skips `deploy-staging` and `verify-staging`. |
-| `STAGING_URL` | The `openemr` service's public Railway domain, e.g. `https://openemr-staging-25fc.up.railway.app` |
+| `STAGING_URL` | The `openemr` service's public Railway domain, e.g. `https://openemr-staging-a41b.up.railway.app` |
 
 The deploy is gated on a **variable** rather than on the presence of the secret
 because a job-level `if:` cannot read the `secrets` context. Without the gate, a
