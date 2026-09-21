@@ -52,6 +52,11 @@ permissions:
 
 env:
   IMAGE: ghcr.io/${{ github.repository }}
+  # Docker Hub holds EVERY component of this project in one public repo,
+  # separated by tag prefix (openemr-*, agent-forge-*, grafana-*, prometheus-*,
+  # proxy-*). That is why the tags below are openemr-prefixed and why there is
+  # no bare :latest here - it would be meaningless in a shared repo.
+  HUB_IMAGE: docker.io/amarquette/gauntletai
 
 jobs:
   # ---------------------------------------------------------------------------
@@ -166,7 +171,7 @@ jobs:
   # a cache hit rather than a second full build.
   # ---------------------------------------------------------------------------
   publish:
-    name: publish to GHCR
+    name: publish to Docker Hub + GHCR
     runs-on: ubuntu-24.04
     needs: [php-syntax, build-verify]
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
@@ -184,9 +189,47 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Docker Hub is OPTIONAL here on purpose. Its credentials are repo secrets
+      # that may not be configured; an unconditional login step would fail the
+      # whole job on a missing secret and take the working GHCR publish down with
+      # it. So the tag list is built to match what is actually configured, and an
+      # absent token downgrades to GHCR-only with a warning rather than a failure.
       - name: Compute tags
         id: tags
-        run: echo "sha=sha-$(echo "${GITHUB_SHA}" | cut -c1-12)" >> "$GITHUB_OUTPUT"
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          sha="sha-$(echo "${GITHUB_SHA}" | cut -c1-12)"
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+
+          if [ -n "${DOCKERHUB_TOKEN:-}" ]; then
+            hub=true
+          else
+            hub=false
+            echo "::warning::DOCKERHUB_TOKEN is not set - publishing to GHCR only. Anything pinned to ${HUB_IMAGE} will NOT move."
+          fi
+          echo "hub=${hub}" >> "$GITHUB_OUTPUT"
+
+          # Multi-line output: one tag per line, exactly what build-push-action wants.
+          {
+            echo "tags<<TAGS_EOF"
+            echo "${IMAGE}:latest"
+            echo "${IMAGE}:main"
+            echo "${IMAGE}:${sha}"
+            if [ "$hub" = true ]; then
+              echo "${HUB_IMAGE}:openemr-latest"
+              echo "${HUB_IMAGE}:openemr-${sha}"
+            fi
+            echo "TAGS_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Log in to Docker Hub
+        if: steps.tags.outputs.hub == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -194,10 +237,7 @@ jobs:
           context: .
           file: docker/railway/Dockerfile
           push: true
-          tags: |
-            ${{ env.IMAGE }}:latest
-            ${{ env.IMAGE }}:main
-            ${{ env.IMAGE }}:${{ steps.tags.outputs.sha }}
+          tags: ${{ steps.tags.outputs.tags }}
           cache-from: type=gha
 
       - name: Summary
@@ -206,12 +246,21 @@ jobs:
             echo "### Published"
             echo ""
             echo '```'
+            if [ "${{ steps.tags.outputs.hub }}" = "true" ]; then
+              echo "docker pull ${HUB_IMAGE}:openemr-latest"
+            fi
             echo "docker pull ${IMAGE}:latest"
             echo '```'
             echo ""
-            echo "| Tag | |"
-            echo "|---|---|"
-            echo "| \`latest\` | moves with main |"
-            echo "| \`main\` | moves with main |"
-            echo "| \`${{ steps.tags.outputs.sha }}\` | immutable - pin demos to this |"
+            echo "| Registry | Tag | |"
+            echo "|---|---|---|"
+            if [ "${{ steps.tags.outputs.hub }}" = "true" ]; then
+              echo "| Docker Hub | \`openemr-latest\` | moves with main - what deployments pin |"
+              echo "| Docker Hub | \`openemr-${{ steps.tags.outputs.sha }}\` | immutable |"
+            else
+              echo "| Docker Hub | - | skipped: DOCKERHUB_TOKEN not set |"
+            fi
+            echo "| GHCR | \`latest\` | moves with main |"
+            echo "| GHCR | \`main\` | moves with main |"
+            echo "| GHCR | \`${{ steps.tags.outputs.sha }}\` | immutable |"
           } >> "$GITHUB_STEP_SUMMARY"
