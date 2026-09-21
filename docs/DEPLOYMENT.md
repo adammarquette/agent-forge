@@ -1,30 +1,49 @@
-# Deployment Runbook: GitLab CI/CD → Railway
+# Deployment Runbook: GitHub Actions → Railway
 
 For a quick-reference service table and architecture diagram, see
 [`RAILWAY.md`](../RAILWAY.md) at the repo root. This doc is the full
 step-by-step setup and troubleshooting runbook.
 
-This project deploys two applications from GitLab (`labs.gauntletai.com`) to
-[Railway](https://railway.com):
+This repo's OpenEMR fork deploys from GitHub Actions
+(`adammarquette/agent-forge`) to [Railway](https://railway.com):
 
 | Repo | App | Railway service |
 |------|-----|-----------------|
-| `adammarquette/agent-forge` | OpenEMR (this repo) | `openemr` (+ `MySQL`) |
+| `adammarquette/agent-forge` | OpenEMR (this repo) | `openemr` (+ MySQL) |
 | `adammarquette/agent-forge-copilot` | Copilot companion app | `agent-forge-api` |
+
+> **Deploys moved from GitLab to GitHub Actions.** Until 2026-07-17 this repo
+> deployed from GitLab CI on `labs.gauntletai.com`; that pipeline is retired
+> and its files are deleted. Its deploy and verify stages now live in
+> `.github/workflows/publish-openemr-ghcr.yml`. **The copilot repo's own
+> pipeline is unaffected by this change** — check that repo for where it
+> deploys from. Between 2026-07-17 and the GitHub deploy job landing there was
+> no automated path from a merge to a running staging app, and the whole
+> `staging` environment was torn down on 2026-08-28; see §6.
 
 **Single-environment model:** push to `main` auto-deploys to Railway's
 `staging` environment. (An earlier version of this doc described a
 development/sdet/production promotion chain; Railway's actual project only
 ever had two environments, and the working deployment has lived in
-`staging` since 2026-07-10 — see `agent-forge#8`'s update. The live project
-is currently named `lucid-clarity` in the Railway dashboard, not
-`agent-forge` — Railway auto-names projects created without an explicit
-name, and this one was never renamed.)
+`staging` since 2026-07-10 — see `agent-forge#8`'s update.)
 
-Railway does not integrate natively with self-hosted GitLab, so deploys run
-from GitLab CI using the Railway CLI and an environment-scoped **project
-token** (`railway up` uploads the source; Railway builds it with
-`docker/railway/Dockerfile` per `railway.json`).
+**Which Railway account.** Staging was rebuilt on 2026-09-16 in project
+**`fearless-abundance`** under the `adam.marquette@challenger.gauntletai.com`
+account, serving at `https://openemr-staging-a41b.up.railway.app`. The previous
+project, `lucid-clarity` under `adam.marquette@gmail.com`, is **trial-expired**
+— every deploy there returns "Your trial has expired" — and its volumes still
+hold the original staging data, unreachable until a plan is selected. Run
+`railway whoami` before trusting anything you read from the CLI; it and the
+Railway MCP integration can be signed in to different accounts at once. Railway
+auto-names projects created without an explicit name, and neither was renamed.
+
+Deploys run from CI using the Railway CLI and an environment-scoped **project
+token**: `railway up` uploads the source and Railway builds it with
+`docker/railway/Dockerfile` — selected by the `dockerfilePath` set on the
+service, **not** by `railway.json` (see §1.3 step 6). See
+[`CI-SETUP.md`](CI-SETUP.md#why-the-deploy-uploads-source-instead-of-deploying-the-published-image)
+for why the deploy uploads source rather than deploying the image the same
+pipeline publishes to GHCR.
 
 ---
 
@@ -34,7 +53,7 @@ token** (`railway up` uploads the source; Railway builds it with
 
 1. In the [Railway dashboard](https://railway.com/dashboard), **New Project**
    → "Empty Project". Name it `agent-forge` (or use an existing project —
-   the live one is currently named `lucid-clarity`).
+   the live one is currently named `fearless-abundance`).
 2. Project **Settings → Environments**. Rename the default environment to
    `staging`, or add a `staging` environment if you'd rather keep the
    default around for something else.
@@ -48,8 +67,9 @@ token** (`railway up` uploads the source; Railway builds it with
 
 ### 1.3 OpenEMR service
 
-1. **Create → Empty Service**, name it `openemr` (must match
-   `RAILWAY_SERVICE` in `.gitlab-ci.yml`).
+1. **Create → Empty Service**, name it `openemr` (must match the
+   `RAILWAY_SERVICE` env value in
+   `.github/workflows/publish-openemr-ghcr.yml`).
 2. In the `staging` environment, set the service **Variables** (use Railway
    reference syntax so credentials follow the MySQL service):
 
@@ -83,6 +103,43 @@ token** (`railway up` uploads the source; Railway builds it with
    normally, but the healthcheck never passes ("service unavailable" on
    every retry until the 10-minute timeout) because Railway is probing a
    port nothing is listening on.
+6. **Set the Dockerfile path on the service** (Settings → Build → Dockerfile
+   path) to `docker/railway/Dockerfile`. Do not rely on `railway.json` for
+   this. A service created on 2026-09-16 came up as `builder: railpack`
+   despite `railway.json` declaring `"builder": "DOCKERFILE"` and that same
+   path, and Railpack's PHP provider runs `composer install` before the full
+   source is copied, so the build dies on `Could not scan for classes inside
+   "library/classes" which does not appear to be a file nor a folder` — an
+   error that reads like missing source but means the wrong builder ran.
+   Railway only auto-detects a Dockerfile at the **repo root**, and this one
+   lives under `docker/railway/`, so without this setting there is nothing to
+   detect. Railway has also deprecated config-as-code (`railway.json` /
+   `railway.toml`) in favour of `.railway/railway.ts`, with the old files
+   working only until 2026-12-01, so service-level build config is the
+   durable place for it either way.
+
+   Equivalent via the API, if you prefer the CLI:
+
+   ```bash
+   railway api 'mutation($sid: String!, $eid: String!, $input: ServiceInstanceUpdateInput!) {
+     serviceInstanceUpdate(serviceId: $sid, environmentId: $eid, input: $input) }' \
+     --variables '{"sid":"<service-id>","eid":"<environment-id>",
+                   "input":{"dockerfilePath":"docker/railway/Dockerfile"}}'
+   ```
+
+   Note the `Builder` enum has no `DOCKERFILE` member (`HEROKU`, `NIXPACKS`,
+   `PAKETO`, `RAILPACK`) — a Dockerfile always takes precedence once Railway
+   knows where it is, so `dockerfilePath` is the only lever. Confirm with
+   `railway environment config`, which should then report `builder: dockerfile`.
+7. **Healthcheck.** `railway.json` declares
+   `/interface/login/login.php?site=default` with a 600 s timeout, but
+   `serviceInstanceUpdate` rejects `healthcheckPath` as "Invalid input" both
+   with and without the query string, so the API cannot currently set it — use
+   the dashboard (Settings → Deploy → Healthcheck path). `healthcheckTimeout`
+   and the restart policy do apply via the API. Until a healthcheck is set,
+   Railway routes traffic as soon as the container starts, which on a first
+   boot is several minutes before OpenEMR answers; the pipeline's
+   `verify-staging` job polls the login page and covers that gap.
 
 ### 1.4 Copilot service
 
@@ -95,61 +152,71 @@ token** (`railway up` uploads the source; Railway builds it with
 ### 1.5 Project token
 
 Project **Settings → Tokens**: create one token scoped to the `staging`
-environment (e.g. named `gitlab-ci-staging`).
+environment (e.g. named `github-actions-staging`).
 
 Copy the value immediately — Railway shows it only once.
 
-## 2. One-time GitLab setup (both repos)
+## 2. One-time GitHub setup
 
-In **each** repo (`agent-forge` and `agent-forge-copilot`):
-**Settings → CI/CD → Variables**, add (Masked; Protected only if `main` is a
-protected branch):
+In `adammarquette/agent-forge`: **Settings → Secrets and variables →
+Actions**.
 
-| Key | Value |
-|-----|-------|
-| `RAILWAY_TOKEN_STAGING` | the staging-scoped token |
+Secrets:
 
-The same Railway token value works for both repos — the token selects the
-*environment*, the `--service` flag in each repo's CI selects the *service*.
-Both repos store it under the same key (`RAILWAY_TOKEN_STAGING`); the Railway
-CLI auto-reads `RAILWAY_TOKEN`, so each repo's deploy job exports
-`RAILWAY_TOKEN=$RAILWAY_TOKEN_STAGING` before calling `railway`.
+| Secret | Value |
+|--------|-------|
+| `RAILWAY_TOKEN_STAGING` | the staging-scoped project token from §1.5 |
+| `OE_PASS` | the OpenEMR admin password (same value as the service variable in §1.3) |
+| `MYSQL_PASS` | the OpenEMR MySQL user password (likewise) |
 
-In `agent-forge` only, also add (plain — these aren't secrets):
+Variables (these aren't secrets):
 
-| Key | Value |
-|-----|-------|
-| `STAGING_URL` | the staging environment's public Railway domain for the `openemr` service, e.g. `https://openemr-staging-xxxx.up.railway.app` |
+| Variable | Value |
+|----------|-------|
+| `RAILWAY_STAGING_ENABLED` | `true` to enable deploys. While it is anything else, `deploy-staging` and `verify-staging` are skipped and the pipeline still builds and publishes. |
+| `STAGING_URL` | the staging environment's public Railway domain for the `openemr` service, e.g. `https://openemr-staging-a41b.up.railway.app` |
 
-`STAGING_URL` is read by the `verify` stage's post-deploy smoke test
-(`.gitlab/ci/verify.yml`), which polls
-`${STAGING_URL}/interface/login/login.php?site=default` until it
-returns HTTP 200.
+The token keeps the `-STAGING` suffix it had in GitLab (parity with
+`agent-forge-copilot`, and it leaves the unsuffixed name free for a future
+dev-tier token). The Railway CLI auto-reads `RAILWAY_TOKEN`, so the deploy job
+maps the secret onto that name.
 
-`agent-forge-copilot` uses the same `RAILWAY_TOKEN_STAGING` variable name
-(its own copy) and its own Railway domain for its `/health`/`/ready` smoke test — see that
-repo's `documentation/CI-SETUP.md`.
+`STAGING_URL` is read by the `verify-staging` job, which polls
+`${STAGING_URL}/interface/login/login.php?site=default` until it returns
+HTTP 200. `RAILWAY_STAGING_ENABLED` exists because a job-level `if:` cannot
+read the `secrets` context — without it, an ungated deploy job would fail
+every run on a repo with no Railway credentials.
+
+`OE_PASS`/`MYSQL_PASS` are reasserted onto the Railway service immediately
+before each deploy so a value edited only in the dashboard cannot drift from
+what CI believes is set. A secret left unset warns and leaves Railway's value
+alone rather than blanking it.
 
 ## 3. CI pipeline for the copilot repo
 
-`agent-forge-copilot` maintains its own `.gitlab-ci.yml` /
-`.gitlab/ci/deploy.yml` — see that repo directly rather than copying an
-example here, since keeping two independently-maintained copies in sync by
-hand is exactly the kind of drift this project has already been bitten by
-(the `RAILWAY_SERVICE`/environment mismatches this doc itself went through).
+`agent-forge-copilot` maintains its own pipeline — see that repo directly
+rather than copying an example here, since keeping two independently
+maintained copies in sync by hand is exactly the kind of drift this project
+has already been bitten by (the `RAILWAY_SERVICE`/environment mismatches this
+doc itself went through). Note that repo's CI was **not** migrated by this
+repo's move to GitHub Actions; check there for where it currently deploys
+from, and for its own `RAILWAY_TOKEN_STAGING` copy and `/health`/`/ready`
+smoke test. The same Railway token value works for both repos — the token
+selects the *environment*, the `--service` flag selects the *service*.
 Both repos deploy `railway up --service "$RAILWAY_SERVICE" --ci` against the
 same `staging` environment; only the service name and any
 service-specific variable reassertion differ.
 
 ## 4. Day-to-day workflow
 
-1. Merge/push to `main` → the pipeline auto-deploys to **staging**.
-2. `verify:staging` smoke-tests the deployed login page; a red job means the
+1. Merge/push to `main` → the pipeline verifies, publishes to GHCR, then
+   auto-deploys to **staging**.
+2. `verify-staging` smoke-tests the deployed login page; a red job means the
    deploy went out but isn't actually serving traffic — check deploy logs
    before re-running.
 
-GitLab's **Operate → Environments** page tracks what commit is live in
-`staging`.
+The repo's **Environments** tab (GitHub) tracks what commit is live in
+`staging`, and links to the `STAGING_URL` domain.
 
 ## 5. OpenEMR-on-Railway specifics
 
@@ -176,9 +243,23 @@ GitLab's **Operate → Environments** page tracks what commit is live in
   be scoped to the `staging` environment.
 - Healthcheck timeout on first deploy → check deploy logs; usually MySQL
   variables are missing/wrong in that environment.
-- Build OOM/timeout → the webpack + composer build is heavy; retry, or
-  build the image in GitLab CI and `railway up` an artifact instead (not
-  currently needed).
+- Build OOM/timeout → the webpack + composer build is heavy; retry, or build
+  the image in CI and `railway up` an artifact instead (not currently needed —
+  the pipeline already builds and publishes an image, see
+  [`CI-SETUP.md`](CI-SETUP.md#why-the-deploy-uploads-source-instead-of-deploying-the-published-image)).
+- **The staging domain 404s and nothing is running.** Distinguish "the deploy
+  failed" from "the environment was torn down": check whether *every* service
+  in the environment lost its deployment at the same moment (`railway status`,
+  or the dashboard). On 2026-08-28 at ~23:40 UTC every service in `staging` —
+  `openemr`, MySQL, Postgres, the reverse proxy and the observability stack —
+  stopped within four seconds of each other, which is an environment-level
+  event, not a bad deploy. Volumes survive this, so the data is still there.
+  The cause in that instance was the **account's trial expiring**, which no
+  amount of redeploying fixes. Check `railway usage limit status` (a hit spend
+  limit pauses a workspace) *and* whether a plan is selected; only then redeploy
+  in dependency order — MySQL first, then `openemr` — and let the app settle
+  before judging the result. First boot runs `auto_configure.php` and took ~7.5
+  minutes from "Deploy complete" to the login page answering 200.
 
 ## 7. AgentForge launch configuration
 
@@ -201,7 +282,7 @@ sidecar's or OpenEMR's own Railway host: a launch whose `/launch` and OAuth
 `/callback` land on different hosts loses the session cookie ("No pending SMART
 launch"), and the issuer must match OpenEMR's `site_addr_oath`.
 
-These are **not** Railway or GitLab CI/CD variables — configure them through the
+These are **not** Railway service variables or CI secrets — configure them through the
 app itself:
 
 **Administration → Modules → Manage Modules → Custom Modules → AgentForge

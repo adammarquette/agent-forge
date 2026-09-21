@@ -11,20 +11,22 @@ full step-by-step setup runbook and troubleshooting, see
 | Repo | App | Railway service | Image / build source |
 |------|-----|-----------------|-----------------------|
 | `adammarquette/agent-forge` (this repo) | OpenEMR | `openemr` | **This fork**, built from `docker/railway/Dockerfile` (`railway.json`) — *not* the stock `openemr/openemr` image |
-| `adammarquette/agent-forge` (this repo) | Database | `MySQL` | Railway's managed MySQL plugin |
+| `adammarquette/agent-forge` (this repo) | Database | `MySQL` — the live service is named `MySQL-gDNR` | Railway's managed MySQL plugin |
 | `adammarquette/agent-forge-copilot` | Copilot/BFF sidecar | `agent-forge-api` | That repo's own build (Railpack-detected unless it adds its own Dockerfile) |
 
 All three services live in the same Railway project's **`staging`**
 environment (single-environment model — push to `main` in either repo
-auto-deploys via GitLab CI). The live project is named `lucid-clarity` in the
-Railway dashboard.
+auto-deploys via CI). This repo deploys from GitHub Actions; the copilot repo
+keeps its own pipeline. The live project is named `fearless-abundance` in the
+Railway dashboard, under the `challenger.gauntletai.com` account — the older
+`lucid-clarity` project is trial-expired. See `docs/DEPLOYMENT.md` for both.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    subgraph GitLab["labs.gauntletai.com"]
-        A[agent-forge<br/>main branch]
+    subgraph CI["CI"]
+        A[agent-forge · GitHub Actions<br/>main branch]
         B[agent-forge-copilot<br/>main branch]
     end
 
@@ -65,7 +67,9 @@ using that token.
 - **MySQL wiring**: `openemr` service variables reference the `MySQL`
   service via Railway's `${{MySQL.MYSQLHOST}}` / `${{MySQL.MYSQLPORT}}` /
   `${{MySQL.MYSQLPASSWORD}}` syntax, so credentials follow the database
-  service automatically.
+  service automatically. Substitute the real service name in that syntax —
+  the live database service is `MySQL-gDNR`, not `MySQL` (Railway suffixes
+  auto-created services, and this one was never renamed).
 
 See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) for one-time setup steps,
 CI/CD variable configuration, day-to-day workflow, and troubleshooting.
