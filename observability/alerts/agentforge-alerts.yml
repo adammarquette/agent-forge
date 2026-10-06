@@ -1,0 +1,407 @@
+# Alert rules for AgentForge Clinical Copilot (ARCHITECTURE.md §11, FR-OBS-4 - at least 3 alerts,
+# each with documented meaning + on-call response). Metric names verified against a real running
+# instance's /metrics output, not assumed from the OTel naming convention - and so are the
+# `turn_type` label and the explicit `le` boundaries the latency rule below depends on, re-checked
+# the same way on 2026-09-21, and the two Week 2 histograms' explicit `le`
+# boundaries on 2026-09-24. Change either in src/ and re-read /metrics: a
+# renamed label or a dropped view leaves this rule syntactically valid and permanently silent.
+# The `> 26` below is pinned to an explicit `le` boundary by AlertRuleThresholdTests, which parses it
+# out of this file: moving the threshold off a boundary reddens the unit suite rather than quietly
+# restoring the interpolation a separate change removed.
+#
+# The `agentforge-week2` group below carries NFR-SLO-W2-1's three named alerts - extraction failure
+# rate, RAG retrieval latency, eval regression (>5% per category). Each states, in its own
+# description, the blind spot it has: alerting on telemetry fails by not firing, and a limit written
+# only in an MR description is not read at 3am. A separate change
+#
+# WHAT PINS WHAT, precisely - the first version of this header overclaimed it, and on a file whose
+# failure mode is that a rule which never fires looks exactly like a working one, that is the wrong
+# place to overclaim. The THREE `agentforge-week2` rules below are pinned by
+# agentforge-alerts-tests.yml: a synthetic series that must fire each one, a near-miss that must
+# not, and - added because the near-misses alone constrain a threshold only from BELOW, so they
+# catch cry-wolf and not never-fires - alert-rules-gate.sh, which asserts each rule's expression is
+# character for character the one the test asserts on. Raise a threshold out of reach here and the
+# gate is red; raise it here AND in the test copy and the synthetic series no longer satisfies it,
+# so `promtool test rules` is red. Of the five `agentforge-slo` rules above, only
+# AgentForgeHighTurnLatencyP95 is pinned at all, by AlertRuleThresholdTests - both its threshold
+# and, off this rule's own expr text, its `{turn_type="brief"}` filter
+# the other four have no cases in either file. AlertRuleThresholdTests pins
+# AgentForgeHighEvidenceRetrievalLatencyP95's `> 6` to an explicit `le` boundary the same way, and
+# Week2HistogramExportTests pins that the boundaries reach /metrics.
+# Add a rule to agentforge-week2 and the gate stays red until you add both cases.
+# SEPARATELY, `for:` on every rule below that declares one - in EITHER group, not only
+# agentforge-week2 - is pinned by alert-rules-gate.sh against a table it carries itself. `for:` is
+# invisible to everything above: promql_expr_test evaluates at an instant, and a near-miss
+# alert_rule_test stays silent at its eval_time whatever `for:` is widened to. Widening `for:` here
+# alone used to leave every check above green - measured on three rules, one of them
+# AgentForgeRetrievalDegradation above, which agentforge-alerts-tests.yml does not mention at all.
+groups:
+  - name: agentforge-slo
+    rules:
+      - alert: AgentForgeHighTurnLatencyP95
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(agentforge_agent_turn_duration_seconds_bucket{turn_type="brief"}[5m])) by (le)
+          ) > 26
+        # `for` was RAISED from 5m to 15m in the same change that added the filter, because the filter
+        # is what broke the old value. Unfiltered, this series was dominated by short agenda turns and
+        # sat far below 26 in steady state, so 5m debounced a transient. Filtered to briefs it sits on
+        # the 25.8s baseline, where a single slow brief is enough to lift the quantile - and a single
+        # sample stays inside the [5m] rate window for a full five minutes, so `for: 5m` would have
+        # been satisfied by ONE turn rather than debouncing anything. 15m outlives that window: the
+        # condition can only hold for 15 consecutive minutes if slow briefs keep arriving, which is the
+        # regression this rule is for. Cost of the change: a genuine breach pages ten minutes later.
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Brief-turn p95 latency is above the 26s NFR-PERF-1 budget"
+          description: >
+            Meaning: the 95th-percentile time to produce a verified pre-visit brief has exceeded 26s,
+            which is NFR-PERF-1's budget for a single-patient RequestBrief turn at up to 50 concurrent
+            users (the budget exists because of REQUIREMENTS.md's ~90-second between-rooms window, which
+            assumes most of that time is turn latency, not clicking around). The series is filtered to
+            turn_type="brief", so this is the budgeted population and not a mix: the short Daily Agenda
+            per-patient summaries (UC-6, fanned out one turn per rostered patient) and in-session
+            follow-ups (UC-2) carry turn_type="agenda" and "follow_up" and are excluded, and the
+            histogram has an explicit bucket boundary AT 26 so the quantile resolves the threshold
+            rather than interpolating across a 25-second-wide band.
+            Two things it still does not establish, both recorded in METRICS.md's
+            NFR-PERF-1 section: it is measured SERVER-SIDE inside RunTurnAsync, so it excludes the
+            SignalR transport, hub dispatch and queueing the end-to-end budget includes and will read
+            LOWER than the client-side baseline; and nothing here qualifies the reading by concurrency,
+            so a p95 under 26 at low load is not evidence about the budget's "up to 50 concurrent
+            users" predicate (unmodelled - a separate change).
+            On-call response: check which stage is slow via the agent.turn/llm.complete/tool.*
+            trace spans; compare against turn_type="agenda" on the same panel to tell "briefs
+            specifically" from "the whole orchestrator is slow"; check OpenEMR FHIR and the LLM
+            provider's own status for degradation (correlate with AgentForgeHighTurnErrorRate firing
+            at the same time); if the LLM provider itself is slow, there is no sidecar-side fix -
+            confirm with on-call before communicating an outage.
+
+      - alert: AgentForgeHighTurnErrorRate
+        expr: |
+          sum(rate(agentforge_agent_turns_total{outcome="failure"}[5m]))
+            / sum(rate(agentforge_agent_turns_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "More than 5% of agent turns are failing"
+          description: >
+            Meaning: a "failed" turn means AgentOrchestrator.RunTurnAsync threw - most commonly
+            exceeding the max tool-call-round bound, an unhandled LLM/tool exception, or a
+            misbehaving model looping on tool calls. This is a hard failure the clinician sees as
+            a broken chat, not a degraded-but-usable answer (contrast with
+            AgentForgeHighToolFailureRate, which can fire without breaking the whole turn).
+            On-call response: check application logs (correlation-id scoped, CONVENTIONS.md
+            §7) for the actual exception type; if it correlates with an LLM provider incident this
+            should self-resolve - otherwise treat as a P1, the product's core loop is down.
+
+      - alert: AgentForgeHighToolFailureRate
+        expr: |
+          sum(rate(agentforge_tool_calls_total{outcome="failure"}[5m]))
+            / sum(rate(agentforge_tool_calls_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "More than 10% of MCP tool calls are failing"
+          description: >
+            Meaning: individual tool calls (get_labs, get_patient_summary, etc.) are failing at an
+            elevated rate - usually OpenEMR FHIR errors, tool-contract validation failures, or a
+            misbehaving model sending malformed arguments repeatedly. A single failed tool call
+            degrades one step, not the whole turn (NFR-REL-1), so this can precede
+            AgentForgeHighTurnErrorRate without every chat breaking yet.
+            On-call response: break down by the `tool` label on agentforge_tool_calls_total - if
+            concentrated on one tool, check OpenEMR FHIR for that specific resource type; if spread
+            across tools, check overall OpenEMR reachability via /ready.
+
+      - alert: AgentForgeElevatedVerificationFailureRate
+        expr: |
+          sum(rate(agentforge_verification_results_total{outcome="fail"}[15m]))
+            / sum(rate(agentforge_verification_results_total[15m])) > 0.2
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "More than 20% of draft answers are failing verification"
+          description: >
+            Meaning (beyond the FR-OBS-4 minimum of 3 - a product-quality signal, not a technical
+            one): the model is generating claims the source-attribution/domain-constraint gate
+            (FR-VERIF-0) is suppressing at an unusually high rate. The clinician still only ever
+            sees verified content (REQUIREMENTS.md §13.1 - suppression, never fabrication), so this is not
+            an outage, but a sustained spike suggests a prompt regression, a model version change,
+            or a data-quality issue in the underlying FHIR records.
+            On-call response: sample recent suppressed claims (SuppressedClaimPayload on the wire,
+            or AccessAuditLog-adjacent logs) for a pattern; check whether CardiologyProfile's system
+            prompt or the LLM model/version changed recently.
+
+      - alert: AgentForgeRetrievalDegradation
+        expr: sum(rate(agentforge_retrieval_degradations_total[10m])) > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Hybrid retrieval is degrading (a half or the reranker is failing, span outcome=degraded)"
+          description: >
+            Meaning: the hybrid evidence retriever (ARCHITECTURE-DOCUMENTS.md §5) caught a failure in one
+            of its stages and continued without it - a `dense` or `sparse` stage means that half of
+            the candidate pool is missing; a `rerank` stage means answers are falling back to the
+            RRF-fused order without cross-encoder reordering (Cohere rerank-v3.5 unreachable, over
+            quota, or erroring). Answers still ship (degradation is deterministic, never a throw -
+            §10), so this is a quality signal, not an outage; sustained `rerank` degradation is also
+            the likeliest sign the Cohere trial key is exhausted.
+            The matching traces are the `retrieval.<stage>` spans with outcome=degraded (their
+            error.type tag names the exception type); outcome=skipped is a different case, a stage
+            with no candidates, and is never counted here. A missing Cohere key is not counted
+            either: the dense half returns nothing and the no-op reranker answers `unranked`, so
+            this alert stays quiet while neither runs.
+            On-call response: break down by the `stage` label. For `rerank`, check Cohere status and
+            the trial key's limits (10 rerank calls a minute, 1,000 calls a month); for `dense`,
+            check the embeddings provider and pgvector/Postgres reachability; for `sparse`, check Postgres FTS. Confirm answers are
+            still grounded (evidence hit rate holding) before escalating.
+
+  # ---------------------------------------------------------------------------------------------
+  # Week 2 (NFR-SLO-W2-1): the three alerts the brief names, each with a documented response action.
+  # TWO of the three thresholds are derived rather than chosen: 6s from the derivation
+  # (METRICS.md §"Week 2 SLO targets"), and 0.05 mirrored from evals/baseline.json's
+  # own policy. The extraction rule's 20% and its >=5 floor are NOT - nothing on file measures a
+  # steady-state rejection rate, so they are shape, and the rule says so in its own description
+  # rather than only in the comment below, because Prometheus does not carry YAML comments into an
+  # alert and a responder reads the annotation. Separate changes
+  # ---------------------------------------------------------------------------------------------
+  - name: agentforge-week2
+    rules:
+      - alert: AgentForgeHighExtractionFailureRate
+        expr: |
+          (
+            sum(rate(agentforge_document_ingestions_total{outcome=~"extraction_rejected|error"}[30m]))
+              / sum(rate(agentforge_document_ingestions_total{outcome=~"ingested|extraction_rejected|error"}[30m]))
+          ) > 0.2
+          and
+          sum(increase(agentforge_document_ingestions_total{outcome=~"ingested|extraction_rejected|error"}[30m])) >= 5
+        # 30m window, >=5 attempts, `for: 10m`. The >=5 floor is what makes the ratio mean something;
+        # `for: 10m` is what stops one bad batch from paging. That none of these is measured is stated
+        # in the `description` below, not only here - a responder never sees this comment.
+        # `error` joins BOTH halves as of this change - see the description for why and for
+        # what this rule could not see before it existed.
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "More than 20% of document extractions are being rejected by the schema gate"
+          description: >
+            Meaning: over the last 30 minutes, more than 20% of the ingestion attempts that actually
+            REACHED the extractor came back either rejected by the strict schema gate or as a throw
+            (see the `error` paragraph below) - together, attempts that produced no derived facts.
+            A schema rejection (DocumentExtractor: either no JSON object in the reply, or JSON that
+            failed the source-generated schema) persists nothing - "vision without invention",
+            ARCHITECTURE-DOCUMENTS.md §4 - so the clinician sees a document that produced no derived facts,
+            not wrong facts. `already_ingested` is excluded from BOTH halves of the ratio on purpose:
+            identical bytes short-circuit on the content hash before the extractor is called
+            (DocumentIngestionService step 1), so they are not extraction attempts, and leaving them in
+            the denominator would let a bulk re-upload mask a near-total extractor failure.
+            20% IS NOT A MEASURED SLO. Neither is the >=5 attempt floor, nor the 30m window. Nothing on
+            file measures a steady-state rejection rate for this extractor, so all three were chosen for
+            SHAPE - ingestion is low-volume and pre-visit bursty, one rejection in two uploads over 5m
+            reads as 50% and would page for nothing - and they are the first thing to revisit against a
+            real ingestion population. Do not treat a firing as "the rejection rate exceeded its
+            budget"; treat it as "attempts are failing well above the handful this extractor usually
+            rejects, and someone should look".
+            `error`: the counter used to be written only on the three paths that RETURN -
+            already_ingested, extraction_rejected, ingested - so a VLM call that THREW (provider
+            unreachable, timeout, or a rate limit surviving the Polly retries), or a store write that
+            threw after a successful extraction, recorded NOTHING and this rule could never fire on a
+            total extractor outage; the only visible symptom was the ingestion rate going to zero,
+            indistinguishable from nobody uploading. Both throwing paths now record `outcome="error"`
+            before rethrowing (DocumentIngestionService), and `error` joins BOTH halves of this ratio -
+            it is a genuine failed attempt, distinct from `extraction_rejected` (the schema gate working
+            correctly) but counted the same way here because neither produced a fact. A DEAD extractor
+            (nothing but errors) now crosses this threshold within one `for: 10m` window at >=5 attempts,
+            same as a dead schema gate would. To tell the two apart, break down by `outcome` on
+            agentforge_document_ingestions_total: `extraction_rejected` dominating means a prompt/schema
+            regression (below); `error` dominating means an outage (below). Watch the "Document Ingestion
+            Rate by Outcome" panel beside this alert regardless - a series gone quiet under `for: 10m`'s
+            window is still the faster tell for a total outage than the ratio catching up.
+            On-call response: (1) read the correlation-id-scoped logs for the rejection reason -
+            DocumentExtractorLog distinguishes "model returned no JSON object" from "JSON failed schema
+            validation", and they point in different directions; a throw instead logs
+            ExtractionThrew/PersistThrew with the exception type. (2) Reasons clustered on one document
+            type or one field mean a prompt or schema regression: check whether ExtractionPrompts, the
+            extraction schema, or the VLM model/version moved (PROMPTS.md). (3) Reasons spread out
+            with no JSON at all usually mean the provider changed the model behind an alias, or replies
+            are being truncated - check provider status and the LLM token panels (MaxOutputTokens is
+            8192). (4) If `outcome="error"` dominates, this is a VLM outage (ExtractionThrew) or a store
+            write failing AFTER a successful extraction (PersistThrew) - check /ready, the provider, and
+            the database in that order; both log lines name the exception type. (5) THE BLIND SPOT IS
+            NARROWER, NOT GONE: a throw from the content-hash idempotency lookup that runs BEFORE the
+            extractor (step 1, a database read) still records nothing at all - a total database outage can
+            still surface only as the counter going QUIET, exactly as an extractor outage used to. Treat a
+            quiet counter as the remaining unmetered case and check /ready and the database directly.
+            Nothing is lost either way - neither a rejected nor an errored document was persisted, and
+            idempotency is keyed on content hash, so re-uploading the same bytes after the fix ingests
+            cleanly.
+
+      - alert: AgentForgeHighEvidenceRetrievalLatencyP95
+        expr: histogram_quantile(0.95, sum(rate(agentforge_evidence_retrieval_duration_seconds_bucket[10m])) by (le)) > 6
+        # 6 is NFR-SLO-W2-1's evidence-retrieval SLO, derived in METRICS.md §"Week 2 SLO
+        # targets" (3.16s measured mean x 1.71, the widest p95/p50 multiple on file, rounded up) - not
+        # a number chosen beside the alert. `for: 10m` matches the rate window: a single slow rerank
+        # must not page, a sustained one must. Separate changes
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          # The summary is the only line that survives into a notification list or a silence UI. Since
+          # a separate change put 6 on a bucket boundary it can state the number; it no longer has to hedge to a band.
+          summary: "Evidence-retrieval p95 has crossed the 6s NFR-SLO-W2-1 SLO"
+          description: >
+            Meaning: the 95th-percentile wall-clock of ONE IEvidenceRetriever.RetrieveAsync call -
+            dense pgvector + sparse FTS + RRF fusion + Cohere rerank - has exceeded the 6s Week 2 SLO.
+            This is the SERVER-SIDE stage stopwatch, and the SLO is stated on the same side it is
+            measured; the Week 2 baseline's client-side whole-turn p95 (14.9s / 12.9s) is a different
+            population and is deliberately NOT what this fires on (METRICS.md §3.1, and the
+            client-vs-server mismatch found on NFR-PERF-1).
+            THREE LIMITS on how far you can read this number; a separate change narrowed the first to one second.
+            (1) BUCKET RESOLUTION - now readable as a number. Since a separate change this histogram has explicit
+            boundaries every second from 5 to 15s with 6 ON one, so the expression exceeds 6 exactly
+            when more than 5% of the window's calls took longer than 6s (the share at le="6" falls
+            below 0.95); it no longer interpolates across a 5-10s band. Between boundaries it still
+            interpolates linearly, so read "6.4s" as "between 6 and 7s", not to the decimal. The
+            boundary and this threshold are pinned to each other by AlertRuleThresholdTests, and the
+            boundaries reaching /metrics by Week2HistogramExportTests.
+            (2) THE SERIES CARRIES NO OUTCOME (only entry_point). `outcome` is on agentforge.evidence_retrievals (the counter),
+            not on this histogram, so a fast MISS cannot be excluded - which means a retrieval outage
+            that failed fast would IMPROVE this number. This rule is not the outage detector and must
+            not be read as one: AgentForgeRetrievalDegradation and the "Evidence Retrieval Hit Rate"
+            panel are.
+            (3) IT COVERS BOTH CALL SITES, SUMMED. The histogram is recorded by
+            EvidenceAgentSupervisor (POST /evidence/ask, entry_point="evidence_ask") and by
+            EvidenceTool (the chat agent's retrieve_evidence tool, entry_point="chat_tool"). This rule
+            sums over entry_point, so it measures the retrieval STAGE; a firing does not say which path
+            is slow - split it with
+            histogram_quantile(0.95, sum by (le, entry_point) (rate(agentforge_evidence_retrieval_duration_seconds_bucket[10m]))).
+            A busy path can hold the stage p95 down while the quieter one is slow.
+            On-call response: (1) split the stages with the "Rerank Latency (p50 / p95)" panel - Cohere
+            is the extra hop the hybrid retriever pays, and a rerank p95 that tracks this one means the
+            cross-encoder is the cost. (2) If rerank is quiet, check Postgres/pgvector: the dense half
+            (embedding call + vector search) and the sparse FTS half share one database - look at
+            connection saturation and index health. (3) Check the embeddings provider's own status; a
+            slow embedding call sits inside this stopwatch. (4) Correlate with
+            AgentForgeRetrievalDegradation: slow AND degrading means a stage is timing out before it
+            degrades; slow with no degradation means every stage works, only slowly. (5) Before
+            escalating, sanity-check the reading against the raw mean (`_sum` / `_count`) - a p95 far
+            above the mean with few samples is a sparse window, not necessarily an incident.
+
+      - alert: AgentForgeEvalCategoryRegression
+        expr: |
+          (
+            agentforge_eval_baseline_pass_rate
+              - on(category) agentforge_eval_category_pass_rate
+          ) > 0.05
+        # No `for`: these are batch gauges republished per eval run, not a sampled signal, so a second
+        # evaluation adds no evidence.
+        #
+        # THIS 0.05 IS A SECOND COPY of evals/baseline.json's `max_regression`, not a reference to it.
+        # It has to be: nothing in Prometheus can read a file out of this repository, so the policy the
+        # CI gate applies per category in tests/AgentForge.Evals/EvalGatePolicy.cs cannot be the same object as
+        # the literal here. A literal and a policy that disagree would let a build fail one control and
+        # pass the other - tighten baseline.json to 0.02 and the merge gate tightens while this alert
+        # stays at 0.05, so a 3-point disclosure-class regression arriving by a hand-edited pin is
+        # blocked at merge and silent at runtime. What keeps them in step is alert-rules-gate.sh, which
+        # reads both numbers and fails the build when they differ; edit either and CI names the other.
+        labels:
+          severity: critical
+        annotations:
+          summary: "Eval rubric category {{ $labels.category }} has regressed more than 5% below baseline"
+          description: >
+            Meaning: a deployed build's eval pass rate for at least one rubric category has fallen more
+            than 5 percentage points below that category's baseline - the same policy the CI gate
+            enforces (evals/baseline.json `max_regression: 0.05`, applied per category in
+            tests/AgentForge.Evals/EvalGatePolicy.cs), evaluated against the build that is actually
+            running. THAT GATE ARM WAS DEAD CODE UNTIL 2026-09-22 and this rule was the only statement of
+            the >5% policy anywhere that could even be exercised (under promtool). A separate change split
+            evals/baseline.json into two tiers and gave the QUALITY one a 0.80 floor, which is what makes
+            the gate's arm reachable there; the two are now genuinely two controls rather than one plus a
+            comment. NOTE the gate's arm is still unreachable for the five SAFETY rubrics, by ruling - a
+            100% floor already refuses any drop - so for those categories THIS RULE IS THE ONLY >5%
+            statement, and it is the one that would matter at runtime where no merge gate runs.
+            The 0.05 in this rule is a HAND-MIRRORED COPY of that policy, because nothing in Prometheus
+            can read the file; CI's alert-rules-gate.sh fails the build when the two numbers differ, so
+            they are kept in step by a check rather than by anyone remembering.
+            RELATIONSHIP TO THE CI GATE, which is the stronger control and is not replaced by this:
+            the gate BLOCKS THE MERGE, so a branch whose eval run regresses cannot reach develop. This
+            rule exists for a regression that reaches a deployed environment BY ANOTHER ROUTE - an
+            image built by hand and pinned directly (image pins are hand-edited, DEPLOYMENT.md §9), an
+            operator apply, a promotion of a build whose pipeline never ran, or a change outside
+            this repository altogether: the model version behind a provider alias, or a rerank model
+            moving under a pinned build. The gate proves the code passed WHEN IT MERGED; this rule is
+            the only thing that asks whether what is running still passes.
+            WHERE THE SERIES COME FROM: the image build runs the eval gate against the image's
+            own source (Dockerfile stage `evals`) and bakes that run into the image, and the sidecar
+            publishes it from its own /metrics - so the figures describe the bytes that are running, in
+            every environment that runs the image and that Prometheus scrapes. Staging does; production
+            does once a promotion fills its empty observability pin. THIS RULE SEES ONLY A >5-POINT DROP IN ONE CATEGORY. A hand-built
+            image, an operator apply or a promotion of a build whose pipeline never ran carries its own
+            run, but most ways that run can FAIL the gate are invisible here: a safety rubric one case
+            under its 100% floor is a ~1-point drop, and an orphaned baseline or a failed population
+            check moves no rate at all. AgentForgeEvalGateFailed reads the run's verdict and fires on all
+            of those - a silent rule here does NOT mean the running build passed its gate. What neither
+            can catch: the model or rerank version moving under a pinned build, because the gate is
+            hermetic (stubbed model) and so is the run baked in. Read agentforge_eval_run_timestamp_seconds
+            for when the run was made. STALENESS: the values live only as long as the process - a
+            stopped sidecar's series go stale at the next failed scrape and this rule resolves, and a
+            category the running build's run did not evaluate has no rate at all (its baseline is still
+            published, so the Grafana panel shows it as missing) rather than a frozen last value. A
+            host-run or hand-built sidecar with no run logs a warning at start naming the missing file and
+            publishes nothing, so silence can also mean "no run", not "no regression".
+            On-call response: (1) read the `category` label - the rubrics are defined in
+            tests/AgentForge.Evals/RubricEvaluator.cs and described in evals/README.md. (2) SAFETY
+            RUBRICS FIRST: no_unauthorized_disclosure, no_phi_in_logs, authorization_outcome and
+            attempt_logged are disclosure-class. A drop in any of those on a running build is a P1 -
+            consider re-pinning to the last build with a green run (DEPLOYMENT.md §9) BEFORE
+            diagnosing, rather than after. (3) Reproduce at the deployed build's commit:
+            `dotnet run --project tests/AgentForge.Evals -- evals`. The gate is hermetic - stubbed
+            model, no database - so a reproduction means the code regressed, while a run that passes at
+            that commit points at the environment (model version, prompt, configuration) instead.
+            (4) Compare the committed evals/results/<date>.json snapshots to find when the category
+            last read clean. (5) Do NOT silence this by loosening baseline.json: that file is the policy
+            the CI merge gate enforces, so loosening it loosens the merge gate - and CI will then make
+            you loosen this rule to match, because alert-rules-gate.sh requires the two to agree. One
+            edit to quiet a page ends up weakening both controls; that is the point of the check, not a
+            way round it.
+
+      - alert: AgentForgeEvalGateFailed
+        expr: agentforge_eval_run_passed == 0
+        # No `for`, for the same reason as the rule above: a batch gauge, fixed for the life of the
+        # process. This is the rule that covers what the per-category rule cannot - a safety rubric
+        # one case under its 100% floor is a ~1-point drop, under 0.05, and an orphaned baseline or a
+        # failed population check moves no rate at all. The gate blocked each of those; the image
+        # still built, because an image the gate blocked is exactly what a runtime alert is for.
+        # a separate change (review B1)
+        labels:
+          severity: critical
+        annotations:
+          summary: "The running build's own eval run FAILED the eval gate"
+          description: >
+            Meaning: the eval run baked into the running sidecar's image at build time (Dockerfile
+            stage `evals`, run against that image's own source) was BLOCKED by the eval gate
+            (evals/results.json `passed: false`), and the image was built and deployed anyway. CI's
+            publish-image job cannot produce such an image - it needs the `evals` job to pass - so this
+            build arrived by another route: a hand-built image, an operator apply, or a pin to a build
+            whose pipeline never ran. This rule fires on EVERY way the gate can fail, including the ones
+            AgentForgeEvalCategoryRegression cannot see: a SAFETY rubric (no_unauthorized_disclosure,
+            no_phi_in_logs, authorization_outcome, attempt_logged, safe_refusal) one case below its 100%
+            floor, which is a drop of only a point or two; a baseline.json category no golden case
+            declares (an orphan); and the M1/M2/M3/M5/evidence population checks. If both rules fire,
+            read the category label on the other one first. The run is hermetic (stubbed model), so a
+            model version moving under a pinned build does not show here.
+            On-call response: (1) treat it as the gate refusing the build that is serving traffic.
+            Re-pin to the last build whose eval run passed (DEPLOYMENT.md §9) BEFORE diagnosing - the
+            safety tier is disclosure-class. (2) Reproduce at the deployed build's commit:
+            `dotnet run --project tests/AgentForge.Evals -- evals`. The FAIL block and the
+            failing_cases list name every failure and what each case guards. (3) Find how the image
+            was built and pinned outside CI, and route future builds through publish-image.
+            agentforge_eval_run_timestamp_seconds says when the run was made.

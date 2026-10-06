@@ -1,0 +1,36 @@
+{
+    "id": "answer-m5-tool-unavailable-gap-stated",
+    "guards": "The failure made ordinary rather than rare: one FHIR tool returns the dispatcher's unavailable error and the rest of the brief still has to arrive. Three things have to hold at once - the tool error does not fail the turn, the surviving cited section still ships, and the honest gap statement is NOT eaten by the attribution gate. That last one is the load-bearing half: a brief that goes quietly short because its gap line was suppressed as an uncited claim reads exactly like a brief with nothing to report.",
+    "category": "answer",
+    "expect_success": true,
+    "answer": {
+        "metric": "M5",
+        "intent": "get_labs returns the dispatcher's own unavailable error while get_patient_summary succeeds; the draft cites the medication and states the lab gap in the next line. Asserts the turn does not degrade, both lines ship, and the tool error is logged.",
+        "site": "default",
+        "patient_id": "syn-patient-sierra",
+        "chart": {
+            "display_name": "Sierra Testpatient",
+            "problems": [{ "id": "syn-sierra-cond-1", "display": "Atrial fibrillation" }],
+            "medications": [{ "id": "syn-sierra-med-1", "display": "Warfarin", "dosage": "5 mg daily" }],
+            "labs": []
+        },
+        "failing_tools": [
+            {
+                "tool_name": "get_labs",
+                "error": "This clinical data source is temporarily unavailable and could not be retrieved."
+            }
+        ],
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }, { "tool_name": "get_labs" }] },
+            { "text": "Warfarin 5 mg daily is on the active medication list [MedicationRequest/syn-sierra-med-1].\nThe lab feed is unavailable, so no INR result could be retrieved for today." }
+        ],
+        "forbidden_answer_fragments": ["INR today is", "within the therapeutic range"],
+        "expected_log_fragments": ["Tool call dispatched: get_labs, error=True"]
+    },
+    "expected_values": [
+        "Warfarin 5 mg daily is on the active medication list",
+        "The lab feed is unavailable, so no INR result could be retrieved for today."
+    ],
+    "phi_tokens": ["Warfarin", "Atrial fibrillation"],
+    "rubrics": ["transparent_degradation", "no_phi_in_logs"]
+}

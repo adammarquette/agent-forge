@@ -1,0 +1,458 @@
+{
+  "title": "AgentForge Clinical Copilot",
+  "uid": "agentforge",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "timezone": "browser",
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "10s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Agent Turn Rate",
+      "description": "Completed agent turns/sec (this app's traffic unit - SignalR hub invocations, not classic HTTP requests). ARCHITECTURE.md §11's 'request count'.",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 0, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (outcome) (rate(agentforge_agent_turns_total[5m]))",
+          "legendFormat": "{{outcome}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Agent Turn Error Rate",
+      "description": "Fraction of agent turns that threw (see AgentForgeHighTurnErrorRate alert).",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 8, "y": 0, "w": 8, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "percentunit" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(rate(agentforge_agent_turns_total{outcome=\"failure\"}[5m])) / sum(rate(agentforge_agent_turns_total[5m]))",
+          "legendFormat": "error rate"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Brief Turn Latency (p50 / p95) - NFR-PERF-1",
+      "description": "Server-side wall-clock duration of one agent turn, SPLIT BY turn_type. The two 'brief' series are NFR-PERF-1's budgeted population (a single-patient RequestBrief turn, UC-1) and the ones the 26s threshold line and AgentForgeHighTurnLatencyP95 apply to; 'agenda' (UC-6, one turn per rostered patient) and 'follow_up' (UC-2) are plotted for comparison only and are NOT in the budget; the comparison series also excludes turn_type=\"\" so that untagged samples scraped from a earlier build are not drawn on the not-budgeted line under a blank legend. Server-side, so it excludes the SignalR transport the end-to-end budget includes and reads lower than METRICS.md's client-side figures. Nothing here qualifies a reading by concurrency.",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 16, "y": 0, "w": 8, "h": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "thresholdsStyle": { "mode": "line" } },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 26 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.50, sum(rate(agentforge_agent_turn_duration_seconds_bucket{turn_type=\"brief\"}[5m])) by (le))",
+          "legendFormat": "brief p50"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, sum(rate(agentforge_agent_turn_duration_seconds_bucket{turn_type=\"brief\"}[5m])) by (le))",
+          "legendFormat": "brief p95 (budgeted)"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, sum(rate(agentforge_agent_turn_duration_seconds_bucket{turn_type!=\"brief\",turn_type!=\"\"}[5m])) by (le, turn_type))",
+          "legendFormat": "{{turn_type}} p95 (not budgeted)"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Tool Call Rate by Tool",
+      "description": "MCP tool calls dispatched/sec, by tool name.",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (tool) (rate(agentforge_tool_calls_total[5m]))",
+          "legendFormat": "{{tool}}"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Tool Call Failure Rate by Tool",
+      "description": "Fraction of calls failing, per tool (see AgentForgeHighToolFailureRate alert).",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "percentunit" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (tool) (rate(agentforge_tool_calls_total{outcome=\"failure\"}[5m])) / sum by (tool) (rate(agentforge_tool_calls_total[5m]))",
+          "legendFormat": "{{tool}}"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Verification Pass/Fail Rate",
+      "description": "FR-VERIF-0 gate outcomes (see AgentForgeElevatedVerificationFailureRate alert). Suppressed content never ships - a rising fail rate is a product-quality signal, not an outage.",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (outcome) (rate(agentforge_verification_results_total[5m]))",
+          "legendFormat": "{{outcome}}"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "LLM Tokens/sec by Direction",
+      "description": "Input vs. output token throughput (FR-OBS-2).",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 16, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (direction) (rate(agentforge_llm_tokens_total[5m]))",
+          "legendFormat": "{{direction}}"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "LLM Cost Rate (USD/sec)",
+      "description": "Estimated spend rate from LlmUsage.EstimatedCostUsd.",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 8, "y": 16, "w": 8, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "currencyUSD" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(rate(agentforge_llm_cost_usd_total[5m]))",
+          "legendFormat": "cost/sec"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Resilience (Polly) - Retry Rate by Pipeline",
+      "description": "FR-OBS-3's retry counts: retries/sec per resilience pipeline, from Microsoft.Extensions.Http.Resilience's own telemetry (Program.cs subscribes the 'Polly' meter). Replaces a raw {otel_scope_name=\"Polly\"} table that returned 201 series and counted nothing. The metric and its labels were confirmed against the live production scrape (/agentforge/metrics, 2026-09-20); 'OnRetry' is Polly's own retry event name (Polly.Retry.RetryConstants.OnRetryEvent), and is the only event_name on this counter that means a retry happened. pipeline_name is the Refit client's assembly-qualified type name, so legend entries are long - the three pipelines are the OpenEMR auth, OpenEMR FHIR and Anthropic clients. Flat at zero is healthy; a rising line means a dependency is flapping underneath the standard resilience handler.",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 16, "y": 16, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (pipeline_name) (rate(resilience_polly_strategy_events_total{event_name=\"OnRetry\"}[5m]))",
+          "legendFormat": "{{pipeline_name}}"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "title": "Authorization Decisions (permit / refuse)",
+      "description": "agentforge.authorization_decisions - the FR-AUTH-2 / UC-4 permit-or-refuse taken below the model on every tool dispatch, per second by outcome and reason. The other half of FR-OBS-3's decision outcomes, beside verification pass/fail, and M3's live half: a refusal is correct behaviour and is deliberately absent from the tool-call series (it would otherwise move the rate AgentForgeHighToolFailureRate pages on), so without this panel a working entitlement boundary is invisible. refuse/no-clinical-relationship is the gate working; refuse/relationship-unresolved is an OpenEMR lookup that failed or a request with no clinician identity - an operations problem, not an entitlement one. A dispatch that ends in an expired session is counted as neither: the authorizer throws rather than deciding, so permit + refuse does not have to equal the tool-call rate. Scope is the TOOL DISPATCH only, one of ARCHITECTURE.md 5.7's three choke points: the SMART launch and POST /evidence/ask re-check and refuse without being metered, so a launch-refusal storm leaves this panel flat.",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 24, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (outcome, reason) (rate(agentforge_authorization_decisions_total[5m]))",
+          "legendFormat": "{{outcome}} - {{reason}}"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Week 2 - Multimodal Evidence Agent",
+      "type": "row",
+      "gridPos": { "x": 0, "y": 32, "w": 24, "h": 1 },
+      "collapsed": false
+    },
+    {
+      "id": 11,
+      "title": "Document Ingestion Rate by Outcome",
+      "description": "agentforge.document_ingestions - ingested / already_ingested / extraction_rejected / error per second (FR-OBS-W2-1, error).",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 33, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (outcome) (rate(agentforge_document_ingestions_total[5m]))",
+          "legendFormat": "{{outcome}}"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Document Ingestion Latency (p95)",
+      "description": "95th-percentile wall-clock of one ingestion attempt, unfiltered by outcome - includes error (a throw,), which is not a real ingest; METRICS.md §3.1 and METRICS.md state the {outcome=\"ingested\"} filter the NFR-SLO-W2-1 target actually uses.",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 8, "y": 33, "w": 8, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, sum(rate(agentforge_document_ingestion_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Graph Worker Latency p95 by Worker",
+      "description": "Per-worker wall-clock across the supervisor graph (intake-extractor / evidence-retriever / answer-composer / critic).",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 16, "y": 33, "w": 8, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, sum by (le, worker) (rate(agentforge_worker_duration_seconds_bucket[5m])))",
+          "legendFormat": "{{worker}}"
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "title": "Supervisor Routing Decisions",
+      "description": "Handoffs per second by destination node - the inspectable routing trail (FR-GRAPH-1).",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 41, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (to) (rate(agentforge_routing_decisions_total[5m]))",
+          "legendFormat": "-> {{to}}"
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "title": "Evidence Retrieval Hit Rate",
+      "description": "Fraction of evidence-retrieval calls that returned at least one snippet (FR-RAG-2 observability).",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 8, "y": 41, "w": 8, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(rate(agentforge_evidence_retrievals_total{outcome=\"hit\"}[5m])) / sum(rate(agentforge_evidence_retrievals_total[5m]))",
+          "legendFormat": "hit rate"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "title": "Evidence Retrieval Latency (p95)",
+      "description": "95th-percentile wall-clock of one evidence-retrieval call.",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 16, "y": 41, "w": 8, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, sum(rate(agentforge_evidence_retrieval_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "title": "Rerank Latency (p50 / p95)",
+      "description": "agentforge.rerank.duration - wall-clock of one rerank call that returned (Cohere rerank-v3.5; span outcome reranked, or unranked when no Cohere key is configured and the no-op reranker answers in microseconds). A degraded (failed) call is not sampled here - it is on Retrieval Degradations by Stage. The added hop the hybrid retriever pays over sparse-only; watch it against the evidence-retrieval budget.",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 49, "w": 8, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.50, sum(rate(agentforge_rerank_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p50"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, sum(rate(agentforge_rerank_duration_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "title": "Retrieval Degradations by Stage",
+      "description": "agentforge.retrieval_degradations - a half or the reranker failed and the stage degraded, per second by stage (sparse / dense / rerank); the matching retrieval.<stage> spans carry outcome=degraded. Non-zero rerank means answers fell back to the fused order without cross-encoder reordering (see AgentForgeRetrievalDegradation alert).",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 8, "y": 49, "w": 8, "h": 8 },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (stage) (rate(agentforge_retrieval_degradations_total[5m]))",
+          "legendFormat": "{{stage}}"
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "title": "Extraction Grounding Confidence (distribution)",
+      "description": "agentforge.extraction_confidence - one observation per ingested document: the SHARE OF ITS CHECKABLE CITATION QUOTES THAT WERE LOCATED verbatim in the document's own text, exact / (exact + unlocatable). READ THE SCALE, NOT THE NAME: this is a GROUNDING/LOCATABILITY confidence, not a model-reported one. 1.0 = every quote that could be checked was found in the source; 0.0 = none of them was - the page's text WAS searched and the quotes are not on it, which is the fabricated-fact signal and the value to alert on. A high reading says the citations are locatable, NOT that the extracted values are right. A heatmap rather than an average because the population is bimodal (a digital PDF grounds every fact, a scan grounds none) and their mean describes no document that exists. DOCUMENTS WITH NOTHING TO CHECK ARE NOT ON THIS PANEL: a scan has no text layer, so every citation resolves 'unchecked' and there is nothing to be confident about - that is a different kind of answer, not a middling score, and plotting it here would sort it against partly-fabricated documents. They are counted on the Extraction Field-Level Pass Rate panel below under outcome=\"unchecked\", and sum(rate(agentforge_document_ingestions_total{outcome=\"ingested\"}[5m])) minus sum(rate(agentforge_extraction_confidence_count[5m])) is how many of them arrived. Forward-only: facts written before the scoring rule changed keep their old two-value score and were not backfilled, so history before 2026-09 is not comparable - it could not produce a 0.0 at all.",
+      "type": "heatmap",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 16, "y": 49, "w": 8, "h": 8 },
+      "options": {
+        "calculate": false,
+        "cellGap": 1,
+        "color": { "mode": "scheme", "scheme": "Oranges", "steps": 64, "reverse": false },
+        "yAxis": { "unit": "percentunit", "decimals": 2 },
+        "legend": { "show": true },
+        "tooltip": { "show": true, "yHistogram": true }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (le) (increase(agentforge_extraction_confidence_bucket[5m]))",
+          "format": "heatmap",
+          "legendFormat": "{{le}}"
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "title": "Extraction Field-Level Pass Rate",
+      "description": "agentforge.extraction_field_outcomes - the share of derived facts of each kind whose citation quote was located verbatim in the source, over ALL facts of that kind (exact + unlocatable + unchecked), which is the denominator that makes this a rate. `field` is the fact's KIND from a closed set of literals in the repository (lab.result, intake.medication, ...), never the extracted field's name, which is model output and would mint a permanent series per string the model emits. No field VALUE ever reaches a label. A low reading is one of two different faults and the Grounding Confidence panel beside it tells them apart: a drift toward 0.0 there means quotes are being searched for and not found (fabrication, or a regressed matcher); a rising outcome=\"unchecked\" share here, with that panel's document count falling away from the ingestion rate, means the documents arriving have no extractable text (scans), which is an input problem, not a model one.",
+      "type": "timeseries",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 57, "w": 8, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 }, "overrides": [] },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum by (field) (rate(agentforge_extraction_field_outcomes_total{outcome=\"exact\"}[5m])) / sum by (field) (rate(agentforge_extraction_field_outcomes_total[5m]))",
+          "legendFormat": "{{field}}"
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "title": "Eval Pass Rate by Rubric Category - offline CI snapshot 2026-09-27 (98 cases)",
+      "description": "Per-rubric pass rates from the newest COMMITTED eval snapshot under evals/results/, not from a runtime instrument. This panel and the provenance panel beside it are the only two on this dashboard that are not scraped from the sidecar: they show the committed run on the record, which no environment publishes - the live panel below plots the deployed image's own run - so the figures are transcribed into this file and re-transcribed when a new snapshot is committed. EVERY rubric in the run OR in evals/baseline.json gets a row - the union, so a rubric added to the suite cannot be silently missing from this list, which is what makes one category degrading while the aggregate holds visible here at all. Delta is the pass rate minus the evals/baseline.json baseline in percentage points. Tier is the category's policy tier in evals/baseline.json, and it is what the Status column means by a floor: safety at 100%, quality at 80%. Status is the gate's OWN ladder in the gate's own order (EvalGatePolicy.Evaluate) - below threshold when the rate is under that tier's floor, and only then REGRESSED when the drop from baseline exceeds max_regression, so a row and the build never explain a red differently. A safety row can never read REGRESSED: its floor subsumes its regression window, which is the ruling in rather than a gap in this panel. Re-render it whenever a newer snapshot is committed.",
+      "type": "text",
+      "gridPos": { "x": 8, "y": 57, "w": 8, "h": 8 },
+      "options": {
+        "mode": "markdown",
+        "content": "**Offline CI results, not a runtime measurement.** Snapshot `evals/results/2026-09-27.json`, run 2026-09-27T06:53:55Z, 98 cases, gate **PASS**. Provenance panel to the right.\n\n| Rubric category | Tier | Pass rate | Delta vs baseline (pp) | Status |\n|---|---|---:|---:|---|\n| `attempt_logged` | safety | 100.0% | +0.0 | ok |\n| `authorization_outcome` | safety | 100.0% | +0.0 | ok |\n| `citation_present` | quality | 100.0% | +0.0 | ok |\n| `constraint_flagged` | quality | 100.0% | +0.0 | ok |\n| `evidence_grounded` | quality | 100.0% | +0.0 | ok |\n| `factually_consistent` | quality | 100.0% | +0.0 | ok |\n| `grounded_answer` | quality | 100.0% | +0.0 | ok |\n| `no_phi_in_logs` | safety | 100.0% | +0.0 | ok |\n| `no_unauthorized_disclosure` | safety | 100.0% | +0.0 | ok |\n| `retrieval_hit` | quality | 100.0% | +0.0 | ok |\n| `safe_refusal` | safety | 100.0% | +0.0 | ok |\n| `schema_valid` | quality | 100.0% | +0.0 | ok |\n| `transparent_degradation` | quality | 100.0% | +0.0 | ok |\n"
+      }
+    },
+    {
+      "id": 24,
+      "title": "Eval Snapshot Provenance and Gate Verdict",
+      "description": "Where the two eval panels' figures come from, and what they do not do. Offline CI results plotted beside runtime instruments read as live unless something says otherwise, so the run's own timestamp, case count and gate verdict are printed on the panel rather than left to a hover. is why: the only committed snapshot at the time described 63 cases against a suite of 87, and nothing on any panel said so.",
+      "type": "text",
+      "gridPos": { "x": 16, "y": 57, "w": 8, "h": 8 },
+      "options": {
+        "mode": "markdown",
+        "content": "### These two panels are NOT live\n\nEvery other panel on this dashboard plots a runtime instrument scraped from the sidecar. These two render a **committed eval snapshot** from the repository - offline CI results that change only when a new snapshot is committed, never in response to anything the running system does.\n\n| | |\n|---|---|\n| Source file | `evals/results/2026-09-27.json` |\n| Run generated at | `2026-09-27T06:53:55Z` (UTC) |\n| Cases in that run | 98 |\n| Rubric categories | 13 |\n| Gate verdict | **PASS** |\n| Gate policy | pass rate by tier: quality >= 80.0%, safety >= 100.0%; max regression 5.0 pp (`evals/baseline.json`) |\n| Safety tier | a single failing case blocks - its >5% regression arm is deliberately unreachable |\n\n**If the date above is old, the figures are old.** Re-run `dotnet run --project tests/AgentForge.Evals -- evals`, commit the run as `evals/results/<date>.json`, then re-render these two panels from it.\n\n**Nothing alerts off these numbers.** `AgentForgeEvalCategoryRegression` evaluates the live series the sidecar publishes - the run its image was built with, which the *running build* panel below plots. That run and this committed one can differ: this one is the record, that one is what is deployed.\n"
+      }
+    },
+    {
+      "id": 25,
+      "title": "Eval Pass Rate by Rubric Category - running build",
+      "description": "LIVE: the eval run the running sidecar's image was built with (Dockerfile stage `evals`, run against that image's own source), scraped from the sidecar - the SAME series AgentForgeEvalCategoryRegression and AgentForgeEvalGateFailed evaluate. The first two tiles say WHEN that run was made and whether the gate PASSED or FAILED it; FAILED means the build serving traffic is one the gate blocked (a safety rubric under its 100% floor, an orphaned baseline or a population check fails the gate without any category dropping 5 points, so read the verdict, not just the bars). Per category, the tile is the pass rate; with more than one sidecar replica it shows the WORST replica (min), while the rules evaluate each instance, so the panel and the rules agree on one replica and can differ on more (and the category rule's on(category) match needs one replica anyway). Panels 23 and 24 beside it are the committed snapshot on the record; this one is whatever build is deployed, which can differ (a hand-built image, an operator apply). A category shown as NOT EVALUATED is one evals/baseline.json names that this build's run produced no rate for - absent, not frozen at an old value. An EMPTY panel means no run is published at all: a sidecar built without the evals stage, or run from source before `dotnet run --project tests/AgentForge.Evals -- evals`; the sidecar logs a warning naming the missing file at start. The gate is hermetic (stubbed model), so this cannot show a model version moving under a pinned build.",
+      "type": "stat",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "x": 0, "y": 65, "w": 24, "h": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit", "min": 0, "max": 1,
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "orange", "value": 0.8 }, { "color": "green", "value": 0.95 } ] }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "run generated at" },
+            "properties": [ { "id": "unit", "value": "dateTimeAsIso" }, { "id": "min" }, { "id": "max" }, { "id": "color", "value": { "mode": "fixed", "fixedColor": "text" } } ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "gate verdict" },
+            "properties": [
+              { "id": "unit", "value": "none" },
+              { "id": "mappings", "value": [ { "type": "value", "options": { "0": { "text": "FAILED", "color": "red" }, "1": { "text": "PASSED", "color": "green" } } } ] }
+            ]
+          }
+        ]
+      },
+      "options": { "orientation": "auto", "textMode": "value_and_name", "colorMode": "background", "graphMode": "none", "justifyMode": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "min(agentforge_eval_run_timestamp_seconds) * 1000",
+          "instant": true,
+          "legendFormat": "run generated at"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "min(agentforge_eval_run_passed)",
+          "instant": true,
+          "legendFormat": "gate verdict"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "min by (category) (agentforge_eval_category_pass_rate)",
+          "instant": true,
+          "legendFormat": "{{category}}"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "(max by (category) (agentforge_eval_baseline_pass_rate) unless on(category) agentforge_eval_category_pass_rate) * 0",
+          "instant": true,
+          "legendFormat": "{{category}} - NOT EVALUATED"
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "title": "Per-encounter story (FR-OBS-W2-1)",
+      "description": "One line per chat turn tying the encounter together: tool sequence, per-step + turn latency, tokens, cost, retrieval hits, extraction confidence, and the runtime verification (eval) outcome. Correlation-id scoped, no PHI - filter one CorrelationId to answer all seven for a single past encounter.",
+      "type": "logs",
+      "datasource": { "type": "loki", "uid": "loki" },
+      "gridPos": { "x": 0, "y": 73, "w": 24, "h": 11 },
+      "options": { "showTime": true, "showLabels": false, "wrapLogMessage": true, "enableLogDetails": true, "dedupStrategy": "none", "sortOrder": "Descending" },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "loki" },
+          "expr": "{service_name=\"agentforge-api\"} |= \"encounter.telemetry\"",
+          "queryType": "range"
+        }
+      ]
+    }
+  ]
+}

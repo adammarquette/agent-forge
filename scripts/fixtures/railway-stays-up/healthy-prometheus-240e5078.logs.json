@@ -1,0 +1,216 @@
+{
+  "data": {
+    "deploymentLogs": [
+      {
+        "message": "Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/ae476990-f518-4863-8152-8d2b00720298/vol_0kpgs0xqwpa8eypm",
+        "severity": "info",
+        "timestamp": "2026-09-25T01:09:31.923979983Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.017Z level=INFO source=main.go:683 msg=\"Starting Prometheus Server\" mode=server version=\"(version=3.1.0, branch=HEAD, revision=7086161a93b262aa0949dbf2aba15a5a7b13e0a3)\"",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.244863982Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.017Z level=INFO source=main.go:688 msg=\"operational information\" build_context=\"(go=go1.23.4, platform=linux/amd64, user=root@74c225e2044f, date=20250102-13:52:43, tags=netgo,builtinassets,stringlabels)\" host_details=\"(Linux 6.18.15+deb13-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.18.15-1~bpo13+1 (2026-03-12) x86_64 90e80f50a2f7 (none))\" fd_limits=\"(soft=1048576, hard=1048576)\" vm_limits=\"(soft=unlimited, hard=unlimited)\"",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.244866782Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.018Z level=INFO source=main.go:764 msg=\"Updating GOMAXPROCS=24: determined from CPU quota\" component=automaxprocs",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.244869702Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.022Z level=INFO source=web.go:650 msg=\"Start listening for connections\" component=web address=[::]:9090",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.244872712Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.022Z level=INFO source=main.go:1224 msg=\"Starting TSDB ...\"",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.244875652Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.023Z level=INFO source=tls_config.go:347 msg=\"Listening on\" component=web address=[::]:9090",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.244880002Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.023Z level=INFO source=tls_config.go:350 msg=\"TLS is disabled.\" component=web http2=false address=[::]:9090",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.244882412Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.025Z level=INFO source=repair.go:54 msg=\"Found healthy block\" component=tsdb mint=1790197819349 maxt=1790229600000 ulid=01M39H5W75VGDWBG84TN48YZF3",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.244885732Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.027Z level=INFO source=repair.go:54 msg=\"Found healthy block\" component=tsdb mint=1790229600000 maxt=1790251200000 ulid=01M39YXAK2Z6W9V42B6VJ7X1PQ",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.244888502Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.028Z level=INFO source=repair.go:54 msg=\"Found healthy block\" component=tsdb mint=1790272809541 maxt=1790280000000 ulid=01M3AKFXEDF4S2G0WJ2GS6P4KB",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.244891372Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.029Z level=INFO source=repair.go:54 msg=\"Found healthy block\" component=tsdb mint=1790280009541 maxt=1790287200000 ulid=01M3ATC3B5GBWSBDS5BWR8E9FK",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245064998Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.031Z level=INFO source=repair.go:54 msg=\"Found healthy block\" component=tsdb mint=1790251213837 maxt=1790272800000 ulid=01M3ATC3DAP7VTSJ49FQH0XKC1",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245067968Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.032Z level=INFO source=repair.go:54 msg=\"Found healthy block\" component=tsdb mint=1790287209543 maxt=1790294400000 ulid=01M3B17TK5JCF0Q7R2W12K3P62",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245070438Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.114Z level=INFO source=head.go:628 msg=\"Replaying on-disk memory mappable chunks if any\" component=tsdb",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245072998Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.116Z level=INFO source=head.go:715 msg=\"On-disk memory mappable chunks replay completed\" component=tsdb duration=1.693923ms",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245075808Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.116Z level=INFO source=head.go:723 msg=\"Replaying WAL, this may take a while\" component=tsdb",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245078358Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.118Z level=INFO source=head.go:760 msg=\"WAL checkpoint loaded\" component=tsdb",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245081307Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.144Z level=INFO source=head.go:795 msg=\"WAL segment loaded\" component=tsdb segment=15 maxSegment=19",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245083727Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.159Z level=INFO source=head.go:795 msg=\"WAL segment loaded\" component=tsdb segment=16 maxSegment=19",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245086127Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.183Z level=INFO source=head.go:795 msg=\"WAL segment loaded\" component=tsdb segment=17 maxSegment=19",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245088547Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.188Z level=INFO source=head.go:795 msg=\"WAL segment loaded\" component=tsdb segment=18 maxSegment=19",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245090867Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.188Z level=INFO source=head.go:795 msg=\"WAL segment loaded\" component=tsdb segment=19 maxSegment=19",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245093387Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.188Z level=INFO source=head.go:832 msg=\"WAL replay completed\" component=tsdb checkpoint_replay_duration=2.252051ms wal_replay_duration=70.555782ms wbl_replay_duration=170ns chunk_snapshot_load_duration=0s mmap_chunk_replay_duration=1.693923ms total_replay_duration=74.532526ms",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245522928Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.190Z level=INFO source=main.go:1245 msg=\"filesystem information\" fs_type=EXT4_SUPER_MAGIC",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245525738Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.190Z level=INFO source=main.go:1248 msg=\"TSDB started\"",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245529038Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.190Z level=INFO source=main.go:1433 msg=\"Loading configuration file\" filename=/etc/prometheus/prometheus.yml",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245531558Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.195Z level=INFO source=main.go:1472 msg=\"updated GOGC\" old=100 new=75",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245534248Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.195Z level=INFO source=main.go:1482 msg=\"Completed loading of configuration file\" db_storage=1.74µs remote_storage=2.73µs web_handler=1.03µs query_engine=1.22µs scrape=702.645µs scrape_sd=34.329µs notify=1.75µs notify_sd=1.01µs rules=3.537655ms tracing=7.47µs filename=/etc/prometheus/prometheus.yml totalDuration=4.656061ms",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245536928Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.195Z level=INFO source=main.go:1209 msg=\"Server is ready to receive web requests.\"",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245539328Z"
+      },
+      {
+        "message": "time=2026-09-25T01:09:32.195Z level=INFO source=manager.go:169 msg=\"Starting rule manager...\" component=\"rule manager\"",
+        "severity": "error",
+        "timestamp": "2026-09-25T01:09:32.245541978Z"
+      },
+      {
+        "message": "Starting Container",
+        "severity": "info",
+        "timestamp": "2026-09-25T01:09:33.004119982Z"
+      },
+      {
+        "message": "time=2026-09-25T03:00:00.340Z level=INFO source=compact.go:591 msg=\"write block\" component=tsdb mint=1790294400000 maxt=1790301600000 ulid=01M3B82T4QJERQ55YNTG5ACE7J duration=60.75829ms ooo=false",
+        "severity": "error",
+        "timestamp": "2026-09-25T03:00:01.005584038Z"
+      },
+      {
+        "message": "time=2026-09-25T03:00:00.343Z level=INFO source=head.go:1371 msg=\"Head GC completed\" component=tsdb caller=truncateMemory duration=2.082045ms",
+        "severity": "error",
+        "timestamp": "2026-09-25T03:00:01.005586968Z"
+      },
+      {
+        "message": "time=2026-09-25T03:00:00.343Z level=INFO source=checkpoint.go:99 msg=\"Creating checkpoint\" component=tsdb from_segment=15 to_segment=17 mint=1790301600000",
+        "severity": "error",
+        "timestamp": "2026-09-25T03:00:01.005589908Z"
+      },
+      {
+        "message": "time=2026-09-25T03:00:00.365Z level=INFO source=head.go:1333 msg=\"WAL checkpoint complete\" component=tsdb first=15 last=17 duration=22.429803ms",
+        "severity": "error",
+        "timestamp": "2026-09-25T03:00:01.005592778Z"
+      },
+      {
+        "message": "time=2026-09-25T03:00:00.447Z level=INFO source=compact.go:530 msg=\"compact blocks\" component=tsdb count=5 mint=1790229600000 maxt=1790294400000 ulid=01M3B82T7E58JYBC5ZJ8R8FM3C sources=\"[01M39YXAK2Z6W9V42B6VJ7X1PQ 01M3ATC3DAP7VTSJ49FQH0XKC1 01M3AKFXEDF4S2G0WJ2GS6P4KB 01M3ATC3B5GBWSBDS5BWR8E9FK 01M3B17TK5JCF0Q7R2W12K3P62]\" duration=81.151457ms",
+        "severity": "error",
+        "timestamp": "2026-09-25T03:00:01.005595518Z"
+      },
+      {
+        "message": "time=2026-09-25T03:00:00.450Z level=INFO source=db.go:1820 msg=\"Deleting obsolete block\" component=tsdb block=01M39YXAK2Z6W9V42B6VJ7X1PQ",
+        "severity": "error",
+        "timestamp": "2026-09-25T03:00:01.005597888Z"
+      },
+      {
+        "message": "time=2026-09-25T03:00:00.457Z level=INFO source=db.go:1820 msg=\"Deleting obsolete block\" component=tsdb block=01M3ATC3B5GBWSBDS5BWR8E9FK",
+        "severity": "error",
+        "timestamp": "2026-09-25T03:00:01.005600378Z"
+      },
+      {
+        "message": "time=2026-09-25T03:00:00.460Z level=INFO source=db.go:1820 msg=\"Deleting obsolete block\" component=tsdb block=01M3B17TK5JCF0Q7R2W12K3P62",
+        "severity": "error",
+        "timestamp": "2026-09-25T03:00:01.005604128Z"
+      },
+      {
+        "message": "time=2026-09-25T03:00:00.465Z level=INFO source=db.go:1820 msg=\"Deleting obsolete block\" component=tsdb block=01M3ATC3DAP7VTSJ49FQH0XKC1",
+        "severity": "error",
+        "timestamp": "2026-09-25T03:00:01.005606718Z"
+      },
+      {
+        "message": "time=2026-09-25T03:00:00.469Z level=INFO source=db.go:1820 msg=\"Deleting obsolete block\" component=tsdb block=01M3AKFXEDF4S2G0WJ2GS6P4KB",
+        "severity": "error",
+        "timestamp": "2026-09-25T03:00:01.005609008Z"
+      }
+    ]
+  }
+}

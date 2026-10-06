@@ -1,0 +1,28 @@
+{
+    "id": "answer-m2-chronotropic-combination-flagged",
+    "guards": "Diltiazem with metoprolol slows AV conduction twice over - bradycardia and heart block - and the two drugs sit adjacent on a medication list that reads as ordinary rate control. Guards that both medications are recovered from a single summary result and matched by their pharmacology, and it is the positive whose control (amlodipine with metoprolol) proves the rule is not matching on drug class.",
+    "category": "answer",
+    "expect_success": true,
+    "answer": {
+        "metric": "M2",
+        "intent": "Seeded violation of FR-VERIF-2's negatively-chronotropic combination constraint: diltiazem is a non-dihydropyridine calcium-channel blocker and metoprolol a beta-blocker, and both slow AV conduction.",
+        "site": "default",
+        "patient_id": "syn-patient-mike",
+        "chart": {
+            "display_name": "Mike Testpatient",
+            "problems": [{ "id": "syn-mike-cond-1", "display": "Atrial fibrillation" }],
+            "medications": [
+                { "id": "syn-mike-med-1", "display": "Diltiazem", "dosage": "120 mg daily" },
+                { "id": "syn-mike-med-2", "display": "Metoprolol tartrate", "dosage": "25 mg twice daily" }
+            ],
+            "labs": []
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }] },
+            { "text": "Diltiazem 120 mg daily is on the active medication list [MedicationRequest/syn-mike-med-1].\nMetoprolol tartrate 25 mg twice daily is also active [MedicationRequest/syn-mike-med-2]." }
+        ],
+        "expected_flag_rule_ids": ["negatively-chronotropic-combination"]
+    },
+    "phi_tokens": ["Diltiazem", "Metoprolol", "Atrial fibrillation"],
+    "rubrics": ["constraint_flagged", "no_phi_in_logs"]
+}

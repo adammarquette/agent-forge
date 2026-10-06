@@ -1,0 +1,28 @@
+{
+    "id": "answer-m2-qt-combination-flagged",
+    "guards": "Two QT-prolonging agents carry an additive torsades risk that neither medication's own row shows and no single-drug check can see - the flag exists precisely because the danger is in the pair. Guards the two-drug threshold, which is what separates a useful flag from one that fires on every antiarrhythmic a cardiology panel is full of.",
+    "category": "answer",
+    "expect_success": true,
+    "answer": {
+        "metric": "M2",
+        "intent": "Seeded violation of FR-VERIF-2's QT-prolonging drug combination constraint: amiodarone and sotalol are concurrently active, which is two class III antiarrhythmics on one list.",
+        "site": "default",
+        "patient_id": "syn-patient-juliet",
+        "chart": {
+            "display_name": "Juliet Testpatient",
+            "problems": [{ "id": "syn-juliet-cond-1", "display": "Atrial fibrillation" }],
+            "medications": [
+                { "id": "syn-juliet-med-1", "display": "Amiodarone", "dosage": "200 mg daily" },
+                { "id": "syn-juliet-med-2", "display": "Sotalol", "dosage": "80 mg twice daily" }
+            ],
+            "labs": []
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }] },
+            { "text": "Amiodarone 200 mg daily is on the active medication list [MedicationRequest/syn-juliet-med-1].\nSotalol 80 mg twice daily is also active [MedicationRequest/syn-juliet-med-2]." }
+        ],
+        "expected_flag_rule_ids": ["qt-prolonging-combination"]
+    },
+    "phi_tokens": ["Amiodarone", "Sotalol", "Atrial fibrillation"],
+    "rubrics": ["constraint_flagged", "no_phi_in_logs"]
+}

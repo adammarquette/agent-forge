@@ -1,0 +1,25 @@
+{
+  "schema_version": "1",
+  "agent": "orchestrator",
+  "display_name": "Orchestrator",
+  "status": "defined, not built",
+  "role": "Directs the campaign: chooses the next category and surface, allocates the budget, halts on spend without signal, and triggers regression runs when the target changes.",
+  "inputs": ["run_records (read)", "exploit_store (read)", "target_changed"],
+  "outputs": ["attack_directive", "error"],
+  "trust_level": "high: it spends money and chooses what to test, but only within the committed allowlist and the spend ceiling, both of which code enforces",
+  "may_call_target": false,
+  "prompt": { "file": "prompts/orchestrator.md", "version": "1.0.0", "sha256": "4b4a806bf60d099dc6227adb589de0463b67d2d2727e140e0cf25cadc30538d1", "status": "proposed" },
+  "model": {
+    "status": "proposed, awaiting maintainer confirmation",
+    "proposal": "Deterministic code for ranking and budgeting. At most a small, low-cost model to phrase a directive's intent field.",
+    "reason": "Ranking and budget decisions must be explainable and reproducible from the run records alone (SECURITY-PLATFORM.md section 6 Q3). SECURITY-PLATFORM.md's platform architecture leaves 'small/cheap model or deterministic' open.",
+    "provider": null,
+    "model_id": null
+  },
+  "coordinates_with": {
+    "red_team": "sends attack_directive; never receives a transcript directly",
+    "judge": "reads its verdicts from the run records",
+    "documentation": "reads open findings and regression cases from the exploit store"
+  },
+  "traces_to": ["FR-MAS-W3-6", "FR-MAS-W3-7", "FR-MAS-W3-8", "FR-REGR-W3-2", "FR-OBSV-W3-7", "UC-W3-1", "UC-W3-5", "UC-W3-7"]
+}

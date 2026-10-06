@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <!-- AgentForgeMetrics.Meter: the unit suite scopes its MeterListener to one instance's meter. -->
+    <InternalsVisibleTo Include="AgentForge.UnitTests" />
+  </ItemGroup>
+
+</Project>

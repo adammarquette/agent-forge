@@ -1,0 +1,69 @@
+{
+  "file_name": "lab-inr-warfarin-multipage.pdf",
+  "media_type": "application/pdf",
+  "doc_type": "lab_pdf",
+  "layout": "multi-page",
+  "description": "Two pages: the current PT/INR and hemoglobin on page 1, the prior INR results on page 2.",
+  "patient": {
+    "name": "Demo Walter Ibekwe",
+    "birth_date": "1960-01-09",
+    "sex": "male",
+    "mrn": "SYN-0692-02"
+  },
+  "page_count": 2,
+  "has_text_layer": true,
+  "facts": [
+    {
+      "fact_type": "lab.result",
+      "label": "PT",
+      "value": "27.4",
+      "unit": "sec",
+      "reference_range": "11.0-13.5",
+      "abnormal_flag": true,
+      "collection_date": "2026-09-01",
+      "page": 1,
+      "quote": "PT 27.4 sec 11.0-13.5 H"
+    },
+    {
+      "fact_type": "lab.result",
+      "label": "INR",
+      "value": "2.6",
+      "reference_range": "2.0-3.0",
+      "abnormal_flag": false,
+      "collection_date": "2026-09-01",
+      "page": 1,
+      "quote": "INR 2.6 2.0-3.0"
+    },
+    {
+      "fact_type": "lab.result",
+      "label": "Hemoglobin",
+      "value": "12.9",
+      "unit": "g/dL",
+      "reference_range": "13.5-17.5",
+      "abnormal_flag": true,
+      "collection_date": "2026-09-01",
+      "page": 1,
+      "quote": "Hemoglobin 12.9 g/dL 13.5-17.5 L"
+    },
+    {
+      "fact_type": "lab.result",
+      "label": "INR",
+      "value": "3.4",
+      "reference_range": "2.0-3.0",
+      "abnormal_flag": true,
+      "collection_date": "2026-08-04",
+      "page": 2,
+      "quote": "2026-08-04 INR 3.4 2.0-3.0 H"
+    },
+    {
+      "fact_type": "lab.result",
+      "label": "INR",
+      "value": "2.9",
+      "reference_range": "2.0-3.0",
+      "abnormal_flag": false,
+      "collection_date": "2026-08-18",
+      "page": 2,
+      "quote": "2026-08-18 INR 2.9 2.0-3.0"
+    }
+  ]
+}

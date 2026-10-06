@@ -1,0 +1,22 @@
+{
+    "id": "intake-nkda",
+    "guards": "An explicit 'NKDA' is carried through as the stated value rather than normalised to an empty list, and it is asserted, so the normalisation fails the case. Collapsing it would erase the difference between asked-and-answered and never-asked, which is the one distinction an allergy field exists to make.",
+    "category": "extraction",
+    "doc_type": "intake_form",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"demographics\":{\"full_name\":\"Fiadh O'Brien\",\"date_of_birth\":\"1972-12-01\",\"sex\":\"F\"},\"chief_concern\":{\"text\":\"preoperative cardiac clearance\",\"citation\":{\"page\":1,\"quote\":\"preoperative cardiac clearance\",\"bounding_box\":null}},\"current_medications\":[{\"name\":\"metoprolol succinate\",\"dose\":\"50mg daily\",\"citation\":{\"page\":1,\"quote\":\"metoprolol succinate 50mg\",\"bounding_box\":null}}],\"allergies\":[{\"text\":\"NKDA\",\"citation\":{\"page\":1,\"quote\":\"NKDA\",\"bounding_box\":null}}],\"family_history\":[{\"text\":\"mother: MI at 65\",\"citation\":{\"page\":1,\"quote\":\"mother: MI at 65\",\"bounding_box\":null}}],\"citation\":{\"page\":1,\"quote\":\"Patient intake form\",\"bounding_box\":null}}",
+    "expect_success": true,
+    "expected_values": [
+        "metoprolol succinate",
+        "NKDA"
+    ],
+    "phi_tokens": [
+        "Fiadh O'Brien"
+    ],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

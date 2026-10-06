@@ -1,0 +1,14 @@
+{
+    "id": "lab-missing-test-name",
+    "guards": "A value with no test name is refused rather than stored as an anonymous number. A result nobody can identify cannot be trended, compared against a range, or safely shown to anyone.",
+    "category": "extraction",
+    "doc_type": "lab_pdf",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"tests\":[{\"value\":\"2.5\",\"citation\":{\"page\":1,\"quote\":\"2.5\",\"bounding_box\":null}}]}",
+    "expect_success": false,
+    "rubrics": [
+        "schema_valid",
+        "safe_refusal",
+        "no_phi_in_logs"
+    ]
+}

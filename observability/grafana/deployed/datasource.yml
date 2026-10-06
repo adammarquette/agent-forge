@@ -1,0 +1,17 @@
+# Prometheus datasource for a DEPLOYED sidecar - baked into observability/grafana/Dockerfile, which
+# copies this over the local-compose file of the same name. Local compose mounts provisioning/
+# directly and is untouched by this file.
+#
+# The URL is an environment variable because the address differs per stack: `agentforge-prometheus`
+# is the compose container name, `prometheus.railway.internal` the Railway private hostname. Grafana
+# interpolates ${VAR} in provisioning files; the Dockerfile sets the compose value as the default.
+# reference: DEPLOYMENT.md, a separate change
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: ${PROMETHEUS_URL}
+    isDefault: true
+    editable: false

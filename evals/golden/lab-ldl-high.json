@@ -1,0 +1,21 @@
+{
+    "id": "lab-ldl-high",
+    "guards": "The same analyte appears here alone and as one row of lab-lipid-panel-multi, at a different value. The pair shows that a value's extraction does not depend on whether it arrived alone or inside a panel, and that nothing is memoised per test name. The quote prints LDL where the result names LDL Cholesterol, an abbreviation in the reviewed table, so the result stays unchecked rather than unlocatable - pinned so that the table losing that entry is a deliberate change.",
+    "category": "extraction",
+    "doc_type": "lab_pdf",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"tests\":[{\"test_name\":\"LDL Cholesterol\",\"value\":\"168\",\"unit\":\"mg/dL\",\"reference_range\":\"<100\",\"collection_date\":\"2026-06-15\",\"abnormal_flag\":true,\"citation\":{\"page\":1,\"quote\":\"LDL 168 (H) mg/dL\",\"bounding_box\":null}}]}",
+    "expect_success": true,
+    "expected_values": [
+        "LDL",
+        "168",
+        "\"quote\":\"LDL 168 (H) mg/dL\",\"match\":\"unchecked\""
+    ],
+    "phi_tokens": ["LDL 168 (H) mg/dL"],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

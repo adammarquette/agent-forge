@@ -1,0 +1,28 @@
+{
+    "id": "answer-m2-control-dihydropyridine-with-beta-blocker",
+    "guards": "The sharpest control in the set, and the one that distinguishes matching on pharmacology from matching on drug class. Amlodipine beside metoprolol IS a calcium-channel blocker beside a beta-blocker, so a rule written against the class rather than against AV conduction flags it - and amlodipine, a dihydropyridine, is not chronotropic. Nothing else in the population separates those two implementations.",
+    "category": "answer",
+    "expect_success": true,
+    "answer": {
+        "metric": "M2",
+        "intent": "Near-miss control for the chronotropy class: amlodipine (a dihydropyridine) with metoprolol, no labs. Asserts no flag is raised.",
+        "site": "default",
+        "patient_id": "syn-patient-romeo",
+        "chart": {
+            "display_name": "Romeo Testpatient",
+            "problems": [{ "id": "syn-romeo-cond-1", "display": "Hypertension" }],
+            "medications": [
+                { "id": "syn-romeo-med-1", "display": "Amlodipine", "dosage": "10 mg daily" },
+                { "id": "syn-romeo-med-2", "display": "Metoprolol tartrate", "dosage": "25 mg twice daily" }
+            ],
+            "labs": []
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }] },
+            { "text": "Amlodipine 10 mg daily is on the active medication list [MedicationRequest/syn-romeo-med-1].\nMetoprolol tartrate 25 mg twice daily is also active [MedicationRequest/syn-romeo-med-2]." }
+        ],
+        "expect_no_constraint_flags": true
+    },
+    "phi_tokens": ["Amlodipine", "Metoprolol", "Hypertension"],
+    "rubrics": ["constraint_flagged", "no_phi_in_logs"]
+}

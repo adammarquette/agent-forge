@@ -1,0 +1,11 @@
+{
+  "id": "intake-missing-required",
+  "guards": "The schema gate is all-or-nothing when several required members are absent at once - here the medication list and the form-level citation: the whole extraction is rejected and nothing is persisted. A partial record saved for the members that did parse is indistinguishable from a complete one downstream.",
+  "category": "extraction",
+  "doc_type": "intake_form",
+  "media_type": "application/pdf",
+  "stub_model_response": "{\"demographics\":{\"full_name\":\"John Doe\",\"date_of_birth\":null,\"sex\":\"M\"},\"chief_concern\":{\"text\":\"chest pain\",\"citation\":{\"page\":1,\"quote\":\"chest pain\",\"bounding_box\":null}},\"allergies\":[],\"family_history\":[]}",
+  "expect_success": false,
+  "phi_tokens": ["John Doe"],
+  "rubrics": ["schema_valid", "safe_refusal", "no_phi_in_logs"]
+}

@@ -1,0 +1,21 @@
+{
+    "id": "lab-creatinine-elevated",
+    "guards": "The same analyte appears in range inside lab-bmp-multi and out of range here, with both flags asserted, so the two together rule out a flag derived from the test name. Renal function is also the input the cardiology dose rules read, which is why the value has to arrive exactly as printed.",
+    "category": "extraction",
+    "doc_type": "lab_pdf",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"tests\":[{\"test_name\":\"Creatinine\",\"value\":\"1.9\",\"unit\":\"mg/dL\",\"reference_range\":\"0.6-1.3\",\"collection_date\":\"2026-06-15\",\"abnormal_flag\":true,\"citation\":{\"page\":1,\"quote\":\"Creatinine 1.9 (H) mg/dL\",\"bounding_box\":null}}]}",
+    "expect_success": true,
+    "expected_values": [
+        "Creatinine",
+        "1.9",
+        "\"abnormal_flag\":true"
+    ],
+    "phi_tokens": ["Creatinine 1.9 (H) mg/dL"],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

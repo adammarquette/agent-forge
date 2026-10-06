@@ -1,0 +1,25 @@
+{
+    "id": "answer-m2-control-single-qt-drug",
+    "guards": "The near-miss control for the QT class, and the one that pins the threshold from below: amiodarone alone is ordinary cardiology prescribing. Lowering the rule to one agent would flag a large fraction of a real AFib panel and bury the genuine pair this metric exists to surface.",
+    "category": "answer",
+    "expect_success": true,
+    "answer": {
+        "metric": "M2",
+        "intent": "Near-miss control for the QT class: amiodarone alone. A single QT-prolonging agent is ordinary cardiology prescribing, not the combination the constraint is about, so nothing may be flagged.",
+        "site": "default",
+        "patient_id": "syn-patient-oscar",
+        "chart": {
+            "display_name": "Oscar Testpatient",
+            "problems": [{ "id": "syn-oscar-cond-1", "display": "Atrial fibrillation" }],
+            "medications": [{ "id": "syn-oscar-med-1", "display": "Amiodarone", "dosage": "200 mg daily" }],
+            "labs": []
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }] },
+            { "text": "Amiodarone 200 mg daily is the only active medication on file [MedicationRequest/syn-oscar-med-1]." }
+        ],
+        "expect_no_constraint_flags": true
+    },
+    "phi_tokens": ["Amiodarone", "Atrial fibrillation"],
+    "rubrics": ["constraint_flagged", "no_phi_in_logs"]
+}

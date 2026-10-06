@@ -1,0 +1,23 @@
+{
+    "id": "intake-post-mi",
+    "guards": "Free-text history entries containing a colon survive JSON round-tripping in the longest family-history list in the set - three entries against two for the next longest - alongside the antiplatelet a post-MI summary must never drop. Each entry carries its own citation, but no rubric reads it, so the asserted entry is still the only thing standing between the list and a silent shape change.",
+    "category": "extraction",
+    "doc_type": "intake_form",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"demographics\":{\"full_name\":\"Halima Testafar\",\"date_of_birth\":\"1953-07-07\",\"sex\":\"F\"},\"chief_concern\":{\"text\":\"post-MI follow-up\",\"citation\":{\"page\":1,\"quote\":\"post-MI follow-up\",\"bounding_box\":null}},\"current_medications\":[{\"name\":\"clopidogrel\",\"dose\":\"75mg daily\",\"citation\":{\"page\":1,\"quote\":\"clopidogrel 75mg\",\"bounding_box\":null}},{\"name\":\"rosuvastatin\",\"dose\":\"20mg nightly\",\"citation\":{\"page\":1,\"quote\":\"rosuvastatin 20mg\",\"bounding_box\":null}}],\"allergies\":[{\"text\":\"codeine\",\"citation\":{\"page\":1,\"quote\":\"codeine\",\"bounding_box\":null}}],\"family_history\":[{\"text\":\"father: MI at 55\",\"citation\":{\"page\":1,\"quote\":\"father: MI at 55\",\"bounding_box\":null}},{\"text\":\"mother: type 2 diabetes\",\"citation\":{\"page\":1,\"quote\":\"mother: type 2 diabetes\",\"bounding_box\":null}},{\"text\":\"sister: hyperlipidemia\",\"citation\":{\"page\":1,\"quote\":\"sister: hyperlipidemia\",\"bounding_box\":null}}],\"citation\":{\"page\":1,\"quote\":\"Patient intake form\",\"bounding_box\":null}}",
+    "expect_success": true,
+    "expected_values": [
+        "clopidogrel",
+        "post-MI follow-up",
+        "father: MI at 55"
+    ],
+    "phi_tokens": [
+        "Halima Testafar"
+    ],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

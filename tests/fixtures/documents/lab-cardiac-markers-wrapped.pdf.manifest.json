@@ -1,0 +1,72 @@
+{
+  "file_name": "lab-cardiac-markers-wrapped.pdf",
+  "media_type": "application/pdf",
+  "doc_type": "lab_pdf",
+  "layout": "wrapped-table",
+  "description": "Serial high-sensitivity troponin, BNP, NT-proBNP and CK-MB in a six-column table whose long test names wrap onto a second line of their cell.",
+  "patient": {
+    "name": "Demo Rosalind Ng",
+    "birth_date": "1955-11-02",
+    "sex": "female",
+    "mrn": "SYN-0692-03"
+  },
+  "page_count": 1,
+  "has_text_layer": true,
+  "facts": [
+    {
+      "fact_type": "lab.result",
+      "label": "Troponin I, high sensitivity, 0 h",
+      "value": "18",
+      "unit": "ng/L",
+      "reference_range": "<=34",
+      "abnormal_flag": false,
+      "collection_date": "2026-09-05",
+      "page": 1,
+      "quote": "Troponin I, high sensitivity, 0 h 18 ng/L <=34"
+    },
+    {
+      "fact_type": "lab.result",
+      "label": "Troponin I, high sensitivity, 3 h",
+      "value": "61",
+      "unit": "ng/L",
+      "reference_range": "<=34",
+      "abnormal_flag": true,
+      "collection_date": "2026-09-05",
+      "page": 1,
+      "quote": "Troponin I, high sensitivity, 3 h 61 ng/L <=34 H"
+    },
+    {
+      "fact_type": "lab.result",
+      "label": "BNP",
+      "value": "412",
+      "unit": "pg/mL",
+      "reference_range": "<100",
+      "abnormal_flag": true,
+      "collection_date": "2026-09-05",
+      "page": 1,
+      "quote": "BNP 412 pg/mL <100 H"
+    },
+    {
+      "fact_type": "lab.result",
+      "label": "NT-proBNP",
+      "value": "2350",
+      "unit": "pg/mL",
+      "reference_range": "<900",
+      "abnormal_flag": true,
+      "collection_date": "2026-09-05",
+      "page": 1,
+      "quote": "NT-proBNP 2350 pg/mL <900 H"
+    },
+    {
+      "fact_type": "lab.result",
+      "label": "CK-MB",
+      "value": "7.9",
+      "unit": "ng/mL",
+      "reference_range": "<=6.6",
+      "abnormal_flag": true,
+      "collection_date": "2026-09-05",
+      "page": 1,
+      "quote": "CK-MB 7.9 ng/mL <=6.6 H"
+    }
+  ]
+}

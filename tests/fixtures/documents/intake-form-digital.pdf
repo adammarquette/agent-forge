@@ -1,0 +1,52 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Length 1154 >>
+stream
+BT /F2 14 Tf 1 0 0 1 54 740 Tm (AgentForge Synthetic Cardiology Intake Form) Tj ET
+BT /F1 9 Tf 1 0 0 1 54 722 Tm (TEST FIXTURE - synthetic data, not a real patient) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 696 Tm (Name: Demo Eleanor Castellano) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 680 Tm (Date of birth: 1952-03-14) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 664 Tm (Sex: Female) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 648 Tm (MRN: SYN-0692-01) Tj ET
+BT /F2 11 Tf 1 0 0 1 54 622 Tm (Chief concern:) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 606 Tm (Palpitations and a racing heartbeat for two weeks) Tj ET
+BT /F2 11 Tf 1 0 0 1 54 580 Tm (Current medications:) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 564 Tm (Metoprolol succinate 50 mg daily) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 548 Tm (Apixaban 5 mg twice daily) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 532 Tm (Atorvastatin 40 mg nightly) Tj ET
+BT /F2 11 Tf 1 0 0 1 54 506 Tm (Allergies:) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 490 Tm (Sulfa drugs \(hives\)) Tj ET
+BT /F2 11 Tf 1 0 0 1 54 464 Tm (Family history:) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 448 Tm (Brother - coronary artery disease at 48) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 422 Tm (Signature: ____________________    Date: 2026-08-28) Tj ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000348 00000 n 
+0000000450 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+1655
+%%EOF

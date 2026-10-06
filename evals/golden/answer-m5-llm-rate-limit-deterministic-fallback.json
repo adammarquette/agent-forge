@@ -1,0 +1,30 @@
+{
+    "id": "answer-m5-llm-rate-limit-deterministic-fallback",
+    "guards": "The same fallback with both ends empty: the 429 arrives before any tool has run, so there is no source data to fall back ON. That is where a silent failure is easiest to ship, because an empty answer and a successfully-degraded answer differ by one string. Guards that the turn still says plainly that nothing could be retrieved, and that the provider's own error reaches the log rather than being swallowed by the degradation path.",
+    "category": "answer",
+    "expect_success": false,
+    "answer": {
+        "metric": "M5",
+        "intent": "REQUIREMENTS.md §13.1's 'LLM rate-limit / quota' row, in its worst shape: the 429 arrives on the first call, so no tool has run and the fallback has no source data to fall back ON. The turn must still say so plainly rather than return a blank - the both-ends-empty case is where a silent failure is easiest to ship.",
+        "site": "default",
+        "patient_id": "syn-patient-victor",
+        "chart": {
+            "display_name": "Victor Testpatient",
+            "problems": [{ "id": "syn-victor-cond-1", "display": "Atrial fibrillation" }],
+            "medications": [{ "id": "syn-victor-med-1", "display": "Warfarin", "dosage": "5 mg daily" }],
+            "labs": []
+        },
+        "model_script": [
+            { "fails_with": "rate_limit" }
+        ],
+        "forbidden_answer_fragments": ["Warfarin", "Atrial fibrillation"],
+        "expected_log_fragments": [
+            "Degraded to deterministic fallback: Synthetic provider rate limit: HTTP 429 Too Many Requests, retries exhausted."
+        ]
+    },
+    "expected_values": [
+        "Summary unavailable right now, and no data could be retrieved this turn either. Please try again."
+    ],
+    "phi_tokens": ["Warfarin", "Atrial fibrillation"],
+    "rubrics": ["transparent_degradation", "no_phi_in_logs"]
+}

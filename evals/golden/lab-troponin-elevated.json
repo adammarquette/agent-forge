@@ -1,0 +1,21 @@
+{
+    "id": "lab-troponin-elevated",
+    "guards": "The paired positive troponin. With lab-troponin-normal - and with both flags asserted - it pins that the abnormal flag tracks the report rather than the analyte, and that a sub-unit decimal reaches canonical JSON unrounded; value is carried as text for exactly this reason.",
+    "category": "extraction",
+    "doc_type": "lab_pdf",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"tests\":[{\"test_name\":\"Troponin I\",\"value\":\"0.85\",\"unit\":\"ng/mL\",\"reference_range\":\"<0.04\",\"collection_date\":\"2026-06-15\",\"abnormal_flag\":true,\"citation\":{\"page\":1,\"quote\":\"Troponin I 0.85 (H) ng/mL\",\"bounding_box\":null}}]}",
+    "expect_success": true,
+    "expected_values": [
+        "Troponin I",
+        "0.85",
+        "\"abnormal_flag\":true"
+    ],
+    "phi_tokens": ["Troponin I 0.85 (H) ng/mL"],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

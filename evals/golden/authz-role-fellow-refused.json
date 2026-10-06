@@ -1,0 +1,27 @@
+{
+    "id": "authz-role-fellow-refused",
+    "guards": "A cardiology fellow can never be an appointment provider participant, so the rule that shipped refuses them. The case exists because ARCHITECTURE.md 5.6 still describes a tiered role model that was pre-empted; this pins what actually shipped, so re-introducing a role tier cannot pass unnoticed. Its clinic-day count assertion also shows the gate read the whole day rather than short-circuiting.",
+    "category": "authorization",
+    "expect_success": false,
+    "authorization": {
+        "vector": "role_confusion",
+        "requester_role": "cardiology fellow (REQUIREMENTS.md 5.2) - can never be an appointment provider participant, so refused at launch",
+        "requester_identity": "syn-fellow-okonkwo",
+        "site": "default",
+        "session_patient_id": "syn-patient-alpha",
+        "clinic_day_appointments": [
+            { "patient_id": "syn-patient-alpha", "provider_reference": "Practitioner/syn-attending-nakamura", "status": "booked" },
+            { "patient_id": "syn-patient-charlie", "provider_reference": "Person/syn-attending-nakamura", "status": "booked" },
+            { "patient_id": "syn-patient-bravo", "provider_reference": "Practitioner/syn-attending-varga", "status": "booked" }
+        ],
+        "tool_call": { "tool_name": "get_patient_summary", "arguments_json": "{}" },
+        "forbidden_values": ["Alpha Testpatient", "Warfarin", "Atrial fibrillation", "Penicillin"],
+        "expected_log_fragments": [
+            "ACCESS AUDIT: clinician=syn-fellow-okonkwo REFUSED patient=syn-patient-alpha via tool=get_patient_summary",
+            "reason=no-clinical-relationship-to-patient (FR-AUTH-2)",
+            "clinicDayAppointments=3"
+        ]
+    },
+    "phi_tokens": ["Warfarin", "Atrial fibrillation", "Penicillin"],
+    "rubrics": ["authorization_outcome", "no_unauthorized_disclosure", "attempt_logged", "safe_refusal", "no_phi_in_logs"]
+}

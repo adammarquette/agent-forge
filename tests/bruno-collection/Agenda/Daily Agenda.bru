@@ -1,0 +1,36 @@
+meta {
+  name: Daily Agenda (/agenda)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/agenda
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+vars:post-response {
+  firstAgendaPatientId: res.body && res.body.rows && res.body.rows.length ? res.body.rows[0].patientId : ''
+}
+
+assert {
+  res.status: eq 200
+  res.body.rows: isArray
+}
+
+docs {
+  UC-6 (REQUIREMENTS.md): the day's not-yet-seen roster for the launched clinician, one safety-flagged
+  summary row per patient (ARCHITECTURE.md §19). Requires an AgendaSessionContext, which only a real
+  `/agenda/launch` browser login can create - see this collection's README ("Getting a session
+  cookie") for how to obtain one and put it in the `local` environment's `sessionCookie` variable.
+  With no session, AgendaEndpoints.HandleGetAgendaAsync returns 401 before it ever calls OpenEMR, so
+  the assertions above fail closed rather than reporting green with nothing behind them.
+
+  Captures the roster's first patientId into `firstAgendaPatientId` (empty string if the roster came
+  back empty, e.g. a 401 body or a day with nothing left) for Select Patient.bru, run next.
+}

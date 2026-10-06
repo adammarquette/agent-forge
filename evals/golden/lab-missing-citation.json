@@ -1,0 +1,10 @@
+{
+  "id": "lab-missing-citation",
+  "guards": "The grounding invariant on the lab path: a result with no citation at all is refused, so no value enters the record without a source. The lab-side twin of intake-med-missing-citation.",
+  "category": "extraction",
+  "doc_type": "lab_pdf",
+  "media_type": "application/pdf",
+  "stub_model_response": "{\"tests\":[{\"test_name\":\"INR\",\"value\":\"2.5\"}]}",
+  "expect_success": false,
+  "rubrics": ["schema_valid", "safe_refusal", "no_phi_in_logs"]
+}

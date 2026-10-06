@@ -1,0 +1,95 @@
+{
+  "file_name": "synthetic-intake-form.png",
+  "media_type": "image/png",
+  "doc_type": "intake_form",
+  "layout": "image",
+  "description": "The hermetic tier's original intake form: a clean 96 dpi PNG with no text layer, upper case as a front-desk form prints.",
+  "patient": {
+    "name": "Demo Harold Whitfield",
+    "birth_date": "1948-07-22",
+    "sex": "male",
+    "mrn": "SYN-0701"
+  },
+  "page_count": 1,
+  "has_text_layer": false,
+  "facts": [
+    {
+      "fact_type": "intake.demographics",
+      "label": "demographics",
+      "value": "DEMO HAROLD WHITFIELD",
+      "page": 1,
+      "quote": "NAME: DEMO HAROLD WHITFIELD",
+      "region": [
+        0.0784313725490196,
+        0.13068181818181818,
+        0.3946078431372549,
+        0.013257575757575758
+      ]
+    },
+    {
+      "fact_type": "intake.chief_concern",
+      "label": "chief_concern",
+      "value": "CHEST PRESSURE WHEN CLIMBING STAIRS",
+      "page": 1,
+      "quote": "CHEST PRESSURE WHEN CLIMBING STAIRS",
+      "region": [
+        0.29901960784313725,
+        0.21401515151515152,
+        0.5122549019607843,
+        0.013257575757575758
+      ]
+    },
+    {
+      "fact_type": "intake.medication",
+      "label": "SPIRONOLACTONE",
+      "value": "25 MG DAILY",
+      "page": 1,
+      "quote": "SPIRONOLACTONE 25 MG DAILY",
+      "region": [
+        0.13725490196078433,
+        0.2765151515151515,
+        0.3799019607843137,
+        0.013257575757575758
+      ]
+    },
+    {
+      "fact_type": "intake.medication",
+      "label": "LISINOPRIL",
+      "value": "20 MG DAILY",
+      "page": 1,
+      "quote": "LISINOPRIL 20 MG DAILY",
+      "region": [
+        0.13725490196078433,
+        0.29734848484848486,
+        0.32107843137254904,
+        0.013257575757575758
+      ]
+    },
+    {
+      "fact_type": "intake.allergy",
+      "label": "allergy",
+      "value": "PENICILLIN (RASH)",
+      "page": 1,
+      "quote": "PENICILLIN (RASH)",
+      "region": [
+        0.24019607843137256,
+        0.3390151515151515,
+        0.24754901960784315,
+        0.013257575757575758
+      ]
+    },
+    {
+      "fact_type": "intake.family_history",
+      "label": "family_history",
+      "value": "FATHER - MYOCARDIAL INFARCTION AT 52",
+      "page": 1,
+      "quote": "FATHER - MYOCARDIAL INFARCTION AT 52",
+      "region": [
+        0.3137254901960784,
+        0.35984848484848486,
+        0.5269607843137255,
+        0.013257575757575758
+      ]
+    }
+  ]
+}

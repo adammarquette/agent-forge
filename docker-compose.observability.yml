@@ -1,0 +1,138 @@
+# -----------------------------------------------------------------------------
+# Observability INSIDE the main compose project, so Prometheus/Loki/Tempo/Grafana share its network and can
+# reach the sidecar. Use this instead of observability/docker-compose.yml whenever the sidecar runs
+# under `--profile copilot`. NOTE the sidecar is reached at `reverse-proxy:${SIDECAR_PORT:-8081}`, not by its
+# own service name: it runs in the proxy's network namespace and has none.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.observability.yml --profile copilot up -d
+#
+# Why it exists: observability/docker-compose.yml is a SEPARATE compose project, so it lands on its own
+# network, and its prometheus.yml scrapes host.docker.internal:5113 - a sidecar run on the host via
+# `dotnet run`. Against a containerized sidecar that target is dead and every dashboard panel is blank.
+# This overlay fixes both halves:
+#   - Prometheus is BUILT from observability/prometheus/Dockerfile rather than pulled stock, so its
+#     entrypoint renders the target from SIDECAR_TARGET: `reverse-proxy:${SIDECAR_PORT:-8081}` - the
+#     sidecar runs in the proxy's network namespace, so that address IS its Kestrel (,
+#     DEPLOYMENT.md §2). Rendering it is why moving SIDECAR_PORT moves the scrape with it instead of
+#     leaving a dead target behind a green /ready.
+#   - agent-forge-api gets Observability__LokiOtlpEndpoint, so the CONTAINER ships logs to Loki
+#     (compose sets no such variable; only appsettings.Development.json does, and that points at
+#     localhost:3100, which inside a container is the container itself) - and
+#     Observability__TraceOtlpEndpoint, so it ships spans to Tempo, for the same reason.
+#
+# Grafana's provisioned datasources already address `prometheus:9090` / `loki:3100` / `tempo:3200` by service name,
+# so one shared network is all they need.
+#
+# TRUST BOUNDARY: sharing that network is not free. Under observability/docker-compose.yml these four are
+# their own compose project and Grafana can reach Prometheus, Loki and Tempo and nothing else. Here it is L3-adjacent
+# to postgres, mysql, openemr and the sidecar - and adding a data source and querying it is precisely what
+# Grafana is for, so its login is the only thing between :3000 and the databases. Hence both of the below:
+#   - all four publish on 127.0.0.1, so they are reachable from this host and not from the network it is on;
+#   - Grafana's admin credential is a passthrough, so it can be changed without editing this file.
+# See DEPLOYMENT.md § "Observability: three wirings".
+#
+# reference: DEPLOYMENT.md §1, #417
+# -----------------------------------------------------------------------------
+
+services:
+  agent-forge-api:
+    environment:
+      Observability__LokiOtlpEndpoint: http://loki:3100/otlp/v1/logs
+      # Spans to Tempo, scrubbed of identifiers by SpanPhiScrubber before export. Fail-open like
+      # the Loki endpoint: without Tempo up, spans are dropped and nothing else changes.
+      Observability__TraceOtlpEndpoint: http://tempo:4318/v1/traces
+      # The third dependency NFR-HEALTH-1 names; /ready also checks the vector index,
+      # which docker-compose.yml already configures. Set HERE and nowhere else in compose, for the
+      # same reason as the Loki endpoint above: this is the only wiring in which a CONTAINERIZED
+      # sidecar can reach Prometheus at all, by service name on the shared network. Unset - the
+      # base stack, which runs no Prometheus - ObservabilityHealthCheck reports Degraded, which
+      # ASP.NET Core maps to HTTP 200: honest about never having contacted it, and deliberately
+      # not a 503 (NFR-REL-2, ARCHITECTURE.md D17). The consequence is that
+      # `/ready` reads 200/Degraded rather than 200/Healthy until this file is in the bring-up.
+      Observability__PrometheusHealthUrl: http://prometheus:9090/-/healthy
+
+  prometheus:
+    profiles: [copilot]
+    # THE FIRST-PARTY IMAGE, NOT STOCK `prom/prometheus`, AND THAT IS WHAT MAKES ${SIDECAR_PORT} REACH
+    # THE SCRAPE. Prometheus does no environment substitution of its own, so a static config
+    # bind-mounted into the stock image carries a LITERAL port - and SIDECAR_PORT then silently walks
+    # away from it. Kestrel and nginx move together, Prometheus keeps scraping the old number, the
+    # target is down and every dashboard panel is blank - while /ready still reports Healthy, because
+    # Observability__PrometheusHealthUrl probes prometheus:9090/-/healthy and never looks at the scrape.
+    # This image renders SIDECAR_TARGET into the config at start and REFUSES TO START when the
+    # substitution did not place it, so the fail-closed guard that already covered the deployed tier
+    # now covers this one too. `up --build` after editing the template; `PROMETHEUS_IMAGE` runs a
+    # published `prometheus-sha-<12>` instead. reference: DEPLOYMENT.md §1, a separate change
+    image: ${PROMETHEUS_IMAGE:-agent-forge-prometheus:local}
+    build:
+      context: .
+      dockerfile: observability/prometheus/Dockerfile
+    container_name: agentforge-prometheus
+    environment:
+      # The only place SIDECAR_PORT reaches Prometheus. `reverse-proxy` because the sidecar has no DNS
+      # name of its own - it runs in the proxy's network namespace (DEPLOYMENT.md §2) - and this port
+      # because that namespace's Kestrel is wherever SIDECAR_PORT put it. It is Kestrel directly, not
+      # nginx, so metrics_path stays the unprefixed /metrics.
+      SIDECAR_TARGET: reverse-proxy:${SIDECAR_PORT:-8081}
+    volumes:
+      # The scrape config is deliberately NOT mounted here any more: the image COPYs it as a template
+      # and the entrypoint WRITES the rendered result to /etc/prometheus/prometheus.yml, so a
+      # read-only mount at that path would make the render fail. The alert rules carry no address, so
+      # they stay a mount and stay editable without a rebuild.
+      - ./observability/alerts/agentforge-alerts.yml:/etc/prometheus/alerts/agentforge-alerts.yml:ro
+    ports:
+      - "127.0.0.1:9090:9090"
+    restart: unless-stopped
+
+  loki:
+    profiles: [copilot]
+    image: grafana/loki:3.7.8
+    container_name: agentforge-loki
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./observability/loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+      # Loki's default storage lives under /loki; without a durable mount every ingested log is lost
+      # on restart. reference: observability/README.md
+      - loki-data:/loki
+    ports:
+      - "127.0.0.1:3100:3100"
+    restart: unless-stopped
+
+  tempo:
+    profiles: [copilot]
+    image: grafana/tempo:2.10.8
+    container_name: agentforge-tempo
+    command: -config.file=/etc/tempo/tempo.yaml
+    volumes:
+      - ./observability/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      # Blocks and WAL, so traces survive a restart. A fresh named volume copies the image's tempo-owned
+      # /var/tempo, so the stock uid 10001 can write it here; Railway's root-owned mount is why the
+      # deployed image runs as root instead. reference: observability/README.md
+      - tempo-data:/var/tempo
+    ports:
+      # Query API only: the sidecar pushes over the shared network, so OTLP needs no host port here.
+      - "127.0.0.1:3200:3200"
+    restart: unless-stopped
+
+  grafana:
+    profiles: [copilot]
+    image: grafana/grafana:12.4.11
+    container_name: agentforge-grafana
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    environment:
+      # Never baked into the image; the login is what guards the shared network described above.
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:3000:3000"
+    restart: unless-stopped
+
+volumes:
+  loki-data:
+  tempo-data:

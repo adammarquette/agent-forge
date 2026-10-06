@@ -1,0 +1,48 @@
+<Project>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!--
+    THE DEPENDENCY VULNERABILITY GATE. These three properties are the whole of it, and before
+    a separate change none of them was written down: the audit ran on SDK defaults, so it gated by
+    inheritance rather than by declaration. It worked - but an SDK upgrade could have moved the
+    severity floor or narrowed the transitive scope with no diff in this repo and no failing
+    build to announce it. Declared here at the values that were already in effect (measured with
+    `dotnet msbuild src/AgentForge.Api/AgentForge.Api.csproj -getProperty:NuGetAuditMode`), so
+    changing the gate now takes an edit somebody has to review.
+
+    NuGetAudit      restore consults nuget.org's advisory data and warns on a match.
+    NuGetAuditMode  `all` - transitive packages too. Every advisory this repo has actually hit
+                    came in transitively (Microsoft.OpenApi via AspNetCore.OpenApi,
+                    System.Security.Cryptography.Xml via EntityFrameworkCore.Design), so `direct`
+                    would have caught none of them. See the pins in Directory.Packages.props.
+    NuGetAuditLevel `low` - the floor is the lowest severity NuGet publishes, i.e. report
+                    everything. This is the only value that
+                    needs no argument about which advisories are worth knowing about: raising it
+                    is a decision to be blind to a class, and it would be reviewable here.
+
+    THIS IS ONLY HALF THE GATE. An advisory is a WARNING; `TreatWarningsAsErrors` above is what
+    turns NU1903 into a red build. Either half alone is a no-op. So never silence an advisory with a
+    NoWarn, a WarningsNotAsErrors, NoWarn metadata on a PackageReference or a <NuGetAuditSuppress>
+    item, and never redeclare these properties - here, in a second PropertyGroup below, or in a nested
+    Directory.Build.props, which MSBuild takes INSTEAD of this file for everything beneath it. Fix an
+    advisory by bumping or pinning the package in Directory.Packages.props. Edit the one declaration
+    above; `dotnet msbuild <project> -getProperty:NuGetAuditMode` reads back what a project evaluates to.
+    reference: CONVENTIONS.md §2
+  -->
+  <PropertyGroup>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>low</NuGetAuditLevel>
+  </PropertyGroup>
+
+</Project>

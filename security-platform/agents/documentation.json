@@ -1,0 +1,25 @@
+{
+  "schema_version": "1",
+  "agent": "documentation",
+  "display_name": "Documentation",
+  "status": "defined, not built",
+  "role": "Turns a confirmed exploit into a structured, reproducible vulnerability report and a regression case; de-duplicates before writing; holds criticals for human approval.",
+  "inputs": ["confirmed_exploit"],
+  "outputs": ["vulnerability_report", "regression case (attack-case schema, provenance regression_from_report)", "error"],
+  "trust_level": "write-gated: the only agent that writes exploit records, and it cannot publish a critical on its own",
+  "may_call_target": false,
+  "prompt": { "file": "prompts/documentation.md", "version": "1.0.0", "sha256": "8996fbe8994cbcf62d54ed224d744126cf5c471e27917f1d034ac08341bc4e56", "status": "proposed" },
+  "model": {
+    "status": "proposed, awaiting maintainer confirmation",
+    "proposal": "A frontier model, family and id to be confirmed by the maintainer; not the Red Team's model.",
+    "reason": "SECURITY-PLATFORM.md (cost and scale posture) reserves frontier models for the Judge and Documentation agents: the report must be usable cold by a senior engineer (FR-DOCAGENT-W3-3). One call per confirmed exploit keeps the cost low.",
+    "provider": null,
+    "model_id": null
+  },
+  "coordinates_with": {
+    "judge": "receives confirmed_exploit",
+    "orchestrator": "writes to the exploit store the Orchestrator reads",
+    "human_gate": "hands off every critical before publication"
+  },
+  "traces_to": ["FR-DOCAGENT-W3-1", "FR-DOCAGENT-W3-2", "FR-DOCAGENT-W3-3", "FR-REGR-W3-1", "UC-W3-3", "UC-W3-4"]
+}

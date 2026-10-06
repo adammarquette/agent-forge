@@ -1,0 +1,15 @@
+# Tempo datasource for a DEPLOYED sidecar - see deployed/datasource.yml for why the URL is a variable.
+#
+# PROVISIONED ONLY WHERE TEMPO IS DEPLOYED, exactly as deployed/loki-datasource.yml is for Loki:
+# the image's entrypoint deletes this file whenever TEMPO_URL is unset or empty, and the image sets no
+# default for it. .railway/railway.ts sets TEMPO_URL only where it declares a `tempo` service - staging,
+# once its pin is filled; never production. No dashboard panel reads Tempo, so there is no panel to swap:
+# traces are read in Explore, and an environment without Tempo simply has no Tempo datasource.
+apiVersion: 1
+datasources:
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: ${TEMPO_URL}
+    editable: false

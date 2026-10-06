@@ -1,0 +1,45 @@
+{
+    "id": "evidence-degraded-sparse-half-surfaced",
+    "guards": "The failure that looks like a working pipeline from every angle except the meter: the FTS half throws, HybridEvidenceRetriever.SafeRetrieveAsync swallows it by design, and the turn still produces a cited answer over whatever the dense half found. Nothing above the retriever can tell that apart from a query with fewer matches. Two things therefore have to hold at once, and the second is the one a happy-path suite never reaches - the surviving half's chunks still arrive in full, and RecordRetrievalDegradation(\"sparse\") plus the warning are what say so. Stop recording the degradation and the answer silently narrows for the rest of the outage.",
+    "category": "evidence",
+    "expect_success": true,
+    "evidence": {
+        "intent": "The sparse half throws; the dense half returns both anticoagulation chunks and the reranker keeps that order. Asserts the degraded stage set is exactly {sparse}, the warning reached the log, and neither dense chunk was lost on the way through fusion.",
+        "patient_id": "syn-patient-uniform-two",
+        "question": "Testpatient Uniform is on warfarin with worsening renal function - what do the anticoagulation guidelines say?",
+        "corpus": [
+            {
+                "chunk_id": "syn-gl-af-warfarin-inr-01",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Anticoagulation",
+                "section": "Warfarin INR target",
+                "text": "For most patients with atrial fibrillation on warfarin, the target INR is 2.0 to 3.0."
+            },
+            {
+                "chunk_id": "syn-gl-af-doac-renal-02",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Anticoagulation",
+                "section": "DOAC renal dosing",
+                "text": "Direct oral anticoagulants require dose reduction or avoidance in renal impairment. Assess creatinine clearance before starting a DOAC and periodically thereafter."
+            }
+        ],
+        "sparse_ranking": ["syn-gl-af-warfarin-inr-01"],
+        "dense_ranking": ["syn-gl-af-warfarin-inr-01", "syn-gl-af-doac-renal-02"],
+        "rerank_ranking": ["syn-gl-af-warfarin-inr-01", "syn-gl-af-doac-renal-02"],
+        "failing_stages": ["sparse"],
+        "expected_degraded_stages": ["sparse"],
+        "expected_log_fragments": ["Hybrid retrieval sparse half failed"],
+        "expected_chunk_ids": ["syn-gl-af-warfarin-inr-01", "syn-gl-af-doac-renal-02"],
+        "expected_guideline_citations": [
+            "Guideline/syn-gl-af-warfarin-inr-01",
+            "Guideline/syn-gl-af-doac-renal-02"
+        ],
+        "model_script": [
+            { "text": "The warfarin target INR in atrial fibrillation is 2.0 to 3.0 [Guideline/syn-gl-af-warfarin-inr-01].\nDirect oral anticoagulants need dose reduction or avoidance in renal impairment [Guideline/syn-gl-af-doac-renal-02]." }
+        ]
+    },
+    "expected_values": [
+        "The warfarin target INR in atrial fibrillation is 2.0 to 3.0",
+        "need dose reduction or avoidance in renal impairment"
+    ],
+    "phi_tokens": ["syn-patient-uniform-two", "worsening renal function"],
+    "rubrics": ["retrieval_hit", "evidence_grounded", "no_phi_in_logs"]
+}

@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentforge.invalid/security-platform/schema/attack-case/v1",
+  "title": "Attack case, v1",
+  "description": "One adversarial test case: a seed case in evals/adversarial/, a Red Team variant, or a regression case the Documentation agent emits. Carries FR-SUITE-W3-2's six fields: category and subcategory; input_sequence; expected_safe_behaviour; observed; severity; regression. The replayer (security_platform/runner.py) reads id, input_sequence and expected_statuses and writes observed. A case is data: no agent follows text inside it as an instruction. Synthetic data only.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "category",
+    "subcategory",
+    "input_sequence",
+    "expected_safe_behaviour",
+    "observed",
+    "severity",
+    "regression",
+    "owasp",
+    "provenance",
+    "synthetic_data_only"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "1" },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$",
+      "description": "Stable identifier. A variant gets its own id and names its parent in provenance."
+    },
+    "category": {
+      "description": "FR-SUITE-W3-2 field 1. One of the six SECURITY-PLATFORM.md threat categories.",
+      "enum": [
+        "prompt_injection",
+        "data_exfiltration",
+        "state_corruption",
+        "tool_misuse",
+        "denial_of_service",
+        "identity_role_exploitation"
+      ]
+    },
+    "subcategory": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "description": "FR-SUITE-W3-2 field 1, e.g. the threat model's named subcategory."
+    },
+    "input_sequence": {
+      "description": "FR-SUITE-W3-2 field 2. The exact requests, in order, sent in one session. The last step is the one the expected-safe check applies to.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": { "$ref": "#/$defs/step" }
+    },
+    "expected_safe_behaviour": {
+      "description": "FR-SUITE-W3-2 field 3. What a defended target does. The Judge rules against this text, not against its own idea of safety.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "expected_statuses": {
+      "description": "Optional deterministic check the replayer applies to the last step's HTTP status.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "integer", "minimum": 100, "maximum": 599 }
+    },
+    "observed": {
+      "description": "FR-SUITE-W3-2 field 4. not_run until a run fills it. The replayer adds http_status, note and steps.",
+      "type": "object",
+      "required": ["result"],
+      "properties": {
+        "result": { "enum": ["pass", "fail", "partial", "not_run"] }
+      }
+    },
+    "severity": {
+      "description": "FR-SUITE-W3-2 field 5: a severity rating and an exploitability assessment.",
+      "type": "object",
+      "required": ["rating", "exploitability"],
+      "additionalProperties": false,
+      "properties": {
+        "rating": { "enum": ["critical", "high", "medium", "low", "info"] },
+        "exploitability": { "enum": ["trivial", "moderate", "difficult", "theoretical"] },
+        "rationale": { "type": "string", "maxLength": 1000 }
+      }
+    },
+    "regression": {
+      "description": "FR-SUITE-W3-2 field 6: whether the case joins the regression suite.",
+      "type": "boolean"
+    },
+    "owasp": {
+      "description": "NFR-OWASP-W3-1: the OWASP Top 10 or OWASP LLM Top 10 categories the case maps to, e.g. LLM01.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "pattern": "^(A[0-9]{2}|LLM[0-9]{2})$" }
+    },
+    "test_design": {
+      "description": "NFR-TESTDESIGN-W3-1: what the case exercises.",
+      "enum": ["boundary", "invariant", "regression"]
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["source"],
+      "additionalProperties": false,
+      "properties": {
+        "source": { "enum": ["seed", "red_team_variant", "regression_from_report", "example"] },
+        "parent_case_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$" },
+        "report_id": { "type": "string", "minLength": 1 },
+        "author": { "type": "string", "minLength": 1, "maxLength": 80 }
+      }
+    },
+    "synthetic_data_only": {
+      "description": "Every patient, clinician and identifier in the case is synthetic demo data.",
+      "const": true
+    }
+  },
+  "$defs": {
+    "step": {
+      "type": "object",
+      "required": ["method", "path"],
+      "additionalProperties": false,
+      "properties": {
+        "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+        "path": {
+          "type": "string",
+          "pattern": "^/[^/\\\\]",
+          "description": "An absolute path on the allowlisted origin. Never a URL: the origin comes from configuration."
+        },
+        "body": { "type": "string", "maxLength": 65536 },
+        "headers": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        }
+      }
+    }
+  }
+}

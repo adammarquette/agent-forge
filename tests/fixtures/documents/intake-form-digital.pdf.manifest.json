@@ -1,0 +1,66 @@
+{
+  "file_name": "intake-form-digital.pdf",
+  "media_type": "application/pdf",
+  "doc_type": "intake_form",
+  "layout": "clean",
+  "description": "An intake form filled in electronically, so it has a real text layer and each line is one run.",
+  "patient": {
+    "name": "Demo Eleanor Castellano",
+    "birth_date": "1952-03-14",
+    "sex": "female",
+    "mrn": "SYN-0692-01"
+  },
+  "page_count": 1,
+  "has_text_layer": true,
+  "facts": [
+    {
+      "fact_type": "intake.demographics",
+      "label": "demographics",
+      "value": "Demo Eleanor Castellano",
+      "page": 1,
+      "quote": "Name: Demo Eleanor Castellano"
+    },
+    {
+      "fact_type": "intake.chief_concern",
+      "label": "chief_concern",
+      "value": "Palpitations and a racing heartbeat for two weeks",
+      "page": 1,
+      "quote": "Palpitations and a racing heartbeat for two weeks"
+    },
+    {
+      "fact_type": "intake.medication",
+      "label": "Metoprolol succinate",
+      "value": "50 mg daily",
+      "page": 1,
+      "quote": "Metoprolol succinate 50 mg daily"
+    },
+    {
+      "fact_type": "intake.medication",
+      "label": "Apixaban",
+      "value": "5 mg twice daily",
+      "page": 1,
+      "quote": "Apixaban 5 mg twice daily"
+    },
+    {
+      "fact_type": "intake.medication",
+      "label": "Atorvastatin",
+      "value": "40 mg nightly",
+      "page": 1,
+      "quote": "Atorvastatin 40 mg nightly"
+    },
+    {
+      "fact_type": "intake.allergy",
+      "label": "allergy",
+      "value": "Sulfa drugs (hives)",
+      "page": 1,
+      "quote": "Sulfa drugs (hives)"
+    },
+    {
+      "fact_type": "intake.family_history",
+      "label": "family_history",
+      "value": "Brother - coronary artery disease at 48",
+      "page": 1,
+      "quote": "Brother - coronary artery disease at 48"
+    }
+  ]
+}

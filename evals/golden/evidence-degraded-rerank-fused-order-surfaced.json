@@ -1,0 +1,60 @@
+{
+    "id": "evidence-degraded-rerank-fused-order-surfaced",
+    "guards": "What \"degrades deterministically\" has to mean for the rerank stage, and the first case that pinned it: with the cross-encoder down the retriever must fall back to the RRF-fused order exactly, not to whichever half answered first. The fixture is built so the two differ - the dense half's top-ranked chunk fuses to last, because RRF rewards agreement across lists rather than depth in one - so replacing Fuse with a dense-first concatenation changes the retrieved order while every chunk is still present and every citation still resolves. It cannot see a sparse-first concatenation, which gives this fixture's fused order exactly, nor a merge on raw scores, which over fixture snippets that all score zero is that same concatenation; evidence-topk-degraded-rerank-fused-order-capped is built so both differ from RRF, and it is the case that catches them. Pairs with the sparse-half case: that one asserts the degradation was recorded, this one asserts what it degraded to.",
+    "category": "evidence",
+    "expect_success": true,
+    "evidence": {
+        "intent": "The reranker throws. Sparse ranks [warfarin-inr, acei-potassium] and dense ranks [doac-renal, warfarin-inr, acei-potassium], so the fused order is [warfarin-inr, acei-potassium, doac-renal] - the dense top-ranked chunk last, carried by one list alone. Asserts that exact order, the degraded stage set {rerank}, and the fallback warning in the log.",
+        "patient_id": "syn-patient-victor-two",
+        "question": "Testpatient Victor is on warfarin and lisinopril - summarise the monitoring the guidelines ask for.",
+        "corpus": [
+            {
+                "chunk_id": "syn-gl-af-warfarin-inr-01",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Anticoagulation",
+                "section": "Warfarin INR target",
+                "text": "For most patients with atrial fibrillation on warfarin, the target INR is 2.0 to 3.0."
+            },
+            {
+                "chunk_id": "syn-gl-gdmt-acei-potassium-03",
+                "document_id": "Synthetic Cardiology Guidance 2026 - GDMT",
+                "section": "ACEi/ARB potassium and creatinine",
+                "text": "When starting or up-titrating an ACE inhibitor or ARB, monitor serum potassium and creatinine within one to two weeks."
+            },
+            {
+                "chunk_id": "syn-gl-af-doac-renal-02",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Anticoagulation",
+                "section": "DOAC renal dosing",
+                "text": "Direct oral anticoagulants require dose reduction or avoidance in renal impairment."
+            }
+        ],
+        "sparse_ranking": ["syn-gl-af-warfarin-inr-01", "syn-gl-gdmt-acei-potassium-03"],
+        "dense_ranking": ["syn-gl-af-doac-renal-02", "syn-gl-af-warfarin-inr-01", "syn-gl-gdmt-acei-potassium-03"],
+        "failing_stages": ["rerank"],
+        "expected_degraded_stages": ["rerank"],
+        "expected_log_fragments": ["Reranker unavailable"],
+        "expected_chunk_ids": [
+            "syn-gl-af-warfarin-inr-01",
+            "syn-gl-gdmt-acei-potassium-03",
+            "syn-gl-af-doac-renal-02"
+        ],
+        "expected_top_chunk_id": "syn-gl-af-warfarin-inr-01",
+        "expected_chunk_order": [
+            "syn-gl-af-warfarin-inr-01",
+            "syn-gl-gdmt-acei-potassium-03",
+            "syn-gl-af-doac-renal-02"
+        ],
+        "expected_guideline_citations": [
+            "Guideline/syn-gl-af-warfarin-inr-01",
+            "Guideline/syn-gl-gdmt-acei-potassium-03"
+        ],
+        "model_script": [
+            { "text": "Target an INR of 2.0 to 3.0 on warfarin for atrial fibrillation [Guideline/syn-gl-af-warfarin-inr-01].\nCheck serum potassium and creatinine one to two weeks after starting or up-titrating the ACE inhibitor [Guideline/syn-gl-gdmt-acei-potassium-03]." }
+        ]
+    },
+    "expected_values": [
+        "Target an INR of 2.0 to 3.0 on warfarin",
+        "Check serum potassium and creatinine one to two weeks after"
+    ],
+    "phi_tokens": ["syn-patient-victor-two", "lisinopril"],
+    "rubrics": ["retrieval_hit", "evidence_grounded", "no_phi_in_logs"]
+}

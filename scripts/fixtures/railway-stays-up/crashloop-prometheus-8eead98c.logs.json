@@ -1,0 +1,736 @@
+{
+  "data": {
+    "deploymentLogs": [
+      {
+        "message": "Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/cec052f8-6b22-4aba-bd9f-cb0f60d3321b/vol_0kpgs0xqwpa8eypm",
+        "severity": "info",
+        "timestamp": "2026-09-23T19:52:26.533541467Z"
+      },
+      {
+        "message": "Starting Container",
+        "severity": "info",
+        "timestamp": "2026-09-23T19:52:26.533590700Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:26.479Z level=INFO source=main.go:636 msg=\"No time or size retention was set so using the default time retention\" duration=15d",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195015972Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:26.479Z level=INFO source=main.go:683 msg=\"Starting Prometheus Server\" mode=server version=\"(version=3.1.0, branch=HEAD, revision=7086161a93b262aa0949dbf2aba15a5a7b13e0a3)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195019282Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:26.479Z level=INFO source=main.go:688 msg=\"operational information\" build_context=\"(go=go1.23.4, platform=linux/amd64, user=root@74c225e2044f, date=20250102-13:52:43, tags=netgo,builtinassets,stringlabels)\" host_details=\"(Linux 6.18.15+deb13-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.18.15-1~bpo13+1 (2026-03-12) x86_64 9127cf5b3d55 (none))\" fd_limits=\"(soft=1048576, hard=1048576)\" vm_limits=\"(soft=unlimited, hard=unlimited)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195021762Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:26.479Z level=INFO source=main.go:764 msg=\"Updating GOMAXPROCS=24: determined from CPU quota\" component=automaxprocs",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195024542Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:26.481Z level=ERROR source=query_logger.go:113 msg=\"Error opening query log file\" component=activeQueryTracker file=/prometheus/queries.active err=\"open /prometheus/queries.active: permission denied\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195027321Z"
+      },
+      {
+        "message": "panic: Unable to create mmap-ed active query log",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195029761Z"
+      },
+      {
+        "message": "",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195032671Z"
+      },
+      {
+        "message": "goroutine 1 [running]:",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195035451Z"
+      },
+      {
+        "message": "github.com/prometheus/prometheus/promql.NewActiveQueryTracker({0x7ffca8b74b1d, 0xb}, 0x14, 0xc000c89ef0)",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195037681Z"
+      },
+      {
+        "message": "\t/app/promql/query_logger.go:145 +0x345",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195040141Z"
+      },
+      {
+        "message": "main.main()",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195042451Z"
+      },
+      {
+        "message": "\t/app/cmd/prometheus/main.go:791 +0x822c",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195045461Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:27.162Z level=INFO source=main.go:636 msg=\"No time or size retention was set so using the default time retention\" duration=15d",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195048031Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:27.162Z level=INFO source=main.go:683 msg=\"Starting Prometheus Server\" mode=server version=\"(version=3.1.0, branch=HEAD, revision=7086161a93b262aa0949dbf2aba15a5a7b13e0a3)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195427282Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:27.162Z level=INFO source=main.go:688 msg=\"operational information\" build_context=\"(go=go1.23.4, platform=linux/amd64, user=root@74c225e2044f, date=20250102-13:52:43, tags=netgo,builtinassets,stringlabels)\" host_details=\"(Linux 6.18.15+deb13-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.18.15-1~bpo13+1 (2026-03-12) x86_64 9127cf5b3d55 (none))\" fd_limits=\"(soft=1048576, hard=1048576)\" vm_limits=\"(soft=unlimited, hard=unlimited)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195435612Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:27.163Z level=INFO source=main.go:764 msg=\"Updating GOMAXPROCS=24: determined from CPU quota\" component=automaxprocs",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195441052Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:27.164Z level=ERROR source=query_logger.go:113 msg=\"Error opening query log file\" component=activeQueryTracker file=/prometheus/queries.active err=\"open /prometheus/queries.active: permission denied\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195445752Z"
+      },
+      {
+        "message": "panic: Unable to create mmap-ed active query log",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195450442Z"
+      },
+      {
+        "message": "",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195455682Z"
+      },
+      {
+        "message": "goroutine 1 [running]:",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195461032Z"
+      },
+      {
+        "message": "github.com/prometheus/prometheus/promql.NewActiveQueryTracker({0x7ffeb4977b1d, 0xb}, 0x14, 0xc000d096e0)",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195465471Z"
+      },
+      {
+        "message": "\t/app/promql/query_logger.go:145 +0x345",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195470111Z"
+      },
+      {
+        "message": "main.main()",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195474411Z"
+      },
+      {
+        "message": "\t/app/cmd/prometheus/main.go:791 +0x822c",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.195479141Z"
+      },
+      {
+        "message": "Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/cec052f8-6b22-4aba-bd9f-cb0f60d3321b/vol_0kpgs0xqwpa8eypm",
+        "severity": "info",
+        "timestamp": "2026-09-23T19:52:27.834944503Z"
+      },
+      {
+        "message": "Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/cec052f8-6b22-4aba-bd9f-cb0f60d3321b/vol_0kpgs0xqwpa8eypm",
+        "severity": "info",
+        "timestamp": "2026-09-23T19:52:27.835097192Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:27.893Z level=INFO source=main.go:683 msg=\"Starting Prometheus Server\" mode=server version=\"(version=3.1.0, branch=HEAD, revision=7086161a93b262aa0949dbf2aba15a5a7b13e0a3)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.918293072Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:27.893Z level=INFO source=main.go:688 msg=\"operational information\" build_context=\"(go=go1.23.4, platform=linux/amd64, user=root@74c225e2044f, date=20250102-13:52:43, tags=netgo,builtinassets,stringlabels)\" host_details=\"(Linux 6.18.15+deb13-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.18.15-1~bpo13+1 (2026-03-12) x86_64 9127cf5b3d55 (none))\" fd_limits=\"(soft=1048576, hard=1048576)\" vm_limits=\"(soft=unlimited, hard=unlimited)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.918301091Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:27.894Z level=INFO source=main.go:764 msg=\"Updating GOMAXPROCS=24: determined from CPU quota\" component=automaxprocs",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.918305371Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:27.895Z level=ERROR source=query_logger.go:113 msg=\"Error opening query log file\" component=activeQueryTracker file=/prometheus/queries.active err=\"open /prometheus/queries.active: permission denied\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.918308671Z"
+      },
+      {
+        "message": "github.com/prometheus/prometheus/promql.NewActiveQueryTracker({0x7fff8f5eab1d, 0xb}, 0x14, 0xc0007cfe00)",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.918309651Z"
+      },
+      {
+        "message": "panic: Unable to create mmap-ed active query log",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.918312601Z"
+      },
+      {
+        "message": "\t/app/promql/query_logger.go:145 +0x345",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.918315811Z"
+      },
+      {
+        "message": "",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.918317031Z"
+      },
+      {
+        "message": "main.main()",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.918320431Z"
+      },
+      {
+        "message": "goroutine 1 [running]:",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.918321181Z"
+      },
+      {
+        "message": "\t/app/cmd/prometheus/main.go:791 +0x822c",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.918325101Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:27.893Z level=INFO source=main.go:636 msg=\"No time or size retention was set so using the default time retention\" duration=15d",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:27.918364730Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:28.575Z level=INFO source=main.go:636 msg=\"No time or size retention was set so using the default time retention\" duration=15d",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:28.633735781Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:28.575Z level=INFO source=main.go:683 msg=\"Starting Prometheus Server\" mode=server version=\"(version=3.1.0, branch=HEAD, revision=7086161a93b262aa0949dbf2aba15a5a7b13e0a3)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:28.633742761Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:28.575Z level=INFO source=main.go:688 msg=\"operational information\" build_context=\"(go=go1.23.4, platform=linux/amd64, user=root@74c225e2044f, date=20250102-13:52:43, tags=netgo,builtinassets,stringlabels)\" host_details=\"(Linux 6.18.15+deb13-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.18.15-1~bpo13+1 (2026-03-12) x86_64 9127cf5b3d55 (none))\" fd_limits=\"(soft=1048576, hard=1048576)\" vm_limits=\"(soft=unlimited, hard=unlimited)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:28.633745541Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:28.577Z level=INFO source=main.go:764 msg=\"Updating GOMAXPROCS=24: determined from CPU quota\" component=automaxprocs",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:28.633750110Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:28.581Z level=ERROR source=query_logger.go:113 msg=\"Error opening query log file\" component=activeQueryTracker file=/prometheus/queries.active err=\"open /prometheus/queries.active: permission denied\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:28.633752640Z"
+      },
+      {
+        "message": "panic: Unable to create mmap-ed active query log",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:28.633755480Z"
+      },
+      {
+        "message": "",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:28.633758520Z"
+      },
+      {
+        "message": "goroutine 1 [running]:",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:28.633761100Z"
+      },
+      {
+        "message": "github.com/prometheus/prometheus/promql.NewActiveQueryTracker({0x7fffa2fa7b1d, 0xb}, 0x14, 0xc0007546d0)",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:28.633763620Z"
+      },
+      {
+        "message": "\t/app/promql/query_logger.go:145 +0x345",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:28.633766010Z"
+      },
+      {
+        "message": "main.main()",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:28.633769100Z"
+      },
+      {
+        "message": "\t/app/cmd/prometheus/main.go:791 +0x822c",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:28.633772350Z"
+      },
+      {
+        "message": "Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/cec052f8-6b22-4aba-bd9f-cb0f60d3321b/vol_0kpgs0xqwpa8eypm",
+        "severity": "info",
+        "timestamp": "2026-09-23T19:52:28.944758856Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:29.349Z level=INFO source=main.go:636 msg=\"No time or size retention was set so using the default time retention\" duration=15d",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:29.427943410Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:29.349Z level=INFO source=main.go:683 msg=\"Starting Prometheus Server\" mode=server version=\"(version=3.1.0, branch=HEAD, revision=7086161a93b262aa0949dbf2aba15a5a7b13e0a3)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:29.427947120Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:29.349Z level=INFO source=main.go:688 msg=\"operational information\" build_context=\"(go=go1.23.4, platform=linux/amd64, user=root@74c225e2044f, date=20250102-13:52:43, tags=netgo,builtinassets,stringlabels)\" host_details=\"(Linux 6.18.15+deb13-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.18.15-1~bpo13+1 (2026-03-12) x86_64 9127cf5b3d55 (none))\" fd_limits=\"(soft=1048576, hard=1048576)\" vm_limits=\"(soft=unlimited, hard=unlimited)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:29.427951090Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:29.351Z level=INFO source=main.go:764 msg=\"Updating GOMAXPROCS=24: determined from CPU quota\" component=automaxprocs",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:29.427954980Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:29.352Z level=ERROR source=query_logger.go:113 msg=\"Error opening query log file\" component=activeQueryTracker file=/prometheus/queries.active err=\"open /prometheus/queries.active: permission denied\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:29.427958700Z"
+      },
+      {
+        "message": "panic: Unable to create mmap-ed active query log",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:29.427962850Z"
+      },
+      {
+        "message": "",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:29.427967010Z"
+      },
+      {
+        "message": "goroutine 1 [running]:",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:29.427971190Z"
+      },
+      {
+        "message": "github.com/prometheus/prometheus/promql.NewActiveQueryTracker({0x7ffede6bfb1d, 0xb}, 0x14, 0xc0006a09f0)",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:29.427975420Z"
+      },
+      {
+        "message": "\t/app/promql/query_logger.go:145 +0x345",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:29.427979130Z"
+      },
+      {
+        "message": "main.main()",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:29.427983020Z"
+      },
+      {
+        "message": "\t/app/cmd/prometheus/main.go:791 +0x822c",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:29.427986330Z"
+      },
+      {
+        "message": "Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/cec052f8-6b22-4aba-bd9f-cb0f60d3321b/vol_0kpgs0xqwpa8eypm",
+        "severity": "info",
+        "timestamp": "2026-09-23T19:52:30.165219775Z"
+      },
+      {
+        "message": "Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/cec052f8-6b22-4aba-bd9f-cb0f60d3321b/vol_0kpgs0xqwpa8eypm",
+        "severity": "info",
+        "timestamp": "2026-09-23T19:52:30.165321057Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:30.113Z level=INFO source=main.go:636 msg=\"No time or size retention was set so using the default time retention\" duration=15d",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.179275202Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:30.113Z level=INFO source=main.go:683 msg=\"Starting Prometheus Server\" mode=server version=\"(version=3.1.0, branch=HEAD, revision=7086161a93b262aa0949dbf2aba15a5a7b13e0a3)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.179278042Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:30.113Z level=INFO source=main.go:688 msg=\"operational information\" build_context=\"(go=go1.23.4, platform=linux/amd64, user=root@74c225e2044f, date=20250102-13:52:43, tags=netgo,builtinassets,stringlabels)\" host_details=\"(Linux 6.18.15+deb13-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.18.15-1~bpo13+1 (2026-03-12) x86_64 9127cf5b3d55 (none))\" fd_limits=\"(soft=1048576, hard=1048576)\" vm_limits=\"(soft=unlimited, hard=unlimited)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.179282572Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:30.114Z level=INFO source=main.go:764 msg=\"Updating GOMAXPROCS=24: determined from CPU quota\" component=automaxprocs",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.179285312Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:30.115Z level=ERROR source=query_logger.go:113 msg=\"Error opening query log file\" component=activeQueryTracker file=/prometheus/queries.active err=\"open /prometheus/queries.active: permission denied\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.179288082Z"
+      },
+      {
+        "message": "panic: Unable to create mmap-ed active query log",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.179294942Z"
+      },
+      {
+        "message": "",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.179298222Z"
+      },
+      {
+        "message": "goroutine 1 [running]:",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.179300791Z"
+      },
+      {
+        "message": "github.com/prometheus/prometheus/promql.NewActiveQueryTracker({0x7ffe55e2db1d, 0xb}, 0x14, 0xc000723a00)",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.179303561Z"
+      },
+      {
+        "message": "\t/app/promql/query_logger.go:145 +0x345",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.179306391Z"
+      },
+      {
+        "message": "main.main()",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.179309381Z"
+      },
+      {
+        "message": "\t/app/cmd/prometheus/main.go:791 +0x822c",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.179312711Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:30.804Z level=INFO source=main.go:636 msg=\"No time or size retention was set so using the default time retention\" duration=15d",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.926009090Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:30.804Z level=INFO source=main.go:683 msg=\"Starting Prometheus Server\" mode=server version=\"(version=3.1.0, branch=HEAD, revision=7086161a93b262aa0949dbf2aba15a5a7b13e0a3)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.926013770Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:30.804Z level=INFO source=main.go:688 msg=\"operational information\" build_context=\"(go=go1.23.4, platform=linux/amd64, user=root@74c225e2044f, date=20250102-13:52:43, tags=netgo,builtinassets,stringlabels)\" host_details=\"(Linux 6.18.15+deb13-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.18.15-1~bpo13+1 (2026-03-12) x86_64 9127cf5b3d55 (none))\" fd_limits=\"(soft=1048576, hard=1048576)\" vm_limits=\"(soft=unlimited, hard=unlimited)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.926019000Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:30.805Z level=INFO source=main.go:764 msg=\"Updating GOMAXPROCS=24: determined from CPU quota\" component=automaxprocs",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.926021530Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:30.806Z level=ERROR source=query_logger.go:113 msg=\"Error opening query log file\" component=activeQueryTracker file=/prometheus/queries.active err=\"open /prometheus/queries.active: permission denied\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.926024610Z"
+      },
+      {
+        "message": "panic: Unable to create mmap-ed active query log",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.926027690Z"
+      },
+      {
+        "message": "",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.926030580Z"
+      },
+      {
+        "message": "goroutine 1 [running]:",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.926033400Z"
+      },
+      {
+        "message": "github.com/prometheus/prometheus/promql.NewActiveQueryTracker({0x7ffce9c08b1d, 0xb}, 0x14, 0xc000512490)",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.926036300Z"
+      },
+      {
+        "message": "\t/app/promql/query_logger.go:145 +0x345",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.926039520Z"
+      },
+      {
+        "message": "main.main()",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.926042550Z"
+      },
+      {
+        "message": "\t/app/cmd/prometheus/main.go:791 +0x822c",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:30.926046009Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:31.510Z level=INFO source=main.go:636 msg=\"No time or size retention was set so using the default time retention\" duration=15d",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:31.527842614Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:31.511Z level=INFO source=main.go:683 msg=\"Starting Prometheus Server\" mode=server version=\"(version=3.1.0, branch=HEAD, revision=7086161a93b262aa0949dbf2aba15a5a7b13e0a3)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:31.527848334Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:31.511Z level=INFO source=main.go:688 msg=\"operational information\" build_context=\"(go=go1.23.4, platform=linux/amd64, user=root@74c225e2044f, date=20250102-13:52:43, tags=netgo,builtinassets,stringlabels)\" host_details=\"(Linux 6.18.15+deb13-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.18.15-1~bpo13+1 (2026-03-12) x86_64 9127cf5b3d55 (none))\" fd_limits=\"(soft=1048576, hard=1048576)\" vm_limits=\"(soft=unlimited, hard=unlimited)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:31.527852184Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:31.511Z level=INFO source=main.go:764 msg=\"Updating GOMAXPROCS=24: determined from CPU quota\" component=automaxprocs",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:31.527855294Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:31.513Z level=ERROR source=query_logger.go:113 msg=\"Error opening query log file\" component=activeQueryTracker file=/prometheus/queries.active err=\"open /prometheus/queries.active: permission denied\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:31.527857974Z"
+      },
+      {
+        "message": "panic: Unable to create mmap-ed active query log",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:31.527860934Z"
+      },
+      {
+        "message": "",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:31.527864254Z"
+      },
+      {
+        "message": "goroutine 1 [running]:",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:31.527868424Z"
+      },
+      {
+        "message": "github.com/prometheus/prometheus/promql.NewActiveQueryTracker({0x7ffff380eb1d, 0xb}, 0x14, 0xc000c27a40)",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:31.527871124Z"
+      },
+      {
+        "message": "\t/app/promql/query_logger.go:145 +0x345",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:31.527874494Z"
+      },
+      {
+        "message": "main.main()",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:31.527877464Z"
+      },
+      {
+        "message": "\t/app/cmd/prometheus/main.go:791 +0x822c",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:31.527880444Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:32.244Z level=INFO source=main.go:636 msg=\"No time or size retention was set so using the default time retention\" duration=15d",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:32.256964777Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:32.244Z level=INFO source=main.go:683 msg=\"Starting Prometheus Server\" mode=server version=\"(version=3.1.0, branch=HEAD, revision=7086161a93b262aa0949dbf2aba15a5a7b13e0a3)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:32.256967607Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:32.244Z level=INFO source=main.go:688 msg=\"operational information\" build_context=\"(go=go1.23.4, platform=linux/amd64, user=root@74c225e2044f, date=20250102-13:52:43, tags=netgo,builtinassets,stringlabels)\" host_details=\"(Linux 6.18.15+deb13-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.18.15-1~bpo13+1 (2026-03-12) x86_64 9127cf5b3d55 (none))\" fd_limits=\"(soft=1048576, hard=1048576)\" vm_limits=\"(soft=unlimited, hard=unlimited)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:32.256970497Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:32.244Z level=INFO source=main.go:764 msg=\"Updating GOMAXPROCS=24: determined from CPU quota\" component=automaxprocs",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:32.256973807Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:32.247Z level=ERROR source=query_logger.go:113 msg=\"Error opening query log file\" component=activeQueryTracker file=/prometheus/queries.active err=\"open /prometheus/queries.active: permission denied\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:32.256976187Z"
+      },
+      {
+        "message": "panic: Unable to create mmap-ed active query log",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:32.256979747Z"
+      },
+      {
+        "message": "",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:32.256982496Z"
+      },
+      {
+        "message": "goroutine 1 [running]:",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:32.256985306Z"
+      },
+      {
+        "message": "github.com/prometheus/prometheus/promql.NewActiveQueryTracker({0x7ffe9a5b2b1d, 0xb}, 0x14, 0xc000513ad0)",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:32.256987876Z"
+      },
+      {
+        "message": "\t/app/promql/query_logger.go:145 +0x345",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:32.256990756Z"
+      },
+      {
+        "message": "main.main()",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:32.256993116Z"
+      },
+      {
+        "message": "\t/app/cmd/prometheus/main.go:791 +0x822c",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:32.256995356Z"
+      },
+      {
+        "message": "Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/cec052f8-6b22-4aba-bd9f-cb0f60d3321b/vol_0kpgs0xqwpa8eypm",
+        "severity": "info",
+        "timestamp": "2026-09-23T19:52:32.793201450Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:33.070Z level=INFO source=main.go:636 msg=\"No time or size retention was set so using the default time retention\" duration=15d",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.087322846Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:33.070Z level=INFO source=main.go:683 msg=\"Starting Prometheus Server\" mode=server version=\"(version=3.1.0, branch=HEAD, revision=7086161a93b262aa0949dbf2aba15a5a7b13e0a3)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.087335776Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:33.070Z level=INFO source=main.go:688 msg=\"operational information\" build_context=\"(go=go1.23.4, platform=linux/amd64, user=root@74c225e2044f, date=20250102-13:52:43, tags=netgo,builtinassets,stringlabels)\" host_details=\"(Linux 6.18.15+deb13-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.18.15-1~bpo13+1 (2026-03-12) x86_64 9127cf5b3d55 (none))\" fd_limits=\"(soft=1048576, hard=1048576)\" vm_limits=\"(soft=unlimited, hard=unlimited)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.087341906Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:33.070Z level=INFO source=main.go:764 msg=\"Updating GOMAXPROCS=24: determined from CPU quota\" component=automaxprocs",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.087347096Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:33.071Z level=ERROR source=query_logger.go:113 msg=\"Error opening query log file\" component=activeQueryTracker file=/prometheus/queries.active err=\"open /prometheus/queries.active: permission denied\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.087351286Z"
+      },
+      {
+        "message": "panic: Unable to create mmap-ed active query log",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.087356836Z"
+      },
+      {
+        "message": "",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.087362475Z"
+      },
+      {
+        "message": "goroutine 1 [running]:",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.087367025Z"
+      },
+      {
+        "message": "github.com/prometheus/prometheus/promql.NewActiveQueryTracker({0x7ffde440ab1d, 0xb}, 0x14, 0xc0005d1a10)",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.087373945Z"
+      },
+      {
+        "message": "\t/app/promql/query_logger.go:145 +0x345",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.087379815Z"
+      },
+      {
+        "message": "main.main()",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.087384175Z"
+      },
+      {
+        "message": "\t/app/cmd/prometheus/main.go:791 +0x822c",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.087388455Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:33.844Z level=INFO source=main.go:636 msg=\"No time or size retention was set so using the default time retention\" duration=15d",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.847856244Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:33.844Z level=INFO source=main.go:683 msg=\"Starting Prometheus Server\" mode=server version=\"(version=3.1.0, branch=HEAD, revision=7086161a93b262aa0949dbf2aba15a5a7b13e0a3)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.847860154Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:33.844Z level=INFO source=main.go:688 msg=\"operational information\" build_context=\"(go=go1.23.4, platform=linux/amd64, user=root@74c225e2044f, date=20250102-13:52:43, tags=netgo,builtinassets,stringlabels)\" host_details=\"(Linux 6.18.15+deb13-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.18.15-1~bpo13+1 (2026-03-12) x86_64 9127cf5b3d55 (none))\" fd_limits=\"(soft=1048576, hard=1048576)\" vm_limits=\"(soft=unlimited, hard=unlimited)\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.847863544Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:33.844Z level=INFO source=main.go:764 msg=\"Updating GOMAXPROCS=24: determined from CPU quota\" component=automaxprocs",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.847866864Z"
+      },
+      {
+        "message": "time=2026-09-23T19:52:33.846Z level=ERROR source=query_logger.go:113 msg=\"Error opening query log file\" component=activeQueryTracker file=/prometheus/queries.active err=\"open /prometheus/queries.active: permission denied\"",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.847875534Z"
+      },
+      {
+        "message": "panic: Unable to create mmap-ed active query log",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.852380151Z"
+      },
+      {
+        "message": "",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.852387371Z"
+      },
+      {
+        "message": "goroutine 1 [running]:",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.852393431Z"
+      },
+      {
+        "message": "github.com/prometheus/prometheus/promql.NewActiveQueryTracker({0x7ffc66310b1d, 0xb}, 0x14, 0xc0005cb2f0)",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.852398660Z"
+      },
+      {
+        "message": "\t/app/promql/query_logger.go:145 +0x345",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.852404410Z"
+      },
+      {
+        "message": "main.main()",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.852408860Z"
+      },
+      {
+        "message": "\t/app/cmd/prometheus/main.go:791 +0x822c",
+        "severity": "error",
+        "timestamp": "2026-09-23T19:52:33.852414110Z"
+      },
+      {
+        "message": "Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/cec052f8-6b22-4aba-bd9f-cb0f60d3321b/vol_0kpgs0xqwpa8eypm",
+        "severity": "info",
+        "timestamp": "2026-09-23T19:52:35.150173661Z"
+      },
+      {
+        "message": "Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/cec052f8-6b22-4aba-bd9f-cb0f60d3321b/vol_0kpgs0xqwpa8eypm",
+        "severity": "info",
+        "timestamp": "2026-09-23T19:52:35.150346560Z"
+      },
+      {
+        "message": "Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/cec052f8-6b22-4aba-bd9f-cb0f60d3321b/vol_0kpgs0xqwpa8eypm",
+        "severity": "info",
+        "timestamp": "2026-09-23T19:52:35.150450596Z"
+      },
+      {
+        "message": "Mounting volume on: /var/lib/containers/railwayapp/bind-mounts/cec052f8-6b22-4aba-bd9f-cb0f60d3321b/vol_0kpgs0xqwpa8eypm",
+        "severity": "info",
+        "timestamp": "2026-09-23T19:52:35.150613450Z"
+      },
+      {
+        "message": "Stopping Container",
+        "severity": "info",
+        "timestamp": "2026-09-23T21:10:11.070422749Z"
+      },
+      {
+        "message": "Stopping Container",
+        "severity": "info",
+        "timestamp": "2026-09-23T21:10:16.600623408Z"
+      }
+    ]
+  }
+}

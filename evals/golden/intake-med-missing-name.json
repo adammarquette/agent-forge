@@ -1,0 +1,17 @@
+{
+    "id": "intake-med-missing-name",
+    "guards": "Required members are enforced inside collection elements, not only at the top level: one nameless medication rejects the entire extraction. A dose with no drug attached is worse than a missing row, because it looks like data.",
+    "category": "extraction",
+    "doc_type": "intake_form",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"demographics\":{\"full_name\":\"Priya Achterberg\",\"date_of_birth\":\"1975-02-14\",\"sex\":\"F\"},\"chief_concern\":{\"text\":\"follow-up\",\"citation\":{\"page\":1,\"quote\":\"follow-up\",\"bounding_box\":null}},\"current_medications\":[{\"dose\":\"10mg daily\",\"citation\":{\"page\":1,\"quote\":\"10mg daily\",\"bounding_box\":null}}],\"allergies\":[],\"family_history\":[],\"citation\":{\"page\":1,\"quote\":\"Intake\",\"bounding_box\":null}}",
+    "expect_success": false,
+    "phi_tokens": [
+        "Priya Achterberg"
+    ],
+    "rubrics": [
+        "schema_valid",
+        "safe_refusal",
+        "no_phi_in_logs"
+    ]
+}

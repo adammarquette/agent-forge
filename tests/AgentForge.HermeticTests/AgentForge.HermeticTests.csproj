@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The hermetic tier (CONVENTIONS.md section 8.3): the real ingestion-to-answer pipeline over
+    committed fixture documents, with only the model (ILlmProvider) scripted and no network, database
+    process, API key or OpenEMR. Its own project because the unit tier forbids the file I/O a fixture
+    needs and the integration tier forbids the stub the model needs. A separate change
+  -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- CA1707 (no underscores) conflicts with the Method_State_ExpectedResult test-naming
+         convention (CONVENTIONS.md §8). -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="JunitXml.TestLogger" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- DI, logging and configuration as the host composes them - shared framework, not NuGet packages. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AgentForge.Agents\AgentForge.Agents.csproj" />
+    <ProjectReference Include="..\..\src\AgentForge.Data\AgentForge.Data.csproj" />
+    <ProjectReference Include="..\..\src\AgentForge.Documents\AgentForge.Documents.csproj" />
+    <ProjectReference Include="..\..\src\AgentForge.Llm\AgentForge.Llm.csproj" />
+    <ProjectReference Include="..\..\src\AgentForge.Observability\AgentForge.Observability.csproj" />
+    <ProjectReference Include="..\..\src\AgentForge.Retrieval\AgentForge.Retrieval.csproj" />
+    <ProjectReference Include="..\..\src\AgentForge.Verification\AgentForge.Verification.csproj" />
+    <!-- The generator is the fixture set's manifest: the stubbed model quotes its strings, and a test holds
+         the committed files to its output. -->
+    <ProjectReference Include="..\..\tools\GenerateFixtureDocuments\GenerateFixtureDocuments.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\fixtures\documents\*" LinkBase="Fixtures" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

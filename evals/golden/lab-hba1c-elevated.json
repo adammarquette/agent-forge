@@ -1,0 +1,21 @@
+{
+    "id": "lab-hba1c-elevated",
+    "guards": "A bare non-alphabetic unit (%) is a valid unit, and the unit field is asserted rather than left to the citation quote that also happens to contain the character. A unit validator that expected letters would reject the metric the diabetic slice of a cardiology population is followed on.",
+    "category": "extraction",
+    "doc_type": "lab_pdf",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"tests\":[{\"test_name\":\"HbA1c\",\"value\":\"8.2\",\"unit\":\"%\",\"reference_range\":\"4.0-5.6\",\"collection_date\":\"2026-06-15\",\"abnormal_flag\":true,\"citation\":{\"page\":1,\"quote\":\"HbA1c 8.2 (H) %\",\"bounding_box\":null}}]}",
+    "expect_success": true,
+    "expected_values": [
+        "HbA1c",
+        "8.2",
+        "\"unit\":\"%\""
+    ],
+    "phi_tokens": ["HbA1c 8.2 (H) %"],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

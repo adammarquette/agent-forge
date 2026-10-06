@@ -1,0 +1,21 @@
+{
+    "id": "lab-hdl-low",
+    "guards": "An abnormal-low result: the value sits below a greater-than floor, and the report's own low flag travels with it and is asserted. With lab-sodium-low, lab-magnesium-low and lab-egfr-low it keeps the abnormal population from being all highs - a reader that equated 'abnormal' with 'high' would report a normal lipid panel and fail here on the flag.",
+    "category": "extraction",
+    "doc_type": "lab_pdf",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"tests\":[{\"test_name\":\"HDL Cholesterol\",\"value\":\"32\",\"unit\":\"mg/dL\",\"reference_range\":\">40\",\"collection_date\":\"2026-06-15\",\"abnormal_flag\":true,\"citation\":{\"page\":1,\"quote\":\"HDL 32 (L) mg/dL\",\"bounding_box\":null}}]}",
+    "expect_success": true,
+    "expected_values": [
+        "HDL",
+        "32",
+        "\"abnormal_flag\":true"
+    ],
+    "phi_tokens": ["HDL 32 (L) mg/dL"],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

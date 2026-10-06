@@ -1,0 +1,25 @@
+{
+    "id": "intake-multiple-allergies",
+    "guards": "A four-item allergy list arrives whole - all four entries are asserted values, so a truncation fails the case. A list truncated to its first entry still looks like a complete allergy list to everything downstream, which is worse than no list at all, and no single-allergy case can detect it.",
+    "category": "extraction",
+    "doc_type": "intake_form",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"demographics\":{\"full_name\":\"Junko Almeida\",\"date_of_birth\":\"1979-06-11\",\"sex\":\"F\"},\"chief_concern\":{\"text\":\"new patient cardiac evaluation\",\"citation\":{\"page\":1,\"quote\":\"new patient cardiac evaluation\",\"bounding_box\":null}},\"current_medications\":[{\"name\":\"losartan\",\"dose\":\"50mg daily\",\"citation\":{\"page\":1,\"quote\":\"losartan 50mg\",\"bounding_box\":null}}],\"allergies\":[{\"text\":\"penicillin\",\"citation\":{\"page\":1,\"quote\":\"penicillin\",\"bounding_box\":null}},{\"text\":\"sulfa\",\"citation\":{\"page\":1,\"quote\":\"sulfa\",\"bounding_box\":null}},{\"text\":\"shellfish\",\"citation\":{\"page\":1,\"quote\":\"shellfish\",\"bounding_box\":null}},{\"text\":\"latex\",\"citation\":{\"page\":1,\"quote\":\"latex\",\"bounding_box\":null}}],\"family_history\":[{\"text\":\"mother: hypertension\",\"citation\":{\"page\":1,\"quote\":\"mother: hypertension\",\"bounding_box\":null}}],\"citation\":{\"page\":1,\"quote\":\"Patient intake form\",\"bounding_box\":null}}",
+    "expect_success": true,
+    "expected_values": [
+        "losartan",
+        "penicillin",
+        "sulfa",
+        "shellfish",
+        "latex"
+    ],
+    "phi_tokens": [
+        "Junko Almeida"
+    ],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

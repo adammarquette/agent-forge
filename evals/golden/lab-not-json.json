@@ -1,0 +1,10 @@
+{
+  "id": "lab-not-json",
+  "guards": "The model apologising in prose is a refusal, not data. No opening brace means the payload never reaches the schema, and the result is a clean rejection carrying a reason - the boundary between 'could not read' and 'read nothing', which must never collapse.",
+  "category": "extraction",
+  "doc_type": "lab_pdf",
+  "media_type": "application/pdf",
+  "stub_model_response": "I'm sorry, I could not read this document.",
+  "expect_success": false,
+  "rubrics": ["schema_valid", "safe_refusal", "no_phi_in_logs"]
+}

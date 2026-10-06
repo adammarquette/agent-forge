@@ -1,0 +1,303 @@
+# Unit tests for agentforge-alerts.yml - `promtool test rules agentforge-alerts-tests.yml`, run from
+# this directory, or through alert-rules-gate.sh, which is what CI runs. A rule nobody has ever seen
+# fire is a comment, not a gate: these feed each Week 2 rule a synthetic series that must fire it and
+# a near-miss that must not. BOTH HALVES OF THE FAILURE MODE - never fires, and cries wolf - ARE
+# PINNED ONLY IN COMBINATION WITH alert-rules-gate.sh; this file alone pins the second and, as the
+# note below explains, constrains each threshold from below only. Separate changes
+#
+# WHAT THIS FILE PINS AND WHAT IT DOES NOT, because the shape is not obvious:
+#   - The SILENT half is asserted against the real rule (`alert_rule_test` with `exp_alerts: []`), so
+#     it exercises the expression, the `for:` debounce and the labels exactly as Prometheus will.
+#   - The FIRING half is asserted against the rule's expression (`promql_expr_test`), NOT through
+#     `alert_rule_test`. promtool compares a firing alert's annotations for exact equality and these
+#     descriptions are paragraphs; pasting them here would create a second copy to keep in step, which
+#     is worse than the gap. The consequence to know: the expressions below are COPIES.
+#   - WHAT KEEPS THOSE COPIES HONEST IS NOT THIS FILE, and the first version of this header got that
+#     wrong. The near-miss cases do read the real rule, but they constrain each threshold only from
+#     BELOW - they catch cry-wolf, not never-fires. Raising all three Week 2 thresholds out of reach
+#     in agentforge-alerts.yml left `promtool test rules` printing SUCCESS, which is precisely the
+#     failure this suite exists to prevent. alert-rules-gate.sh closes it: it asserts every
+#     agentforge-week2 rule's `expr` is, character for character once whitespace is collapsed, an
+#     expression a `promql_expr_test` below asserts on. Edit a threshold in one file and CI is red on
+#     the mismatch; edit it in both and CI is red HERE instead, because the synthetic series no longer
+#     satisfies the raised threshold and the expected sample vanishes. A separate change
+#   - Bucket layout below is a SUBSET of the retrieval histogram's real explicit boundaries
+#     (AgentForgeMetrics.EvidenceRetrievalDurationBucketBoundariesSeconds: ... 5, 6, 7, ... 10, ... 15
+#     ...), never a boundary the sidecar does not export. 6 is one of them, so the cases show the rule
+#     telling "over 6s" from "over 5s" - which the default 5-10s bucket could not. Separate changes
+
+rule_files:
+  - agentforge-alerts.yml
+
+evaluation_interval: 1m
+
+tests:
+  # -------------------------------------------------------------------------------------------
+  # AgentForgeHighExtractionFailureRate
+  # -------------------------------------------------------------------------------------------
+  - interval: 1m
+    name: extraction failure rate - half of the extractions that reached the extractor are rejected
+    input_series:
+      - series: 'agentforge_document_ingestions_total{outcome="ingested"}'
+        values: '0+1x60'
+      - series: 'agentforge_document_ingestions_total{outcome="extraction_rejected"}'
+        values: '0+1x60'
+      # Re-uploads of bytes already on file. They short-circuit before the extractor, so they must
+      # NOT dilute the ratio - this series is here precisely to prove the filter excludes it. Ten a
+      # minute would drag an unfiltered ratio to 0.08 and silence the rule.
+      - series: 'agentforge_document_ingestions_total{outcome="already_ingested"}'
+        values: '0+10x60'
+    promql_expr_test:
+      - expr: |
+          (
+            sum(rate(agentforge_document_ingestions_total{outcome=~"extraction_rejected|error"}[30m]))
+              / sum(rate(agentforge_document_ingestions_total{outcome=~"ingested|extraction_rejected|error"}[30m]))
+          ) > 0.2
+          and
+          sum(increase(agentforge_document_ingestions_total{outcome=~"ingested|extraction_rejected|error"}[30m])) >= 5
+        eval_time: 40m
+        exp_samples:
+          - labels: '{}'
+            value: 0.5
+    alert_rule_test:
+      # The `for: 10m` debounce. The ratio is already over 0.2 here; the rule must still be quiet.
+      - eval_time: 5m
+        alertname: AgentForgeHighExtractionFailureRate
+        exp_alerts: []
+
+  - interval: 1m
+    name: extraction failure rate - a total extractor outage (every attempt throws) now fires
+    input_series:
+      # Before a separate change a throw recorded NOTHING, so this case's ratio would have been 0/0 (no data,
+      # never fires) even though every single attempt failed - the exact blind spot the issue is about.
+      # `already_ingested` traffic continues alongside the outage and must not mask it, same as the
+      # case above.
+      - series: 'agentforge_document_ingestions_total{outcome="error"}'
+        values: '0+1x60'
+      - series: 'agentforge_document_ingestions_total{outcome="already_ingested"}'
+        values: '0+10x60'
+    promql_expr_test:
+      - expr: |
+          (
+            sum(rate(agentforge_document_ingestions_total{outcome=~"extraction_rejected|error"}[30m]))
+              / sum(rate(agentforge_document_ingestions_total{outcome=~"ingested|extraction_rejected|error"}[30m]))
+          ) > 0.2
+          and
+          sum(increase(agentforge_document_ingestions_total{outcome=~"ingested|extraction_rejected|error"}[30m])) >= 5
+        eval_time: 40m
+        exp_samples:
+          - labels: '{}'
+            value: 1
+    alert_rule_test:
+      # The `for: 10m` debounce, same shape as the first case: over threshold at 5m, still quiet.
+      # (The FIRING half is asserted via promql_expr_test above, per this file's own convention -
+      # promtool compares a firing alert's annotations for exact equality and this rule's description
+      # is a paragraph, so pasting a second copy here would be worse than the gap.)
+      - eval_time: 5m
+        alertname: AgentForgeHighExtractionFailureRate
+        exp_alerts: []
+
+  - interval: 1m
+    name: extraction failure rate - errors alone stay under the volume floor and must not page
+    input_series:
+      # Same shape as "every attempt rejected but too few to mean anything" above, for the error path:
+      # one throw in the whole window is not five attempts, so the >=5 floor - now counting error too -
+      # must still hold it quiet.
+      - series: 'agentforge_document_ingestions_total{outcome="error"}'
+        values: '0+0x30 1+0x30'
+    alert_rule_test:
+      - eval_time: 50m
+        alertname: AgentForgeHighExtractionFailureRate
+        exp_alerts: []
+
+  - interval: 1m
+    name: extraction failure rate - a normal rejection trickle must not page
+    input_series:
+      - series: 'agentforge_document_ingestions_total{outcome="ingested"}'
+        values: '0+10x60'
+      - series: 'agentforge_document_ingestions_total{outcome="extraction_rejected"}'
+        values: '0+1x60'
+    alert_rule_test:
+      # 1 in 11 rejected = 0.09. Well inside the threshold, and this is the cry-wolf half.
+      - eval_time: 40m
+        alertname: AgentForgeHighExtractionFailureRate
+        exp_alerts: []
+
+  - interval: 1m
+    name: extraction failure rate - every attempt rejected but too few to mean anything
+    input_series:
+      # Nothing succeeds and nothing is attempted either: one rejection in the whole window. The
+      # ratio is 1.0, and the >=5 volume floor is the only thing standing between that and a page.
+      - series: 'agentforge_document_ingestions_total{outcome="ingested"}'
+        values: '0+0x60'
+      - series: 'agentforge_document_ingestions_total{outcome="extraction_rejected"}'
+        values: '0+0x30 1+0x30'
+    alert_rule_test:
+      - eval_time: 50m
+        alertname: AgentForgeHighExtractionFailureRate
+        exp_alerts: []
+
+  # -------------------------------------------------------------------------------------------
+  # AgentForgeHighEvidenceRetrievalLatencyP95
+  # -------------------------------------------------------------------------------------------
+  - interval: 1m
+    name: evidence retrieval p95 - six calls in a hundred take longer than 6s
+    input_series:
+      # 100 retrievals a minute: 90 under 5s, 4 between 5s and 6s, 6 between 6s and 7s. The share at
+      # le=6 is 0.94 < 0.95, so the 95th percentile lands in the 6-7s bucket. Under the default layout
+      # the same calls sat in one 5-10s bucket and the rule could not tell them from calls just over 5s.
+      - series: 'agentforge_evidence_retrieval_duration_seconds_bucket{le="5"}'
+        values: '0+90x60'
+      - series: 'agentforge_evidence_retrieval_duration_seconds_bucket{le="6"}'
+        values: '0+94x60'
+      - series: 'agentforge_evidence_retrieval_duration_seconds_bucket{le="7"}'
+        values: '0+100x60'
+      - series: 'agentforge_evidence_retrieval_duration_seconds_bucket{le="10"}'
+        values: '0+100x60'
+      - series: 'agentforge_evidence_retrieval_duration_seconds_bucket{le="15"}'
+        values: '0+100x60'
+      - series: 'agentforge_evidence_retrieval_duration_seconds_bucket{le="+Inf"}'
+        values: '0+100x60'
+    promql_expr_test:
+      - expr: histogram_quantile(0.95, sum(rate(agentforge_evidence_retrieval_duration_seconds_bucket[10m])) by (le)) > 6
+        eval_time: 30m
+        exp_samples:
+          # 6.1667s in arithmetic: 6 + (95-94)/(100-94) * (7-6). The tail is `rate()`'s per-second
+          # division, and promtool compares floats exactly - so the literal has to carry it. Both stacks
+          # pin prom/prometheus:v3.15.0, which is what makes that reproducible.
+          - labels: '{}'
+            value: 6.166666666666666
+    alert_rule_test:
+      # `for: 10m` again: over the threshold at 5m, still silent.
+      - eval_time: 5m
+        alertname: AgentForgeHighEvidenceRetrievalLatencyP95
+        exp_alerts: []
+
+  - interval: 1m
+    name: evidence retrieval p95 - the chat path alone is slow and still reaches the rule
+    input_series:
+      # Since a separate change both call sites record, told apart by entry_point. Here POST /evidence/ask is idle
+      # and only the chat agent's retrieve_evidence tool is slow - the same split as the case above.
+      # The rule must sum over entry_point: a filter to one path would reopen the blind spot this case
+      # exists to keep closed.
+      - series: 'agentforge_evidence_retrieval_duration_seconds_bucket{entry_point="evidence_ask",le="5"}'
+        values: '0+0x60'
+      - series: 'agentforge_evidence_retrieval_duration_seconds_bucket{entry_point="evidence_ask",le="+Inf"}'
+        values: '0+0x60'
+      - series: 'agentforge_evidence_retrieval_duration_seconds_bucket{entry_point="chat_tool",le="5"}'
+        values: '0+90x60'
+      - series: 'agentforge_evidence_retrieval_duration_seconds_bucket{entry_point="chat_tool",le="6"}'
+        values: '0+94x60'
+      - series: 'agentforge_evidence_retrieval_duration_seconds_bucket{entry_point="chat_tool",le="7"}'
+        values: '0+100x60'
+      - series: 'agentforge_evidence_retrieval_duration_seconds_bucket{entry_point="chat_tool",le="+Inf"}'
+        values: '0+100x60'
+    promql_expr_test:
+      - expr: histogram_quantile(0.95, sum(rate(agentforge_evidence_retrieval_duration_seconds_bucket[10m])) by (le)) > 6
+        eval_time: 30m
+        exp_samples:
+          - labels: '{}'
+            value: 6.166666666666666
+
+  - interval: 1m
+    name: evidence retrieval p95 - six calls in a hundred exceed 5s but none exceeds 6s, and the rule stays silent
+    input_series:
+      # The near-miss the 6s boundary makes decidable. 94 calls finish under 5s and the other six
+      # between 5s and 6s, so every call met the SLO and the 95th percentile interpolates to ~5.17s.
+      # Under the default layout this case and the firing one above were the same 5-10s bucket.
+      - series: 'agentforge_evidence_retrieval_duration_seconds_bucket{le="5"}'
+        values: '0+94x60'
+      - series: 'agentforge_evidence_retrieval_duration_seconds_bucket{le="6"}'
+        values: '0+100x60'
+      - series: 'agentforge_evidence_retrieval_duration_seconds_bucket{le="7"}'
+        values: '0+100x60'
+      - series: 'agentforge_evidence_retrieval_duration_seconds_bucket{le="+Inf"}'
+        values: '0+100x60'
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: AgentForgeHighEvidenceRetrievalLatencyP95
+        exp_alerts: []
+
+  # -------------------------------------------------------------------------------------------
+  # AgentForgeEvalCategoryRegression
+  # -------------------------------------------------------------------------------------------
+  - interval: 1m
+    name: eval regression - one category drops a quarter below its baseline
+    input_series:
+      - series: 'agentforge_eval_baseline_pass_rate{category="no_unauthorized_disclosure"}'
+        values: '1x30'
+      - series: 'agentforge_eval_category_pass_rate{category="no_unauthorized_disclosure"}'
+        values: '0.75x30'
+      # A second category, unchanged. It must not be dragged in by the vector match.
+      - series: 'agentforge_eval_baseline_pass_rate{category="citation_present"}'
+        values: '1x30'
+      - series: 'agentforge_eval_category_pass_rate{category="citation_present"}'
+        values: '1x30'
+    promql_expr_test:
+      - expr: |
+          (
+            agentforge_eval_baseline_pass_rate
+              - on(category) agentforge_eval_category_pass_rate
+          ) > 0.05
+        eval_time: 10m
+        exp_samples:
+          - labels: '{category="no_unauthorized_disclosure"}'
+            value: 0.25
+
+  - interval: 1m
+    name: eval regression - a drop inside the 5% policy must not page
+    input_series:
+      # 0.96875 is 1 - 1/32: a 3.1% drop, inside evals/baseline.json's max_regression of 0.05. Chosen
+      # to be exact in binary so the comparison is not testing floating-point rounding.
+      - series: 'agentforge_eval_baseline_pass_rate{category="citation_present"}'
+        values: '1x30'
+      - series: 'agentforge_eval_category_pass_rate{category="citation_present"}'
+        values: '0.96875x30'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: AgentForgeEvalCategoryRegression
+        exp_alerts: []
+
+  # -------------------------------------------------------------------------------------------
+  # AgentForgeEvalGateFailed
+  # -------------------------------------------------------------------------------------------
+  - interval: 1m
+    name: eval gate failed - a safety rubric one case under its floor, which the category rule cannot see
+    input_series:
+      # no_phi_in_logs at 93/94: the safety tier's 100% floor blocks the gate, but the drop is 1.06
+      # points - under the per-category rule's 0.05. An orphaned baseline row (no rate at all) fails
+      # the gate too and joins nothing. Only the verdict series carries either failure.
+      # a separate change review B1
+      - series: 'agentforge_eval_baseline_pass_rate{category="no_phi_in_logs"}'
+        values: '1x30'
+      - series: 'agentforge_eval_category_pass_rate{category="no_phi_in_logs"}'
+        values: '0.9893617021276596x30'
+      - series: 'agentforge_eval_baseline_pass_rate{category="zzz_orphan"}'
+        values: '1x30'
+      - series: 'agentforge_eval_run_passed'
+        values: '0x30'
+    promql_expr_test:
+      - expr: agentforge_eval_run_passed == 0
+        eval_time: 10m
+        exp_samples:
+          - labels: 'agentforge_eval_run_passed'
+            value: 0
+    alert_rule_test:
+      # The gap this rule exists for, asserted rather than described: same inputs, category rule silent.
+      - eval_time: 10m
+        alertname: AgentForgeEvalCategoryRegression
+        exp_alerts: []
+
+  - interval: 1m
+    name: eval gate failed - a passing run must not page
+    input_series:
+      - series: 'agentforge_eval_baseline_pass_rate{category="no_phi_in_logs"}'
+        values: '1x30'
+      - series: 'agentforge_eval_category_pass_rate{category="no_phi_in_logs"}'
+        values: '1x30'
+      - series: 'agentforge_eval_run_passed'
+        values: '1x30'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: AgentForgeEvalGateFailed
+        exp_alerts: []

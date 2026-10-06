@@ -1,0 +1,24 @@
+{
+    "id": "intake-hypertension",
+    "guards": "A fact's own text must be supported by the quote it cites, and a mismatch is marked, never rejected. An allergy the form does not state (sulfa, cited on the line that says NKDA) comes out unlocatable, as does hydrochlorothiazide expanded from a quote that prints only HCTZ - the rule's stated cost, pinned so that forgiving abbreviations is a deliberate change. The faithful amlodipine stays unchecked beside them, and the whole form still extracts. Without the check the invented allergy would carry the model's word and the real line's grounding into the stored payload.",
+    "category": "extraction",
+    "doc_type": "intake_form",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"demographics\":{\"full_name\":\"Beatrix Nkemelu\",\"date_of_birth\":\"1968-02-17\",\"sex\":\"F\"},\"chief_concern\":{\"text\":\"blood pressure follow-up\",\"citation\":{\"page\":1,\"quote\":\"blood pressure follow-up\",\"bounding_box\":null}},\"current_medications\":[{\"name\":\"amlodipine\",\"dose\":\"5mg daily\",\"citation\":{\"page\":1,\"quote\":\"amlodipine 5mg daily\",\"bounding_box\":null}},{\"name\":\"hydrochlorothiazide\",\"dose\":\"25mg\",\"citation\":{\"page\":1,\"quote\":\"HCTZ 25mg\",\"bounding_box\":null}}],\"allergies\":[{\"text\":\"sulfa\",\"citation\":{\"page\":1,\"quote\":\"NKDA\",\"bounding_box\":null,\"match\":\"exact\"}}],\"family_history\":[{\"text\":\"mother: stroke\",\"citation\":{\"page\":1,\"quote\":\"mother: stroke\",\"bounding_box\":null}}],\"citation\":{\"page\":1,\"quote\":\"Patient intake form\",\"bounding_box\":null}}",
+    "expect_success": true,
+    "expected_values": [
+        "amlodipine",
+        "{\"text\":\"sulfa\",\"citation\":{\"page\":1,\"quote\":\"NKDA\",\"match\":\"unlocatable\"}}",
+        "{\"name\":\"hydrochlorothiazide\",\"dose\":\"25mg\",\"citation\":{\"page\":1,\"quote\":\"HCTZ 25mg\",\"match\":\"unlocatable\"}}",
+        "{\"name\":\"amlodipine\",\"dose\":\"5mg daily\",\"citation\":{\"page\":1,\"quote\":\"amlodipine 5mg daily\",\"match\":\"unchecked\"}}"
+    ],
+    "phi_tokens": [
+        "Beatrix Nkemelu"
+    ],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

@@ -1,0 +1,67 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R 4 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 7 0 R >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 8 0 R >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+7 0 obj
+<< /Length 655 >>
+stream
+BT /F2 14 Tf 1 0 0 1 54 740 Tm (AgentForge Synthetic Cardiology Intake Form) Tj ET
+BT /F1 9 Tf 1 0 0 1 54 722 Tm (TEST FIXTURE - synthetic data, not a real patient) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 696 Tm (Page 1 of 2) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 670 Tm (Name: Demo Walter Ibekwe) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 654 Tm (Date of birth: 1960-01-09) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 638 Tm (Sex: Male) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 622 Tm (MRN: SYN-0692-02) Tj ET
+BT /F2 11 Tf 1 0 0 1 54 596 Tm (Chief concern:) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 580 Tm (Short of breath climbing one flight of stairs) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 554 Tm (Continued on page 2.) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Length 807 >>
+stream
+BT /F1 11 Tf 1 0 0 1 54 740 Tm (Patient: Demo Walter Ibekwe    MRN: SYN-0692-02    Page 2 of 2) Tj ET
+BT /F2 11 Tf 1 0 0 1 54 714 Tm (Current medications:) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 698 Tm (Warfarin 5 mg daily) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 682 Tm (Losartan 50 mg daily) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 666 Tm (Furosemide 40 mg daily) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 650 Tm (Rosuvastatin 20 mg nightly) Tj ET
+BT /F2 11 Tf 1 0 0 1 54 624 Tm (Allergies:) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 608 Tm (Lisinopril \(angioedema\)) Tj ET
+BT /F2 11 Tf 1 0 0 1 54 582 Tm (Family history:) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 566 Tm (Mother - myocardial infarction at 55) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 550 Tm (Father - stroke at 60) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 524 Tm (Signature: ____________________    Date: 2026-09-01) Tj ET
+endstream
+endobj
+xref
+0 9
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000121 00000 n 
+0000000257 00000 n 
+0000000393 00000 n 
+0000000490 00000 n 
+0000000592 00000 n 
+0000001297 00000 n 
+trailer
+<< /Size 9 /Root 1 0 R >>
+startxref
+2154
+%%EOF

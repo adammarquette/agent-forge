@@ -1,0 +1,28 @@
+{
+    "id": "answer-m2-control-inr-mechanical-valve-in-range",
+    "guards": "Holds the mechanical-valve branch from the far side, and is the probe the reviewer of used to show the branch was unseeded: an INR of 3.2 is supratherapeutic for atrial fibrillation and squarely therapeutic for a mechanical valve, so a regression that collapsed the branches into the default 2.0-3.0 raises a flag on a chart that must raise none - a false alarm on a safety surface, which is how flags stop being read. It is also the golden set's first fixture to carry effective dates, and so the first case in which the gate itself can see a recency regression: the superseded 2019 INR of 4.8 is listed FIRST, so nothing but ObservationRecency.MostRecentPerCode keeps it out of the answer, and a rule that read the whole history instead of the current value would state a seven-year-old excursion as this patient's anticoagulation today. Both failure modes surface the same way here - a flag where none is allowed - and the two are told apart by the flag's own text, which names either the 3.2 against atrial fibrillation or the 4.8 as of 2019-11-06.",
+    "category": "answer",
+    "expect_success": true,
+    "answer": {
+        "metric": "M2",
+        "intent": "Near-miss control for the mechanical-valve branch: warfarin, a mechanical aortic valve replacement, a superseded INR of 4.8 drawn in 2019 and a current INR of 3.2 - therapeutic for this indication. Nothing may be flagged. The stale result is listed before the current one on purpose: arrival order must not be what rescues the case, so recency ranking is the only thing that can.",
+        "site": "default",
+        "patient_id": "syn-patient-alpha-two",
+        "chart": {
+            "display_name": "Alpha-Two Testpatient",
+            "problems": [{ "id": "syn-alpha-two-cond-1", "display": "Mechanical aortic valve replacement" }],
+            "medications": [{ "id": "syn-alpha-two-med-1", "display": "Warfarin", "dosage": "7.5 mg daily" }],
+            "labs": [
+                { "id": "syn-alpha-two-obs-1", "display": "INR", "value": 4.8, "unit": null, "reference_range_low": 2.0, "reference_range_high": 3.0, "effective_date_time": "2019-11-06T09:00:00+00:00" },
+                { "id": "syn-alpha-two-obs-2", "display": "INR", "value": 3.2, "unit": null, "reference_range_low": 2.0, "reference_range_high": 3.0, "effective_date_time": "2026-09-12T09:00:00+00:00" }
+            ]
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }, { "tool_name": "get_labs" }] },
+            { "text": "Warfarin 7.5 mg daily is on the active medication list [MedicationRequest/syn-alpha-two-med-1].\nHis most recent INR is 3.2 [Observation/syn-alpha-two-obs-2]." }
+        ],
+        "expect_no_constraint_flags": true
+    },
+    "phi_tokens": ["Warfarin", "Mechanical aortic valve replacement"],
+    "rubrics": ["constraint_flagged", "no_phi_in_logs"]
+}

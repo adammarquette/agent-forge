@@ -1,0 +1,15 @@
+{
+    "id": "intake-minimal",
+    "guards": "An optional member that is absent behaves exactly like one present and null (chief_concern is omitted here, explicitly null in intake-empty-lists), and a near-blank form extracts rather than erroring. The boundary is between 'the form said nothing' and 'the document could not be read', which downstream must never confuse.",
+    "category": "extraction",
+    "doc_type": "intake_form",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"demographics\":{\"full_name\":null,\"date_of_birth\":null,\"sex\":null},\"current_medications\":[],\"allergies\":[],\"family_history\":[],\"citation\":{\"page\":1,\"quote\":\"Intake form (fields largely blank)\",\"bounding_box\":null}}",
+    "expect_success": true,
+    "phi_tokens": ["Intake form (fields largely blank)"],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "no_phi_in_logs"
+    ]
+}

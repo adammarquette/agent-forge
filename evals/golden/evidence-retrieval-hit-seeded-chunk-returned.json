@@ -1,0 +1,49 @@
+{
+    "id": "evidence-retrieval-hit-seeded-chunk-returned",
+    "guards": "The floor of the RAG slice, and the case that fails first if either half of hybrid retrieval stops reaching the answer. The expected set is deliberately the union of the two halves - one chunk both rank, one only the dense half found, one only the sparse half found - so fusing a single list or intersecting the two instead of merging them drops a chunk the composer needed. Nothing downstream notices: the composer is handed fewer snippets and writes a shorter answer in which every remaining citation still resolves. Losing a body from the hydration map fails this case differently - the fusion step's lookup throws KeyNotFoundException for the chunk whose body is missing - and the gate reports that as every rubric failed with the exception named, not as a dropped chunk.",
+    "category": "evidence",
+    "expect_success": true,
+    "evidence": {
+        "intent": "Both halves rank the warfarin INR chunk first; the sparse half also returns the ACEi chunk and the dense half the DOAC chunk, and the reranker keeps the merged order. Asserts all three chunks - the union of the two halves - are in the retrieved set, that the cited one survived verification, and that no stage degraded.",
+        "patient_id": "syn-patient-quebec-two",
+        "question": "My patient is on warfarin for atrial fibrillation - what INR range should I be targeting?",
+        "corpus": [
+            {
+                "chunk_id": "syn-gl-af-warfarin-inr-01",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Anticoagulation",
+                "section": "Warfarin INR target",
+                "text": "For most patients with atrial fibrillation on warfarin, the target INR is 2.0 to 3.0. An INR below 2.0 indicates subtherapeutic anticoagulation and increased stroke risk; an INR above 3.0 indicates elevated bleeding risk."
+            },
+            {
+                "chunk_id": "syn-gl-af-doac-renal-02",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Anticoagulation",
+                "section": "DOAC renal dosing",
+                "text": "Direct oral anticoagulants require dose reduction or avoidance in renal impairment. Assess creatinine clearance before starting a DOAC and periodically thereafter."
+            },
+            {
+                "chunk_id": "syn-gl-gdmt-acei-potassium-03",
+                "document_id": "Synthetic Cardiology Guidance 2026 - GDMT",
+                "section": "ACEi/ARB potassium and creatinine",
+                "text": "When starting or up-titrating an ACE inhibitor or ARB, monitor serum potassium and creatinine within one to two weeks."
+            }
+        ],
+        "sparse_ranking": ["syn-gl-af-warfarin-inr-01", "syn-gl-gdmt-acei-potassium-03"],
+        "dense_ranking": ["syn-gl-af-warfarin-inr-01", "syn-gl-af-doac-renal-02"],
+        "rerank_ranking": ["syn-gl-af-warfarin-inr-01", "syn-gl-af-doac-renal-02", "syn-gl-gdmt-acei-potassium-03"],
+        "expected_chunk_ids": [
+            "syn-gl-af-warfarin-inr-01",
+            "syn-gl-af-doac-renal-02",
+            "syn-gl-gdmt-acei-potassium-03"
+        ],
+        "expected_guideline_citations": ["Guideline/syn-gl-af-warfarin-inr-01"],
+        "model_script": [
+            { "text": "For atrial fibrillation on warfarin the target INR is 2.0 to 3.0 [Guideline/syn-gl-af-warfarin-inr-01].\nBelow 2.0 the anticoagulation is subtherapeutic and stroke risk rises [Guideline/syn-gl-af-warfarin-inr-01]." }
+        ]
+    },
+    "expected_values": [
+        "the target INR is 2.0 to 3.0",
+        "Below 2.0 the anticoagulation is subtherapeutic"
+    ],
+    "phi_tokens": ["syn-patient-quebec-two", "warfarin", "atrial fibrillation"],
+    "rubrics": ["retrieval_hit", "evidence_grounded", "no_phi_in_logs"]
+}

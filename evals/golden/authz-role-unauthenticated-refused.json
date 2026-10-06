@@ -1,0 +1,24 @@
+{
+    "id": "authz-role-unauthenticated-refused",
+    "guards": "With no authenticated identity in scope there is nothing to match against the appointment, and the gate refuses rather than treating absent as anonymous-but-allowed. It also pins that the audit line is still written, attributed to an unknown clinician: an unattributable attempt must still leave a record.",
+    "category": "authorization",
+    "expect_success": false,
+    "authorization": {
+        "vector": "role_confusion",
+        "requester_role": "no authenticated identity in scope (FR-AUTH-1) - the gate has nothing to match and fails closed",
+        "requester_identity": null,
+        "site": "default",
+        "session_patient_id": "syn-patient-alpha",
+        "clinic_day_appointments": [
+            { "patient_id": "syn-patient-alpha", "provider_reference": "Practitioner/syn-attending-nakamura", "status": "booked" }
+        ],
+        "tool_call": { "tool_name": "get_patient_summary", "arguments_json": "{}" },
+        "forbidden_values": ["Alpha Testpatient", "Warfarin", "Atrial fibrillation"],
+        "expected_log_fragments": [
+            "ACCESS AUDIT: clinician=unknown REFUSED patient=syn-patient-alpha via tool=get_patient_summary",
+            "clinicDayAppointments=unresolved"
+        ]
+    },
+    "phi_tokens": ["Warfarin", "Atrial fibrillation"],
+    "rubrics": ["authorization_outcome", "no_unauthorized_disclosure", "attempt_logged", "safe_refusal", "no_phi_in_logs"]
+}

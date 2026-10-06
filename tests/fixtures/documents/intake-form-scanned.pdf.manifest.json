@@ -1,0 +1,121 @@
+{
+  "file_name": "intake-form-scanned.pdf",
+  "media_type": "application/pdf",
+  "doc_type": "intake_form",
+  "layout": "scanned",
+  "description": "A printed intake form scanned at 75 dpi, skewed about 1.5 degrees and speckled - an image-only PDF with no text layer.",
+  "patient": {
+    "name": "Demo Rosalind Ng",
+    "birth_date": "1955-11-02",
+    "sex": "female",
+    "mrn": "SYN-0692-03"
+  },
+  "page_count": 1,
+  "has_text_layer": false,
+  "facts": [
+    {
+      "fact_type": "intake.demographics",
+      "label": "demographics",
+      "value": "Demo Rosalind Ng",
+      "page": 1,
+      "quote": "Name: Demo Rosalind Ng",
+      "region": [
+        0.0634,
+        0.1483,
+        0.4111,
+        0.0253
+      ]
+    },
+    {
+      "fact_type": "intake.chief_concern",
+      "label": "chief_concern",
+      "value": "Exertional chest pain, eases with rest",
+      "page": 1,
+      "quote": "Exertional chest pain, eases with rest",
+      "region": [
+        0.068,
+        0.2755,
+        0.7119,
+        0.0314
+      ]
+    },
+    {
+      "fact_type": "intake.medication",
+      "label": "Aspirin",
+      "value": "81 mg daily",
+      "page": 1,
+      "quote": "Aspirin 81 mg daily",
+      "region": [
+        0.1459,
+        0.3612,
+        0.3547,
+        0.0241
+      ]
+    },
+    {
+      "fact_type": "intake.medication",
+      "label": "Bisoprolol",
+      "value": "5 mg daily",
+      "page": 1,
+      "quote": "Bisoprolol 5 mg daily",
+      "region": [
+        0.1468,
+        0.3871,
+        0.3923,
+        0.0249
+      ]
+    },
+    {
+      "fact_type": "intake.medication",
+      "label": "Ramipril",
+      "value": "10 mg daily",
+      "page": 1,
+      "quote": "Ramipril 10 mg daily",
+      "region": [
+        0.1477,
+        0.4141,
+        0.3735,
+        0.0245
+      ]
+    },
+    {
+      "fact_type": "intake.medication",
+      "label": "Atorvastatin",
+      "value": "80 mg nightly",
+      "page": 1,
+      "quote": "Atorvastatin 80 mg nightly",
+      "region": [
+        0.1486,
+        0.4385,
+        0.4863,
+        0.0268
+      ]
+    },
+    {
+      "fact_type": "intake.allergy",
+      "label": "allergy",
+      "value": "Codeine (nausea)",
+      "page": 1,
+      "quote": "Codeine (nausea)",
+      "region": [
+        0.282,
+        0.4929,
+        0.2983,
+        0.023
+      ]
+    },
+    {
+      "fact_type": "intake.family_history",
+      "label": "family_history",
+      "value": "Sister - angina at 50",
+      "page": 1,
+      "quote": "Sister - angina at 50",
+      "region": [
+        0.077,
+        0.5485,
+        0.3923,
+        0.0249
+      ]
+    }
+  ]
+}

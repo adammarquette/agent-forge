@@ -1,0 +1,30 @@
+{
+    "id": "answer-m2-renal-doac-flagged",
+    "guards": "DOAC dosing is renally cleared, so the flag is a prompt to check the dose against renal function, not a computed clearance. Guards the JOIN across two tool results in one turn: the medication comes from get_patient_summary and the creatinine from get_labs, so a scanner that lost either half would stop flagging silently, with every individual tool result still looking correct.",
+    "category": "answer",
+    "expect_success": true,
+    "answer": {
+        "metric": "M2",
+        "intent": "Seeded violation of FR-VERIF-2's renal-dose DOAC constraint: apixaban is renally cleared, and a creatinine of 2.3 mg/dL alongside stage 3 chronic kidney disease is impaired renal function by the diagnosis on the problem list, not merely a number above a constant.",
+        "site": "default",
+        "patient_id": "syn-patient-kilo",
+        "chart": {
+            "display_name": "Kilo Testpatient",
+            "problems": [
+                { "id": "syn-kilo-cond-1", "display": "Atrial fibrillation" },
+                { "id": "syn-kilo-cond-2", "display": "Chronic kidney disease stage 3" }
+            ],
+            "medications": [{ "id": "syn-kilo-med-1", "display": "Apixaban", "dosage": "5 mg twice daily" }],
+            "labs": [
+                { "id": "syn-kilo-obs-1", "display": "Creatinine", "value": 2.3, "unit": "mg/dL", "reference_range_low": 0.6, "reference_range_high": 1.1 }
+            ]
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }, { "tool_name": "get_labs" }] },
+            { "text": "Apixaban 5 mg twice daily is on the active medication list [MedicationRequest/syn-kilo-med-1].\nHer creatinine today is 2.3 mg/dL [Observation/syn-kilo-obs-1]." }
+        ],
+        "expected_flag_rule_ids": ["renal-doac-dosing"]
+    },
+    "phi_tokens": ["Apixaban", "Chronic kidney disease", "creatinine"],
+    "rubrics": ["constraint_flagged", "no_phi_in_logs"]
+}

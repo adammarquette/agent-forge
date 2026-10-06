@@ -1,0 +1,38 @@
+{
+    "id": "evidence-out-of-corpus-no-evidence-found",
+    "guards": "The must-miss control, and the one case that a retriever returning too much fails by returning anything at all - without it `retrieval_hit` is a membership check that gets easier the more a broken retriever returns. (The evidence-topk-* cases pin an exact order over a corpus larger than topK, so they reject the whole corpus too, but only by its length.) It is also where the invention risk is highest: a question the corpus does not cover is exactly when a model fills the gap, and the answer here carries a plausible fabricated chunk id that the critic has to remove. If evidence citations stopped being resolved against the retrieved set, the invented recommendation ships reading like sourced guidance.",
+    "category": "evidence",
+    "expect_success": false,
+    "evidence": {
+        "intent": "A question about septal reduction against a corpus holding only anticoagulation and GDMT chunks: neither half matches, the retriever returns nothing and never reaches the reranker. The draft states the gap and then asserts a recommendation citing a chunk id that does not exist. Asserts the retrieved set is empty, the gap statement ships, and the invented citation is suppressed.",
+        "patient_id": "syn-patient-tango-two",
+        "question": "Does the corpus say when to refer Testpatient Tango for septal reduction in hypertrophic cardiomyopathy?",
+        "corpus": [
+            {
+                "chunk_id": "syn-gl-af-warfarin-inr-01",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Anticoagulation",
+                "section": "Warfarin INR target",
+                "text": "For most patients with atrial fibrillation on warfarin, the target INR is 2.0 to 3.0."
+            },
+            {
+                "chunk_id": "syn-gl-gdmt-statin-05",
+                "document_id": "Synthetic Cardiology Guidance 2026 - GDMT",
+                "section": "Statin therapy in hyperlipidemia",
+                "text": "High-intensity statin therapy is recommended for patients with established atherosclerotic cardiovascular disease to lower LDL cholesterol."
+            }
+        ],
+        "sparse_ranking": [],
+        "dense_ranking": [],
+        "expect_no_evidence": true,
+        "expected_suppressed_citations": ["Guideline/syn-gl-hcm-septal-reduction-09"],
+        "forbidden_answer_fragments": ["Refer for septal myectomy once the resting gradient"],
+        "model_script": [
+            { "text": "No guideline evidence on file covers septal reduction in hypertrophic cardiomyopathy, so I cannot answer this from the corpus.\nRefer for septal myectomy once the resting gradient exceeds 50 mmhg on echocardiography [Guideline/syn-gl-hcm-septal-reduction-09]." }
+        ]
+    },
+    "expected_values": [
+        "No guideline evidence on file covers septal reduction in hypertrophic cardiomyopathy"
+    ],
+    "phi_tokens": ["syn-patient-tango-two", "hypertrophic cardiomyopathy", "septal reduction"],
+    "rubrics": ["retrieval_hit", "evidence_grounded", "no_phi_in_logs"]
+}

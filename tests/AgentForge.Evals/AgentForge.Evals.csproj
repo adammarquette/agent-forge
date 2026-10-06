@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\AgentForge.Documents\AgentForge.Documents.csproj" />
+    <!-- The authorization cases dispatch through the shipped enforcement path (McpToolDispatcher +
+         PatientRelationshipGate), so the gate scores the real rule rather than a copy of it.
+         -->
+    <ProjectReference Include="..\..\src\AgentForge.Agent\AgentForge.Agent.csproj" />
+    <!-- The evidence cases run the shipped HybridEvidenceRetriever over pinned halves, so RRF fusion, the
+         rerank ordering and the degradation path are scored rather than re-implemented here.
+         -->
+    <ProjectReference Include="..\..\src\AgentForge.Retrieval\AgentForge.Retrieval.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The EvalTests project reuses these internal eval building blocks (GoldenCase, RubricEvaluator,
+         Stub/CapturingLogger) so the fast xUnit tests share this gate's exact pipeline. -->
+    <InternalsVisibleTo Include="AgentForge.EvalTests" />
+  </ItemGroup>
+
+</Project>

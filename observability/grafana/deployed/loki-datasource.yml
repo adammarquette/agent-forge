@@ -1,0 +1,20 @@
+# Loki datasource for a DEPLOYED sidecar - see deployed/datasource.yml for why the URL is a variable.
+#
+# PROVISIONED ONLY WHERE LOKI IS DEPLOYED. The image's entrypoint deletes this file, and swaps
+# in the dashboard built without its one Loki panel ("Per-encounter story (FR-OBS-W2-1)"), whenever
+# LOKI_URL is unset - and the image sets no default for it. .railway/railway.ts sets LOKI_URL only
+# where it declares a `loki` service: staging, once its pin is filled; never production.
+#
+# THIS REVERSES THE POSITION THIS FILE USED TO ARGUE. It said an erroring Loki panel on a metrics-only
+# deployment was "the honest reading". The maintainer ruled for a transparent absence instead, and the
+# reasoning is this: a panel that errors in the one environment that will never have Loki trains
+# operators to ignore a red panel, which costs more than the panel tells them. Absence is now shown by
+# the panel not being there.
+apiVersion: 1
+datasources:
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: ${LOKI_URL}
+    editable: false

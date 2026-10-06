@@ -1,0 +1,28 @@
+{
+    "id": "answer-m1-gap-statement-ships-uncited",
+    "guards": "The opposite false positive, and the more dangerous one. A gap has nothing to cite by definition, so a verifier without the gap exemption deletes precisely the honest half of the answer: UC-5's 'no INR on file, cannot confirm the range' becomes silence, and silence about a missing lab is indistinguishable from the lab being fine. It also pins the per-CLAUSE evaluation - the exemption has to survive a sentence that reports the gap and its consequence in two clauses.",
+    "category": "answer",
+    "expect_success": true,
+    "answer": {
+        "metric": "M1",
+        "intent": "The other false positive M1 has to avoid: an honest gap statement has nothing to cite by definition, so suppressing it would delete the truthful half of the answer and leave silence. UC-5, and CardiologyProfile's own gap-reporting example.",
+        "site": "default",
+        "patient_id": "syn-patient-golf",
+        "chart": {
+            "display_name": "Golf Testpatient",
+            "problems": [{ "id": "syn-golf-cond-1", "display": "Atrial fibrillation" }],
+            "medications": [{ "id": "syn-golf-med-1", "display": "Metoprolol succinate", "dosage": "25 mg twice daily" }],
+            "labs": []
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }, { "tool_name": "get_labs" }] },
+            { "text": "Metoprolol succinate 25 mg twice daily is on the active medication list [MedicationRequest/syn-golf-med-1].\nNo INR is on file for this patient, so I cannot confirm her therapeutic range." }
+        ]
+    },
+    "expected_values": [
+        "Metoprolol succinate 25 mg twice daily is on the active medication list",
+        "No INR is on file for this patient, so I cannot confirm her therapeutic range."
+    ],
+    "phi_tokens": ["Metoprolol", "Atrial fibrillation"],
+    "rubrics": ["grounded_answer", "no_phi_in_logs"]
+}

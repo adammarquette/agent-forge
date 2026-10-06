@@ -1,0 +1,83 @@
+# Self-hosted observability stack (Epic 9 - ARCHITECTURE.md §11): Prometheus scrapes the sidecar's
+# /metrics endpoint (OpenTelemetry's Prometheus exporter, wired in Program.cs); Loki ingests the
+# sidecar's logs over OTLP (Epic 107); Tempo ingests its spans over OTLP; Grafana reads from all
+# three and is pre-provisioned with the AgentForge dashboard, alert rules, and datasources below. This compose file stands up the
+# observability *backend* only - run the sidecar itself separately (`dotnet run` from
+# src/AgentForge.Api, or its own container). To ship logs here, the sidecar needs
+# Observability__LokiOtlpEndpoint=http://localhost:3100/otlp/v1/logs, and to ship spans,
+# Observability__TraceOtlpEndpoint=http://localhost:4318/v1/traces (both set in appsettings.Development.json).
+#
+# TRUST BOUNDARY: all four publish on 127.0.0.1, so they are reachable from this host and not from the
+# network it is on. Prometheus, Loki and Tempo have no auth of their own, Loki holds application logs and
+# Tempo spans, so the loopback binding is the only thing in front of them; Grafana's admin credential is a passthrough, so it
+# can be changed without editing this file. Republish any of these on 0.0.0.0 and the credential has to
+# change in the same edit. Same posture as docker-compose.observability.yml, which additionally puts these
+# four on the application network.
+# See DEPLOYMENT.md § "Observability: three wirings".
+#
+# Usage (no flag needed - compose resolves the default .env from THIS file's directory, which is why the
+# credential's home is observability/.env, not the repo-root one; see observability/.env.example):
+#   docker compose -f observability/docker-compose.yml up
+#   Grafana:    http://localhost:3000  (GRAFANA_ADMIN_USER / GRAFANA_ADMIN_PASSWORD, default admin/admin)
+#   Prometheus: http://localhost:9090
+#   Loki:       http://localhost:3100  (query via Grafana Explore -> Loki)
+#   Tempo:      http://localhost:3200  (query via Grafana Explore -> Tempo); OTLP/HTTP in on :4318
+# Keeping the credential in the repo-root .env instead means passing `--env-file .env` on EVERY bring-up:
+# without it that file is silently ignored and Grafana stays admin/admin, and with it the file must exist
+# (an explicit --env-file is required, unlike the default .env, so it exits 1 on a clean clone).
+#
+# reference: #438
+
+services:
+  prometheus:
+    image: prom/prometheus:v3.15.0
+    container_name: agentforge-prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alerts/agentforge-alerts.yml:/etc/prometheus/alerts/agentforge-alerts.yml:ro
+    ports:
+      - "127.0.0.1:9090:9090"
+    extra_hosts:
+      # Lets the container reach the sidecar running on the host via `dotnet run`. Docker Desktop
+      # (Windows/Mac) resolves host.docker.internal automatically; this line makes it explicit and
+      # also works on Linux.
+      - "host.docker.internal:host-gateway"
+
+  loki:
+    image: grafana/loki:3.7.8
+    container_name: agentforge-loki
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
+    ports:
+      - "127.0.0.1:3100:3100"
+
+  tempo:
+    # Traces. The config binds its OTLP receiver on every interface, because Tempo's own default
+    # (localhost:4318) is unreachable from outside its container. 4318 is published so a sidecar run on
+    # the host via `dotnet run` can push to it; 3200 is the query API Grafana reads.
+    image: grafana/tempo:2.10.8
+    container_name: agentforge-tempo
+    command: -config.file=/etc/tempo/tempo.yaml
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+    ports:
+      - "127.0.0.1:3200:3200"
+      - "127.0.0.1:4318:4318"
+
+  grafana:
+    image: grafana/grafana:12.4.11
+    container_name: agentforge-grafana
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    environment:
+      # Never baked into the image; the login is the only auth in this stack, and Grafana queries Loki and Tempo.
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "127.0.0.1:3000:3000"

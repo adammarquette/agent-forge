@@ -1,0 +1,98 @@
+{
+    "id": "evidence-topk-fused-order-sixth-chunk-dropped",
+    "guards": "The topK cut on the path the disabled reranker takes in production: it returns no ranking, so the RRF-fused order stands and HybridEvidenceRetriever has to cut it to topK itself. Six chunks fuse into six distinct ranks and only five may come back, so deleting that .Take(topK) returns the sixth - the pinned order no longer matches, and the draft's citation of that sixth chunk resolves and ships. That second half is the one no smaller corpus can reach: the chunk is real, it is in the corpus and its text supports the claim, but this turn did not retrieve it, so a critic resolving against anything wider than the retrieved set - the whole corpus, or a pool not yet cut to topK - lets it through. Until no evidence corpus held more than three chunks, so no pool ever reached topK and every truncation could be deleted with the gate still green.",
+    "category": "evidence",
+    "expect_success": true,
+    "evidence": {
+        "intent": "Sparse returns all six chunks, dense the first two, and the reranker returns no ranking. RRF gives six distinct ranks [warfarin-inr, doac-renal, acei-potassium, bb-ccb, statin, rate-control]; topK is five, so rate-control is fused but not retrieved. The draft cites warfarin-inr correctly and then cites rate-control. Asserts the exact five-chunk order, that the warfarin citation survives, and that the rate-control line is suppressed although its chunk is in the corpus.",
+        "patient_id": "syn-patient-xray-two",
+        "question": "Testpatient Xray has permanent atrial fibrillation on warfarin - what INR and resting heart rate should we be aiming for?",
+        "corpus": [
+            {
+                "chunk_id": "syn-gl-af-warfarin-inr-01",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Anticoagulation",
+                "section": "Warfarin INR target",
+                "text": "For most patients with atrial fibrillation on warfarin, the target INR is 2.0 to 3.0."
+            },
+            {
+                "chunk_id": "syn-gl-af-doac-renal-02",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Anticoagulation",
+                "section": "DOAC renal dosing",
+                "text": "Direct oral anticoagulants require dose reduction or avoidance in renal impairment. Assess creatinine clearance before starting a DOAC and periodically thereafter."
+            },
+            {
+                "chunk_id": "syn-gl-gdmt-acei-potassium-03",
+                "document_id": "Synthetic Cardiology Guidance 2026 - GDMT",
+                "section": "ACEi/ARB potassium and creatinine",
+                "text": "When starting or up-titrating an ACE inhibitor or ARB, monitor serum potassium and creatinine within one to two weeks."
+            },
+            {
+                "chunk_id": "syn-gl-gdmt-bb-ccb-04",
+                "document_id": "Synthetic Cardiology Guidance 2026 - GDMT",
+                "section": "Beta-blocker and non-dihydropyridine calcium channel blocker",
+                "text": "Combining a beta-blocker with a non-dihydropyridine calcium channel blocker such as diltiazem or verapamil can cause excessive bradycardia and heart block; avoid or use with close monitoring."
+            },
+            {
+                "chunk_id": "syn-gl-gdmt-statin-05",
+                "document_id": "Synthetic Cardiology Guidance 2026 - GDMT",
+                "section": "Statin therapy in hyperlipidemia",
+                "text": "High-intensity statin therapy is recommended for patients with established atherosclerotic cardiovascular disease to lower LDL cholesterol."
+            },
+            {
+                "chunk_id": "syn-gl-af-rate-control-11",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Rate Control",
+                "section": "Resting rate target in permanent atrial fibrillation",
+                "text": "In permanent atrial fibrillation a lenient resting rate target of under 110 beats per minute is reasonable initially, tightening only if symptoms or ventricular function demand it."
+            }
+        ],
+        "sparse_ranking": [
+            "syn-gl-af-warfarin-inr-01",
+            "syn-gl-af-doac-renal-02",
+            "syn-gl-gdmt-acei-potassium-03",
+            "syn-gl-gdmt-bb-ccb-04",
+            "syn-gl-gdmt-statin-05",
+            "syn-gl-af-rate-control-11"
+        ],
+        "dense_ranking": [
+            "syn-gl-af-warfarin-inr-01",
+            "syn-gl-af-doac-renal-02"
+        ],
+        "expected_chunk_ids": [
+            "syn-gl-af-warfarin-inr-01"
+        ],
+        "expected_top_chunk_id": "syn-gl-af-warfarin-inr-01",
+        "expected_chunk_order": [
+            "syn-gl-af-warfarin-inr-01",
+            "syn-gl-af-doac-renal-02",
+            "syn-gl-gdmt-acei-potassium-03",
+            "syn-gl-gdmt-bb-ccb-04",
+            "syn-gl-gdmt-statin-05"
+        ],
+        "expected_guideline_citations": [
+            "Guideline/syn-gl-af-warfarin-inr-01"
+        ],
+        "expected_suppressed_citations": [
+            "Guideline/syn-gl-af-rate-control-11"
+        ],
+        "forbidden_answer_fragments": [
+            "Aim for a resting rate under 110 bpm in permanent atrial fibrillation"
+        ],
+        "model_script": [
+            {
+                "text": "Target an INR of 2.0 to 3.0 on warfarin for atrial fibrillation [Guideline/syn-gl-af-warfarin-inr-01].\nAim for a resting rate under 110 bpm in permanent atrial fibrillation [Guideline/syn-gl-af-rate-control-11]."
+            }
+        ]
+    },
+    "expected_values": [
+        "Target an INR of 2.0 to 3.0 on warfarin"
+    ],
+    "phi_tokens": [
+        "syn-patient-xray-two",
+        "permanent atrial fibrillation"
+    ],
+    "rubrics": [
+        "retrieval_hit",
+        "evidence_grounded",
+        "no_phi_in_logs"
+    ]
+}

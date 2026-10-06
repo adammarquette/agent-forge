@@ -1,0 +1,33 @@
+{
+    "id": "answer-m5-malformed-output-exhausts-repair",
+    "guards": "The bound on the repair, which is the half that cannot be tested by a repair that succeeds. A second malformed reply degrades rather than re-prompting again: an unbounded repair loop would burn the turn deadline and the token budget on a model that is not going to recover, and the clinician would wait out the whole window for nothing instead of getting the raw chart data immediately.",
+    "category": "answer",
+    "expect_success": false,
+    "answer": {
+        "metric": "M5",
+        "intent": "The same REQUIREMENTS.md §13.1 row taking its bad branch: the repaired draft is malformed too, so the one bounded repair attempt is spent and the turn degrades. The bound is what is under test - a repair loop with no ceiling would spin instead of degrading.",
+        "site": "default",
+        "patient_id": "syn-patient-xray",
+        "chart": {
+            "display_name": "Xray Testpatient",
+            "problems": [{ "id": "syn-xray-cond-1", "display": "Atrial fibrillation" }],
+            "medications": [{ "id": "syn-xray-med-1", "display": "Warfarin", "dosage": "5 mg daily" }],
+            "labs": []
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }] },
+            { "text": "", "stop_reason": "max_tokens" },
+            { "text": "", "stop_reason": "max_tokens" }
+        ],
+        "expected_log_fragments": [
+            "Degraded to deterministic fallback: Model output failed the final-answer contract (stop reason MaxTokens) after one repair attempt."
+        ]
+    },
+    "expected_values": [
+        "Summary unavailable right now - here is the source data retrieved this turn instead:",
+        "Source 1:",
+        "syn-xray-med-1"
+    ],
+    "phi_tokens": ["Warfarin", "Atrial fibrillation"],
+    "rubrics": ["transparent_degradation", "no_phi_in_logs"]
+}

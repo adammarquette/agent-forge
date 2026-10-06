@@ -1,0 +1,27 @@
+{
+    "id": "answer-m2-inr-mechanical-valve-subtherapeutic-flagged",
+    "guards": "The half of InrTherapeuticRangeRule no seeded case reached until now: the 2.5-3.5 mechanical-valve range. An INR of 2.2 is the sharpest available probe because it is therapeutic for atrial fibrillation and subtherapeutic for a valve - the SAME number the default branch calls fine. So this case reddens only if indication detection genuinely switched the range: it is the only case in the set that moving the 2.5 lower bound alone turns red, a regression collapsing both branches into the default 2.0-3.0 reddens it too, alongside its paired control, and moving the 3.5 upper bound leaves this case green and reddens only that control. Every M2 case that existed before stays green under all three of those. The clinical stake is a real one: a mechanical-valve patient sitting at 2.2 is under-anticoagulated and at risk of valve thrombosis, which is the failure the rule exists to surface. Deliberately one undated lab, so nothing but the branch selection is under test.",
+    "category": "answer",
+    "expect_success": true,
+    "answer": {
+        "metric": "M2",
+        "intent": "Chart: warfarin, a mechanical mitral valve replacement, and an INR of 2.2. Asserts inr-therapeutic-range fires and nothing else does. The range is chosen from the problem list's mechanical-valve keywords - never from the medication and never from the lab's own reference range, which is left at the generic 2.0-3.0 precisely so that a rule reading it instead of the problem list would not flag. Pairs with answer-m2-control-inr-mechanical-valve-in-range, which holds the same branch from the other side.",
+        "site": "default",
+        "patient_id": "syn-patient-zulu",
+        "chart": {
+            "display_name": "Zulu Testpatient",
+            "problems": [{ "id": "syn-zulu-cond-1", "display": "Mechanical mitral valve replacement" }],
+            "medications": [{ "id": "syn-zulu-med-1", "display": "Warfarin", "dosage": "6 mg daily" }],
+            "labs": [
+                { "id": "syn-zulu-obs-1", "display": "INR", "value": 2.2, "unit": null, "reference_range_low": 2.0, "reference_range_high": 3.0 }
+            ]
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }, { "tool_name": "get_labs" }] },
+            { "text": "Warfarin 6 mg daily is on the active medication list [MedicationRequest/syn-zulu-med-1].\nHis INR today is 2.2 [Observation/syn-zulu-obs-1]." }
+        ],
+        "expected_flag_rule_ids": ["inr-therapeutic-range"]
+    },
+    "phi_tokens": ["Warfarin", "Mechanical mitral valve replacement"],
+    "rubrics": ["constraint_flagged", "no_phi_in_logs"]
+}

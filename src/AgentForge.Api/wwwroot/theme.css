@@ -1,0 +1,53 @@
+/*
+ * Theme tokens for the Daily Agenda and Copilot chat views, mirrored from the OpenEMR fork's new frontend
+ * (GitLab 2046, openemr-frontend/src/theme/tokens.ts and theme.ts at develop 1deeb73c) so the embedded views
+ * read as part of the same product. Change a value there first, then here.
+ * Selection: html[data-theme] (set by theme.js) wins; with none, the device's prefers-color-scheme decides.
+ */
+:root {
+  color-scheme: light;
+  --oe-page: #e6e6e6; --oe-surface: #ffffff; --oe-surface-alt: #f3f4f6; --oe-line: #d1d5db;
+  --oe-text: #111827; --oe-muted: #4b5563; --oe-link: #1d4ed8;
+  --oe-primary: #0069d9; --oe-on-primary: #ffffff;
+  --oe-warning: #ffc107; --oe-on-warning: #111827;
+  --oe-danger: #bd2130; --oe-on-danger: #ffffff;
+  --oe-success: #19692c; --oe-info: #0f6674;
+  --oe-font: "Lato", "Helvetica", "Arial", sans-serif;
+  --oe-radius: 4px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --oe-page: #000000; --oe-surface: #212529; --oe-surface-alt: #343a40; --oe-line: #495057;
+    --oe-text: #f8f9fa; --oe-muted: #ced4da; --oe-link: #8ab8ff;
+    --oe-primary: #3b95ff; --oe-on-primary: #000000;
+    --oe-warning: #ffc107; --oe-on-warning: #111111;
+    --oe-danger: #ff6b6b; --oe-on-danger: #000000;
+    --oe-success: #5dd879; --oe-info: #5bc8da;
+  }
+}
+/* Same dark values as above: an explicit choice must win over the device either way. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --oe-page: #000000; --oe-surface: #212529; --oe-surface-alt: #343a40; --oe-line: #495057;
+  --oe-text: #f8f9fa; --oe-muted: #ced4da; --oe-link: #8ab8ff;
+  --oe-primary: #3b95ff; --oe-on-primary: #000000;
+  --oe-warning: #ffc107; --oe-on-warning: #111111;
+  --oe-danger: #ff6b6b; --oe-on-danger: #000000;
+  --oe-success: #5dd879; --oe-info: #5bc8da;
+}
+/* The views' own names, bound to the tokens. Pairs used for text all clear WCAG AA 4.5:1 in both themes. */
+:root {
+  --bg: var(--oe-page); --surface: var(--oe-surface); --border: var(--oe-line); --text: var(--oe-text);
+  --muted: var(--oe-muted); --accent: var(--oe-primary); --on-accent: var(--oe-on-primary);
+  --accent-text: var(--oe-link); --accent-weak: var(--oe-surface-alt);
+  /* Form-control outline: --border is 1.5-1.9:1, below the 3:1 a control boundary needs. */
+  --control-border: var(--oe-muted);
+  --user-bg: var(--oe-primary); --user-text: var(--oe-on-primary);
+  --ok: var(--oe-success); --wait: var(--oe-warning);
+  --warn-bg: var(--oe-warning); --warn-text: var(--oe-on-warning);
+  --flag-bg: var(--oe-warning); --flag-text: var(--oe-on-warning);
+  --fail-bg: var(--oe-danger); --fail-text: var(--oe-on-danger);
+  --cite-bg: var(--oe-surface-alt);
+  --radius: var(--oe-radius);
+}

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- For SmartLaunchScopes: the registered scope superset is shared with the sidecar's own
+         contract tests rather than duplicated as literals here. -->
+    <ProjectReference Include="..\..\src\AgentForge.Integration.OpenEmr\AgentForge.Integration.OpenEmr.csproj" />
+  </ItemGroup>
+
+</Project>

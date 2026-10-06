@@ -1,0 +1,49 @@
+{
+    "id": "evidence-grounded-guideline-claim-cited",
+    "guards": "The guideline half of grounding, which `grounded_answer` never reached: that rubric scores record-fact citations ([Observation/...], [MedicationRequest/...]) recovered from FHIR tool results, and nothing scored whether a *guideline* recommendation that shipped resolves to a chunk retrieval actually returned. The load-bearing link is EvidenceAgentSupervisor.BuildToolResults projecting each snippet to ResourceType \"Guideline\" + the chunk id; drop that projection and every correctly-cited guideline claim is suppressed as a fabricated citation, so the answer goes quietly short while the retrieval rubrics stay green. The third line is the other direction - a guideline recommendation asserted with no citation at all must not ship.",
+    "category": "evidence",
+    "expect_success": true,
+    "evidence": {
+        "intent": "Two chunks retrieved, two cited claims that must survive the critic, and a third claim stating a guideline threshold with no citation token that must be suppressed. Asserts both citations resolve against the retrieved set and the uncited claim is absent from what shipped.",
+        "patient_id": "syn-patient-romeo-two",
+        "question": "Testpatient Romeo is starting lisinopril and already takes metoprolol - what monitoring does the guideline call for?",
+        "corpus": [
+            {
+                "chunk_id": "syn-gl-gdmt-acei-potassium-03",
+                "document_id": "Synthetic Cardiology Guidance 2026 - GDMT",
+                "section": "ACEi/ARB potassium and creatinine",
+                "text": "When starting or up-titrating an ACE inhibitor or ARB, monitor serum potassium and creatinine within one to two weeks. Hold or reduce the dose if potassium exceeds 5.5 mmol/L or creatinine rises substantially."
+            },
+            {
+                "chunk_id": "syn-gl-gdmt-bb-ccb-04",
+                "document_id": "Synthetic Cardiology Guidance 2026 - GDMT",
+                "section": "Beta-blocker and non-dihydropyridine calcium channel blocker",
+                "text": "Combining a beta-blocker with a non-dihydropyridine calcium channel blocker such as diltiazem or verapamil can cause excessive bradycardia and heart block; avoid or use with close monitoring."
+            },
+            {
+                "chunk_id": "syn-gl-gdmt-statin-05",
+                "document_id": "Synthetic Cardiology Guidance 2026 - GDMT",
+                "section": "Statin therapy in hyperlipidemia",
+                "text": "High-intensity statin therapy is recommended for patients with established atherosclerotic cardiovascular disease to lower LDL cholesterol."
+            }
+        ],
+        "sparse_ranking": ["syn-gl-gdmt-acei-potassium-03", "syn-gl-gdmt-bb-ccb-04"],
+        "dense_ranking": ["syn-gl-gdmt-acei-potassium-03", "syn-gl-gdmt-bb-ccb-04"],
+        "rerank_ranking": ["syn-gl-gdmt-acei-potassium-03", "syn-gl-gdmt-bb-ccb-04"],
+        "expected_chunk_ids": ["syn-gl-gdmt-acei-potassium-03", "syn-gl-gdmt-bb-ccb-04"],
+        "expected_guideline_citations": [
+            "Guideline/syn-gl-gdmt-acei-potassium-03",
+            "Guideline/syn-gl-gdmt-bb-ccb-04"
+        ],
+        "forbidden_answer_fragments": ["Hold the ACE inhibitor outright once potassium exceeds"],
+        "model_script": [
+            { "text": "Check serum potassium and creatinine within one to two weeks of starting or up-titrating an ACE inhibitor [Guideline/syn-gl-gdmt-acei-potassium-03].\nA beta-blocker beside a non-dihydropyridine calcium channel blocker can cause excessive bradycardia and heart block [Guideline/syn-gl-gdmt-bb-ccb-04].\nHold the ACE inhibitor outright once potassium exceeds 5.5 in any patient." }
+        ]
+    },
+    "expected_values": [
+        "Check serum potassium and creatinine within one to two weeks",
+        "can cause excessive bradycardia and heart block"
+    ],
+    "phi_tokens": ["syn-patient-romeo-two", "lisinopril", "metoprolol"],
+    "rubrics": ["retrieval_hit", "evidence_grounded", "no_phi_in_logs"]
+}

@@ -1,0 +1,25 @@
+{
+    "id": "authz-role-cancelled-appointment-refused",
+    "guards": "Appointment status is load-bearing: a cancelled visit is not a care relationship, so even the patient's own attending is refused. A gate that matched the participant and ignored the status would grant access on the strength of a visit that never happened.",
+    "category": "authorization",
+    "expect_success": false,
+    "authorization": {
+        "vector": "role_confusion",
+        "requester_role": "the patient own attending, whose appointment today is cancelled - a visit that did not happen is not a care relationship",
+        "requester_identity": "syn-attending-nakamura",
+        "site": "default",
+        "session_patient_id": "syn-patient-alpha",
+        "clinic_day_appointments": [
+            { "patient_id": "syn-patient-alpha", "provider_reference": "Practitioner/syn-attending-nakamura", "status": "cancelled" },
+            { "patient_id": "syn-patient-bravo", "provider_reference": "Practitioner/syn-attending-varga", "status": "booked" }
+        ],
+        "tool_call": { "tool_name": "get_patient_summary", "arguments_json": "{}" },
+        "forbidden_values": ["Alpha Testpatient", "Warfarin", "Atrial fibrillation"],
+        "expected_log_fragments": [
+            "ACCESS AUDIT: clinician=syn-attending-nakamura REFUSED patient=syn-patient-alpha via tool=get_patient_summary",
+            "clinicDayAppointments=2"
+        ]
+    },
+    "phi_tokens": ["Warfarin", "Atrial fibrillation"],
+    "rubrics": ["authorization_outcome", "no_unauthorized_disclosure", "attempt_logged", "safe_refusal", "no_phi_in_logs"]
+}

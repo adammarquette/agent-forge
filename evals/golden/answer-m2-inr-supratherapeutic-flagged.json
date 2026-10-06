@@ -1,0 +1,27 @@
+{
+    "id": "answer-m2-inr-supratherapeutic-flagged",
+    "guards": "An INR of 4.6 is a bleeding risk the cardiologist has about ninety seconds to notice, and the constraint flag is the only thing that raises it - the value itself is just another row on a lab panel. Guards that the flag is computed from tool-result JSON BELOW the model: the pinned draft never mentions a range, so a rule reading the model's prose instead of the scanned tool results would raise nothing and redden this case. What it does NOT pin is WHICH therapeutic range fired - 4.6 is outside the default 2.0-3.0 and the mechanical-valve 2.5-3.5 alike, so this case exercises the branch without discriminating it. The discrimination is held by answer-m2-inr-mechanical-valve-subtherapeutic-flagged and its control, each seeded at a value the other branch judges the opposite way; this case would stay green if the two ranges were collapsed into one.",
+    "category": "answer",
+    "expect_success": true,
+    "answer": {
+        "metric": "M2",
+        "intent": "Chart: warfarin, atrial fibrillation, and an INR of 4.6 against a 2.0-3.0 reference range. Asserts inr-therapeutic-range fires and nothing else does. What the rule actually reads is the labs plus the problem list's mechanical-valve keywords - never the medication - so this case exercises the DEFAULT atrial-fibrillation range rather than indication selection. The warfarin entry makes the chart clinically coherent; deleting it would not change the outcome.",
+        "site": "default",
+        "patient_id": "syn-patient-india",
+        "chart": {
+            "display_name": "India Testpatient",
+            "problems": [{ "id": "syn-india-cond-1", "display": "Atrial fibrillation" }],
+            "medications": [{ "id": "syn-india-med-1", "display": "Warfarin", "dosage": "5 mg daily" }],
+            "labs": [
+                { "id": "syn-india-obs-1", "display": "INR", "value": 4.6, "unit": null, "reference_range_low": 2.0, "reference_range_high": 3.0 }
+            ]
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }, { "tool_name": "get_labs" }] },
+            { "text": "Warfarin 5 mg daily is on the active medication list [MedicationRequest/syn-india-med-1].\nHer INR today is 4.6 [Observation/syn-india-obs-1]." }
+        ],
+        "expected_flag_rule_ids": ["inr-therapeutic-range"]
+    },
+    "phi_tokens": ["Warfarin", "Atrial fibrillation"],
+    "rubrics": ["constraint_flagged", "no_phi_in_logs"]
+}

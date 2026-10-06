@@ -1,0 +1,25 @@
+{
+  "kind": "agentforge.railway.data-refreshable",
+  "reference": "",
+  "what": "What this repository owes each Railway environment's data. TWO INDEPENDENT QUESTIONS, one entry per environment, because an environment can answer them differently. `refreshable` (boolean) answers MAY THE SNAPSHOT GUARD SKIP ITS PRE-DESTRUCTION BACKUP HERE - it is the only field railway-snapshot-guard.sh reads, and it gates nothing else. `schedules` (\"none\" or \"daily\") answers SHOULD THIS ENVIRONMENT CARRY SCHEDULED VOLUME BACKUPS - read by railway-backup-schedules.sh, which expects that state in `check`, refuses `apply` where it is \"none\" and refuses `remove` where it is not. The one place the two meet is a WARNING, not a gate: `remove` reads `refreshable` so it can say out loud that removing the schedules where the guard still snapshots makes its first manual backup meet Railway's 50% cap. Each carries its own justification: `reason` for the first, `schedulesReason` for the second. They were one field until the review: production was then not refreshable AND carried no schedules, and collapsing that into one boolean made `check` demand a DAILY schedule on every production volume and tell the operator to run the `apply` that re-creates what the ruling retired. Since both environments give the same two answers; the fields stay separate because the questions still are. Every way of failing to answer - an environment not listed here, a `refreshable` that is not the boolean true, a `schedules` that is neither word - reads as the strict answer to that question: NOT refreshable (a verified snapshot is still required) and DAILY-expected (the schedules stay, and `remove` refuses). See DEPLOYMENT.md section 10.",
+  "environments": [
+    {
+      "environmentId": "43e5ee34-ad72-4dbf-81ac-b52bd138dae4",
+      "name": "staging",
+      "refreshable": true,
+      "schedules": "none",
+      "declaredOn": "2026-09-22",
+      "reason": "Staging holds synthetic demo data only - the OpenEMR cardiology cohort is re-seeded from the fork's seed_cardiology_demo.php (run inside the openemr container; tools/BootstrapOpenEmr only writes globals and enables oauth_clients), the sidecar's facts are re-derived by re-running ingestion, Prometheus and the data-protection keys are derived. Nothing here would ever be restored from a backup, so the snapshot guard takes none.",
+      "schedulesReason": "Maintainer ruling,: no scheduled volume backups in either environment, because the data is not critical and can be refreshed. Staging's three DAILY schedules were removed on 2026-09-22 by this script's `remove` verb."
+    },
+    {
+      "environmentId": "0e2d543a-5776-46af-992e-5f60e91aa726",
+      "name": "production",
+      "refreshable": true,
+      "schedules": "none",
+      "declaredOn": "2026-09-23",
+      "reason": "Maintainer ruling, (2026-09-23): production data is refreshable - the OpenEMR cohort is re-seedable from the fork's seed_cardiology_demo.php (run inside the openemr container), the same as staging, and the sidecar's facts are re-derived by re-running ingestion; tools/BootstrapOpenEmr only writes globals and enables oauth_clients - so the snapshot guard takes no pre-apply backup here. The maintainer was asked with the trade-off stated and accepted it: a destructive apply to production could lose data that can then only be re-seeded, not restored. This reverses the strict answer recorded here, for this field only; the schedules answer below is unchanged.",
+      "schedulesReason": "Maintainer ruling,: no scheduled volume backups in either environment. Production never had any, so nothing was removed - this records that none is the intended state rather than an outstanding operator task, which is what `check` would otherwise keep reporting. It is stated here rather than inferred from `refreshable`, which answers a different question."
+    }
+  ]
+}

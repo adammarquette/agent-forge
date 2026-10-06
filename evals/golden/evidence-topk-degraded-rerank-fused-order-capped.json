@@ -1,0 +1,108 @@
+{
+    "id": "evidence-topk-degraded-rerank-fused-order-capped",
+    "guards": "The topK cut on the degradation path, and the fused order it cuts. With the reranker down HybridEvidenceRetriever falls back to the RRF-fused order and must cap it at topK; delete that .Take(topK) and the sixth chunk comes back, so the pinned order fails and the draft's citation of that chunk - in the corpus, not retrieved - resolves and ships. The fixture is also built so the fused order differs from both concatenations of the halves: the sparse half's top chunk fuses second, behind the chunk both halves rank near the top, and the dropped chunk sits inside the sparse half's first five. So replacing Fuse with a sparse-first concatenation, a dense-first one, or a merge on raw scores (every fixture snippet scores zero, which makes that the sparse-first concatenation again) changes which five come back or their order. The three-chunk rerank-degradation case cannot tell a sparse-first concatenation from RRF; this one can.",
+    "category": "evidence",
+    "expect_success": true,
+    "evidence": {
+        "intent": "The reranker throws. Sparse ranks [acei-potassium, warfarin-inr, bb-ccb, statin, rate-control] and dense [warfarin-inr, doac-renal, acei-potassium], so RRF gives [warfarin-inr, acei-potassium, doac-renal, bb-ccb, statin, rate-control] and topK five drops rate-control. Asserts that exact five-chunk order, the degraded stage set {rerank}, the fallback warning, that the beta-blocker citation survives, and that the rate-control line is suppressed.",
+        "patient_id": "syn-patient-zulu-two",
+        "question": "Testpatient Zulu is on metoprolol and diltiazem for permanent atrial fibrillation - what do the guidelines say about the combination and the rate target?",
+        "corpus": [
+            {
+                "chunk_id": "syn-gl-af-warfarin-inr-01",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Anticoagulation",
+                "section": "Warfarin INR target",
+                "text": "For most patients with atrial fibrillation on warfarin, the target INR is 2.0 to 3.0."
+            },
+            {
+                "chunk_id": "syn-gl-af-doac-renal-02",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Anticoagulation",
+                "section": "DOAC renal dosing",
+                "text": "Direct oral anticoagulants require dose reduction or avoidance in renal impairment. Assess creatinine clearance before starting a DOAC and periodically thereafter."
+            },
+            {
+                "chunk_id": "syn-gl-gdmt-acei-potassium-03",
+                "document_id": "Synthetic Cardiology Guidance 2026 - GDMT",
+                "section": "ACEi/ARB potassium and creatinine",
+                "text": "When starting or up-titrating an ACE inhibitor or ARB, monitor serum potassium and creatinine within one to two weeks."
+            },
+            {
+                "chunk_id": "syn-gl-gdmt-bb-ccb-04",
+                "document_id": "Synthetic Cardiology Guidance 2026 - GDMT",
+                "section": "Beta-blocker and non-dihydropyridine calcium channel blocker",
+                "text": "Combining a beta-blocker with a non-dihydropyridine calcium channel blocker such as diltiazem or verapamil can cause excessive bradycardia and heart block; avoid or use with close monitoring."
+            },
+            {
+                "chunk_id": "syn-gl-gdmt-statin-05",
+                "document_id": "Synthetic Cardiology Guidance 2026 - GDMT",
+                "section": "Statin therapy in hyperlipidemia",
+                "text": "High-intensity statin therapy is recommended for patients with established atherosclerotic cardiovascular disease to lower LDL cholesterol."
+            },
+            {
+                "chunk_id": "syn-gl-af-rate-control-11",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Rate Control",
+                "section": "Resting rate target in permanent atrial fibrillation",
+                "text": "In permanent atrial fibrillation a lenient resting rate target of under 110 beats per minute is reasonable initially, tightening only if symptoms or ventricular function demand it."
+            }
+        ],
+        "sparse_ranking": [
+            "syn-gl-gdmt-acei-potassium-03",
+            "syn-gl-af-warfarin-inr-01",
+            "syn-gl-gdmt-bb-ccb-04",
+            "syn-gl-gdmt-statin-05",
+            "syn-gl-af-rate-control-11"
+        ],
+        "dense_ranking": [
+            "syn-gl-af-warfarin-inr-01",
+            "syn-gl-af-doac-renal-02",
+            "syn-gl-gdmt-acei-potassium-03"
+        ],
+        "failing_stages": [
+            "rerank"
+        ],
+        "expected_degraded_stages": [
+            "rerank"
+        ],
+        "expected_log_fragments": [
+            "Reranker unavailable"
+        ],
+        "expected_chunk_ids": [
+            "syn-gl-gdmt-bb-ccb-04"
+        ],
+        "expected_top_chunk_id": "syn-gl-af-warfarin-inr-01",
+        "expected_chunk_order": [
+            "syn-gl-af-warfarin-inr-01",
+            "syn-gl-gdmt-acei-potassium-03",
+            "syn-gl-af-doac-renal-02",
+            "syn-gl-gdmt-bb-ccb-04",
+            "syn-gl-gdmt-statin-05"
+        ],
+        "expected_guideline_citations": [
+            "Guideline/syn-gl-gdmt-bb-ccb-04"
+        ],
+        "expected_suppressed_citations": [
+            "Guideline/syn-gl-af-rate-control-11"
+        ],
+        "forbidden_answer_fragments": [
+            "Aim for a resting rate under 110 bpm in permanent atrial fibrillation"
+        ],
+        "model_script": [
+            {
+                "text": "A beta-blocker beside a non-dihydropyridine calcium channel blocker can cause excessive bradycardia and heart block [Guideline/syn-gl-gdmt-bb-ccb-04].\nAim for a resting rate under 110 bpm in permanent atrial fibrillation [Guideline/syn-gl-af-rate-control-11]."
+            }
+        ]
+    },
+    "expected_values": [
+        "can cause excessive bradycardia and heart block"
+    ],
+    "phi_tokens": [
+        "syn-patient-zulu-two",
+        "metoprolol",
+        "diltiazem"
+    ],
+    "rubrics": [
+        "retrieval_hit",
+        "evidence_grounded",
+        "no_phi_in_logs"
+    ]
+}

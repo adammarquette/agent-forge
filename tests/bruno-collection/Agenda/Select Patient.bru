@@ -1,0 +1,39 @@
+meta {
+  name: Select Patient (/agenda/select-patient)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/agenda/select-patient?patientId={{firstAgendaPatientId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+settings {
+  followRedirects: false
+}
+
+assert {
+  res.status: eq 302
+  res.headers.location: eq /index.html
+}
+
+docs {
+  UC-6 (REQUIREMENTS.md): the roster drill-down - hands one patient off from the agenda to that patient's
+  own single-patient session (REQUIREMENTS.md UC-6's "opening any one patient from the list drops into that
+  patient's own live conversational session"). `patientId` comes from Daily Agenda.bru's
+  `firstAgendaPatientId`, run immediately before this in the same collection run (Bruno's
+  `vars:post-response`), so this needs the agenda's roster to have at least one row for today - an
+  empty demo-data agenda makes this 403 (not in roster) rather than a session-gate failure; seed at
+  least one appointment for the launched clinician first (DEPLOYMENT.md §4a) if that happens.
+
+  On success, AgendaEndpoints.HandleSelectPatientAsync saves a PatientSessionContext into the same
+  session the Cookie header carries - Patient Context.bru (../Patient/) reuses that same
+  `sessionCookie` and needs no separate launch. Expects a 302 to the chat SPA
+  (`Bff:ChatPath`/index.html); redirect-following is disabled to see the raw response.
+}

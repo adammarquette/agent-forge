@@ -1,0 +1,14 @@
+{
+    "id": "lab-citation-missing-quote",
+    "guards": "A citation that exists but carries no verbatim quote is not a citation. Required members are enforced inside the nested citation object, so a page number on its own - which looks like grounding and supports nothing - is rejected.",
+    "category": "extraction",
+    "doc_type": "lab_pdf",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"tests\":[{\"test_name\":\"INR\",\"value\":\"2.5\",\"citation\":{\"page\":1,\"bounding_box\":null}}]}",
+    "expect_success": false,
+    "rubrics": [
+        "schema_valid",
+        "safe_refusal",
+        "no_phi_in_logs"
+    ]
+}

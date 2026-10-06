@@ -1,0 +1,33 @@
+{
+    "id": "answer-m5-turn-deadline-deterministic-fallback",
+    "guards": "The per-request deadline, which is what makes the ninety-second window a bound rather than an aspiration: a provider call that never returns must end the turn with whatever was gathered, not hang the session. Guards that the tool results already in hand still reach the clinician under the fallback banner, and that the deadline is recorded as the reason. It does NOT guard the deadline-versus-caller-cancellation distinction - both arrive as OperationCanceledException, but nothing here cancels the caller's own token, so that half is AgentOrchestratorTests.StartBriefAsync_CallersOwnCancellationTokenAlreadyCanceled_ThrowsRatherThanDegradingToFallback, not this case.",
+    "category": "answer",
+    "expect_success": false,
+    "answer": {
+        "metric": "M5",
+        "intent": "REQUIREMENTS.md §13.1's 'tool slow / hits deadline' row and the per-request-deadline design default: the second model call never returns, and the turn's own budget is what ends it. The tools that already succeeded still ship, which is the difference between degrading and hanging. Deterministic despite involving a clock: the deadline is one millisecond and has already elapsed when the call starts, so the outcome does not depend on how fast the machine is.",
+        "site": "default",
+        "patient_id": "syn-patient-yankee",
+        "chart": {
+            "display_name": "Yankee Testpatient",
+            "problems": [{ "id": "syn-yankee-cond-1", "display": "Atrial fibrillation" }],
+            "medications": [{ "id": "syn-yankee-med-1", "display": "Warfarin", "dosage": "5 mg daily" }],
+            "labs": []
+        },
+        "turn_deadline_ms": 1,
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }] },
+            { "never_returns": true }
+        ],
+        "expected_log_fragments": [
+            "Degraded to deterministic fallback: Turn exceeded its configured deadline."
+        ]
+    },
+    "expected_values": [
+        "Summary unavailable right now - here is the source data retrieved this turn instead:",
+        "Source 1:",
+        "syn-yankee-med-1"
+    ],
+    "phi_tokens": ["Warfarin", "Atrial fibrillation"],
+    "rubrics": ["transparent_degradation", "no_phi_in_logs"]
+}

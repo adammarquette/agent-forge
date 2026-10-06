@@ -1,0 +1,72 @@
+{
+  "file_name": "lab-lipid-panel.pdf",
+  "media_type": "application/pdf",
+  "doc_type": "lab_pdf",
+  "layout": "clean",
+  "description": "Clean one-table lipid panel: every row one line in reading order, the case the exact matcher handles.",
+  "patient": {
+    "name": "Demo Eleanor Castellano",
+    "birth_date": "1952-03-14",
+    "sex": "female",
+    "mrn": "SYN-0692-01"
+  },
+  "page_count": 1,
+  "has_text_layer": true,
+  "facts": [
+    {
+      "fact_type": "lab.result",
+      "label": "Total cholesterol",
+      "value": "232",
+      "unit": "mg/dL",
+      "reference_range": "<200",
+      "abnormal_flag": true,
+      "collection_date": "2026-08-28",
+      "page": 1,
+      "quote": "Total cholesterol 232 mg/dL <200 H"
+    },
+    {
+      "fact_type": "lab.result",
+      "label": "LDL cholesterol",
+      "value": "151",
+      "unit": "mg/dL",
+      "reference_range": "<100",
+      "abnormal_flag": true,
+      "collection_date": "2026-08-28",
+      "page": 1,
+      "quote": "LDL cholesterol 151 mg/dL <100 H"
+    },
+    {
+      "fact_type": "lab.result",
+      "label": "HDL cholesterol",
+      "value": "44",
+      "unit": "mg/dL",
+      "reference_range": ">=40",
+      "abnormal_flag": false,
+      "collection_date": "2026-08-28",
+      "page": 1,
+      "quote": "HDL cholesterol 44 mg/dL >=40"
+    },
+    {
+      "fact_type": "lab.result",
+      "label": "Triglycerides",
+      "value": "186",
+      "unit": "mg/dL",
+      "reference_range": "<150",
+      "abnormal_flag": true,
+      "collection_date": "2026-08-28",
+      "page": 1,
+      "quote": "Triglycerides 186 mg/dL <150 H"
+    },
+    {
+      "fact_type": "lab.result",
+      "label": "Non-HDL cholesterol",
+      "value": "188",
+      "unit": "mg/dL",
+      "reference_range": "<130",
+      "abnormal_flag": true,
+      "collection_date": "2026-08-28",
+      "page": 1,
+      "quote": "Non-HDL cholesterol 188 mg/dL <130 H"
+    }
+  ]
+}

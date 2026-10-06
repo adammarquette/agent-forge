@@ -1,0 +1,89 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Length 2639 >>
+stream
+BT /F2 14 Tf 1 0 0 1 54 740 Tm (AgentForge Synthetic Laboratory) Tj ET
+BT /F1 9 Tf 1 0 0 1 54 722 Tm (TEST FIXTURE - synthetic data, not a real patient or a real report) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 692 Tm (Patient: Demo Walter Ibekwe) Tj ET
+BT /F1 11 Tf 1 0 0 1 320 692 Tm (DOB: 1960-01-09) Tj ET
+BT /F1 11 Tf 1 0 0 1 450 692 Tm (MRN: SYN-0692-02) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 674 Tm (Collected: 2026-09-03) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 656 Tm (Panel: Basic metabolic panel) Tj ET
+BT /F2 9 Tf 1 0 0 1 54 620 Tm (Test) Tj ET
+BT /F2 9 Tf 1 0 0 1 140 620 Tm (Result) Tj ET
+BT /F2 9 Tf 1 0 0 1 172 620 Tm (Units) Tj ET
+BT /F2 9 Tf 1 0 0 1 222 620 Tm (Reference) Tj ET
+BT /F2 9 Tf 1 0 0 1 268 620 Tm (Flag) Tj ET
+BT /F2 9 Tf 1 0 0 1 318 620 Tm (Test) Tj ET
+BT /F2 9 Tf 1 0 0 1 404 620 Tm (Result) Tj ET
+BT /F2 9 Tf 1 0 0 1 436 620 Tm (Units) Tj ET
+BT /F2 9 Tf 1 0 0 1 486 620 Tm (Reference) Tj ET
+BT /F2 9 Tf 1 0 0 1 532 620 Tm (Flag) Tj ET
+BT /F1 9 Tf 1 0 0 1 54 602 Tm (Sodium) Tj ET
+BT /F1 9 Tf 1 0 0 1 140 602 Tm (136) Tj ET
+BT /F1 9 Tf 1 0 0 1 172 602 Tm (mmol/L) Tj ET
+BT /F1 9 Tf 1 0 0 1 222 602 Tm (135-145) Tj ET
+BT /F1 9 Tf 1 0 0 1 318 602 Tm (BUN) Tj ET
+BT /F1 9 Tf 1 0 0 1 404 602 Tm (28) Tj ET
+BT /F1 9 Tf 1 0 0 1 436 602 Tm (mg/dL) Tj ET
+BT /F1 9 Tf 1 0 0 1 486 602 Tm (7-20) Tj ET
+BT /F1 9 Tf 1 0 0 1 532 602 Tm (H) Tj ET
+BT /F1 9 Tf 1 0 0 1 54 587 Tm (Potassium) Tj ET
+BT /F1 9 Tf 1 0 0 1 140 587 Tm (5.3) Tj ET
+BT /F1 9 Tf 1 0 0 1 172 587 Tm (mmol/L) Tj ET
+BT /F1 9 Tf 1 0 0 1 222 587 Tm (3.5-5.1) Tj ET
+BT /F1 9 Tf 1 0 0 1 268 587 Tm (H) Tj ET
+BT /F1 9 Tf 1 0 0 1 318 587 Tm (Creatinine) Tj ET
+BT /F1 9 Tf 1 0 0 1 404 587 Tm (1.5) Tj ET
+BT /F1 9 Tf 1 0 0 1 436 587 Tm (mg/dL) Tj ET
+BT /F1 9 Tf 1 0 0 1 486 587 Tm (0.7-1.3) Tj ET
+BT /F1 9 Tf 1 0 0 1 532 587 Tm (H) Tj ET
+BT /F1 9 Tf 1 0 0 1 54 572 Tm (Chloride) Tj ET
+BT /F1 9 Tf 1 0 0 1 140 572 Tm (101) Tj ET
+BT /F1 9 Tf 1 0 0 1 172 572 Tm (mmol/L) Tj ET
+BT /F1 9 Tf 1 0 0 1 222 572 Tm (98-107) Tj ET
+BT /F1 9 Tf 1 0 0 1 318 572 Tm (Glucose) Tj ET
+BT /F1 9 Tf 1 0 0 1 404 572 Tm (112) Tj ET
+BT /F1 9 Tf 1 0 0 1 436 572 Tm (mg/dL) Tj ET
+BT /F1 9 Tf 1 0 0 1 486 572 Tm (70-99) Tj ET
+BT /F1 9 Tf 1 0 0 1 532 572 Tm (H) Tj ET
+BT /F1 9 Tf 1 0 0 1 54 557 Tm (CO2) Tj ET
+BT /F1 9 Tf 1 0 0 1 140 557 Tm (23) Tj ET
+BT /F1 9 Tf 1 0 0 1 172 557 Tm (mmol/L) Tj ET
+BT /F1 9 Tf 1 0 0 1 222 557 Tm (22-29) Tj ET
+BT /F1 9 Tf 1 0 0 1 318 557 Tm (Calcium) Tj ET
+BT /F1 9 Tf 1 0 0 1 404 557 Tm (9.4) Tj ET
+BT /F1 9 Tf 1 0 0 1 436 557 Tm (mg/dL) Tj ET
+BT /F1 9 Tf 1 0 0 1 486 557 Tm (8.6-10.3) Tj ET
+BT /F1 9 Tf 1 0 0 1 54 522 Tm (H = above, L = below reference range. End of report.) Tj ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000348 00000 n 
+0000000450 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+3140
+%%EOF

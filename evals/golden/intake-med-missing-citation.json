@@ -1,0 +1,17 @@
+{
+    "id": "intake-med-missing-citation",
+    "guards": "Per-item grounding: an uncited medication cannot ride along inside an otherwise well-formed form. A present form-level citation is not enough - every medication carries its own or the extraction is refused.",
+    "category": "extraction",
+    "doc_type": "intake_form",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"demographics\":{\"full_name\":\"Oswaldo Nakamura\",\"date_of_birth\":\"1959-08-05\",\"sex\":\"M\"},\"chief_concern\":{\"text\":\"medication review\",\"citation\":{\"page\":1,\"quote\":\"medication review\",\"bounding_box\":null}},\"current_medications\":[{\"name\":\"metoprolol\",\"dose\":\"25mg BID\"}],\"allergies\":[],\"family_history\":[],\"citation\":{\"page\":1,\"quote\":\"Intake\",\"bounding_box\":null}}",
+    "expect_success": false,
+    "phi_tokens": [
+        "Oswaldo Nakamura"
+    ],
+    "rubrics": [
+        "schema_valid",
+        "safe_refusal",
+        "no_phi_in_logs"
+    ]
+}

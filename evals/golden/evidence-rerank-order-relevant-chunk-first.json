@@ -1,0 +1,46 @@
+{
+    "id": "evidence-rerank-order-relevant-chunk-first",
+    "guards": "The only case in which the cross-encoder decides which chunk the answer leads with. Both halves rank a keyword-dense distractor above the chunk that answers the question, so the RRF-fused order leads with the wrong chunk; only the rerank step puts the right one first. Remove the IReranker call, swallow its result, or let the fused order stand and the top retrieved chunk becomes the distractor - which membership alone cannot see, because the relevant chunk is still in the set. The composer leads with the wrong recommendation and every citation still resolves.",
+    "category": "evidence",
+    "expect_success": true,
+    "evidence": {
+        "intent": "Sparse and dense both rank the DOAC-renal distractor first; RRF fuses to [distractor, rate-control, statin] and the reranker promotes the rate-control chunk. Asserts the retrieved list *starts* with the rate-control chunk, not merely that it is present.",
+        "patient_id": "syn-patient-sierra-two",
+        "question": "Testpatient Sierra has permanent atrial fibrillation on apixaban - what resting heart rate should rate control be aiming for?",
+        "corpus": [
+            {
+                "chunk_id": "syn-gl-af-rate-control-11",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Rate Control",
+                "section": "Resting rate target in permanent atrial fibrillation",
+                "text": "In permanent atrial fibrillation a lenient resting rate target of under 110 beats per minute is reasonable initially, tightening only if symptoms or ventricular function demand it."
+            },
+            {
+                "chunk_id": "syn-gl-af-doac-renal-02",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Anticoagulation",
+                "section": "DOAC renal dosing",
+                "text": "Direct oral anticoagulants require dose reduction or avoidance in renal impairment. Assess creatinine clearance before starting a DOAC in atrial fibrillation and periodically thereafter."
+            },
+            {
+                "chunk_id": "syn-gl-gdmt-statin-05",
+                "document_id": "Synthetic Cardiology Guidance 2026 - GDMT",
+                "section": "Statin therapy in hyperlipidemia",
+                "text": "High-intensity statin therapy is recommended for patients with established atherosclerotic cardiovascular disease to lower LDL cholesterol."
+            }
+        ],
+        "sparse_ranking": ["syn-gl-af-doac-renal-02", "syn-gl-gdmt-statin-05", "syn-gl-af-rate-control-11"],
+        "dense_ranking": ["syn-gl-af-doac-renal-02", "syn-gl-af-rate-control-11", "syn-gl-gdmt-statin-05"],
+        "rerank_ranking": ["syn-gl-af-rate-control-11", "syn-gl-af-doac-renal-02", "syn-gl-gdmt-statin-05"],
+        "expected_chunk_ids": ["syn-gl-af-rate-control-11"],
+        "expected_top_chunk_id": "syn-gl-af-rate-control-11",
+        "expected_guideline_citations": ["Guideline/syn-gl-af-rate-control-11"],
+        "model_script": [
+            { "text": "A lenient resting rate target of under 110 bpm is reasonable initially in permanent atrial fibrillation [Guideline/syn-gl-af-rate-control-11].\nTighten the target only if symptoms or ventricular function demand it [Guideline/syn-gl-af-rate-control-11]." }
+        ]
+    },
+    "expected_values": [
+        "A lenient resting rate target of under 110 bpm is reasonable initially",
+        "Tighten the target only if symptoms or ventricular function demand it"
+    ],
+    "phi_tokens": ["syn-patient-sierra-two", "apixaban", "permanent atrial fibrillation"],
+    "rubrics": ["retrieval_hit", "evidence_grounded", "no_phi_in_logs"]
+}

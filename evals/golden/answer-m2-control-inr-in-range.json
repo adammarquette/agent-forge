@@ -1,0 +1,27 @@
+{
+    "id": "answer-m2-control-inr-in-range",
+    "guards": "The near-miss control for the INR class: the same warfarin-for-AFib picture as the seeded case, at a therapeutic 2.4. Recall measured without a control is unfalsifiable, because an engine that flagged every chart would read 100% - and on a safety surface a cardiologist is meant to trust, a flag that fires on a normal result is how flags stop being read at all.",
+    "category": "answer",
+    "expect_success": true,
+    "answer": {
+        "metric": "M2",
+        "intent": "Near-miss control for the INR class: the same warfarin-for-atrial-fibrillation picture as the seeded case, with an INR of 2.4 - unambiguously therapeutic for this indication. Nothing may be flagged. Without controls like this one, an engine that flagged every chart would read 100% recall.",
+        "site": "default",
+        "patient_id": "syn-patient-november",
+        "chart": {
+            "display_name": "November Testpatient",
+            "problems": [{ "id": "syn-november-cond-1", "display": "Atrial fibrillation" }],
+            "medications": [{ "id": "syn-november-med-1", "display": "Warfarin", "dosage": "4 mg daily" }],
+            "labs": [
+                { "id": "syn-november-obs-1", "display": "INR", "value": 2.4, "unit": null, "reference_range_low": 2.0, "reference_range_high": 3.0 }
+            ]
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }, { "tool_name": "get_labs" }] },
+            { "text": "Warfarin 4 mg daily is on the active medication list [MedicationRequest/syn-november-med-1].\nHer INR today is 2.4 [Observation/syn-november-obs-1]." }
+        ],
+        "expect_no_constraint_flags": true
+    },
+    "phi_tokens": ["Warfarin", "Atrial fibrillation"],
+    "rubrics": ["constraint_flagged", "no_phi_in_logs"]
+}

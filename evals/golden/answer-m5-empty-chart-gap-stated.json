@@ -1,0 +1,32 @@
+{
+    "id": "answer-m5-empty-chart-gap-stated",
+    "guards": "The empty-patient-record boundary, and the answer-path mirror of intake-missing-allergies: an empty chart must not read as a healthy patient. Every tool succeeds and returns nothing, so there is no error anywhere to notice - the only thing standing between 'we retrieved no medications' and 'this patient takes none' is the turn saying so, and the verifier letting it.",
+    "category": "answer",
+    "expect_success": true,
+    "answer": {
+        "metric": "M5",
+        "intent": "The 'empty patient record' boundary the Week 1 brief names, and REQUIREMENTS.md §13.1's 'missing / incomplete patient data' row: every tool succeeds and returns nothing. The turn must state the absence rather than fill it, and the gap statements must survive the verification gate rather than being suppressed as uncited claims.",
+        "site": "default",
+        "patient_id": "syn-patient-tango",
+        "chart": {
+            "display_name": "Tango Testpatient",
+            "problems": [],
+            "medications": [],
+            "allergies": [],
+            "labs": []
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }, { "tool_name": "get_labs" }] },
+            { "text": "No active problems are on file for this patient.\nNo active medications are on file.\nNo laboratory results are on file for this patient." }
+        ],
+        "forbidden_answer_fragments": ["Warfarin", "Atrial fibrillation", "INR"],
+        "expected_log_fragments": ["Tool call dispatched: get_patient_summary, error=False"]
+    },
+    "expected_values": [
+        "No active problems are on file for this patient.",
+        "No active medications are on file.",
+        "No laboratory results are on file for this patient."
+    ],
+    "phi_tokens": ["Tango Testpatient"],
+    "rubrics": ["transparent_degradation", "no_phi_in_logs"]
+}

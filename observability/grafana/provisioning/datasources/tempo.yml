@@ -1,0 +1,11 @@
+# Local-compose Tempo datasource: Grafana reads the sidecar's traces from the Tempo container, in
+# Explore -> Tempo (search by service agentforge-api, or TraceQL on agentforge.correlation_id).
+# The deployed image replaces this url with the environment's service address (../deployed/tempo-datasource.yml).
+apiVersion: 1
+datasources:
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    editable: false

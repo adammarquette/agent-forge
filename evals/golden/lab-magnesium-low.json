@@ -1,0 +1,22 @@
+{
+    "id": "lab-magnesium-low",
+    "guards": "An electrolyte low enough to be why an arrhythmia is not responding, extracted as printed with its interval-style range and its low flag, both asserted. With lab-sodium-low, lab-hdl-low and lab-egfr-low it keeps the abnormal population from being all highs.",
+    "category": "extraction",
+    "doc_type": "lab_pdf",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"tests\":[{\"test_name\":\"Magnesium\",\"value\":\"1.2\",\"unit\":\"mg/dL\",\"reference_range\":\"1.7-2.2\",\"collection_date\":\"2026-06-15\",\"abnormal_flag\":true,\"citation\":{\"page\":1,\"quote\":\"Magnesium 1.2 (L) mg/dL\",\"bounding_box\":null}}]}",
+    "expect_success": true,
+    "expected_values": [
+        "Magnesium",
+        "1.2",
+        "1.7-2.2",
+        "\"abnormal_flag\":true"
+    ],
+    "phi_tokens": ["Magnesium 1.2 (L) mg/dL"],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

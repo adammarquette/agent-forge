@@ -1,0 +1,126 @@
+<Project>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Typed OpenEMR FHIR/REST clients (CONVENTIONS.md §2) -->
+    <PackageVersion Include="Refit" Version="13.1.0" />
+    <PackageVersion Include="Refit.HttpClientFactory" Version="13.1.0" />
+
+    <!-- Streaming the fast-core-then-defer answer to the iFrame SPA -->
+    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.9" />
+
+    <!-- OpenAPI document generation for the Api HTTP surface (INTERFACES.md §D / a separate change).
+         Served only in non-prod (CONVENTIONS.md §6). MIT-licensed. -->
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.9" />
+    <!-- Security pin: Microsoft.AspNetCore.OpenApi 10.0.9 pulls Microsoft.OpenApi 2.0.0, which has a
+         high-severity reader-DoS CVE (NU1903, GHSA-v5pm-xwqc-g5wc; 2.x patched in 2.7.5). Pin up to the
+         patched release to keep the audit gate green - same rationale as the Cryptography.Xml pin below. -->
+    <PackageVersion Include="Microsoft.OpenApi" Version="2.7.5" />
+
+    <!-- In-process real host for the BFF's own integration tests (Epic 3 QA) -->
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.9" />
+
+    <!-- Transient-fault handling on every outbound OpenEMR/LLM call -->
+    <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.7.0" />
+
+    <!-- Strongly-typed configuration (Options pattern) -->
+    <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="10.0.9" />
+
+    <!-- ILogger abstraction, no hard dependency on a concrete provider -->
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.9" />
+
+    <!--
+      OpenTelemetry (Epic 9 - ARCHITECTURE.md §11 / CONVENTIONS.md §7): traces/metrics,
+      never a hard dependency on a specific backend. Prometheus.AspNetCore has stayed in beta
+      upstream for years (spec churn, not instability) - this is the accepted, standard way to
+      expose a /metrics scrape endpoint from an ASP.NET Core app; there is no stable release to
+      pin to instead.
+    -->
+    <PackageVersion Include="OpenTelemetry" Version="1.16.0" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.16.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.16.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.16.0" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.1" />
+    <!-- Real process CPU%/RSS (Runtime above is GC/heap only) - no stable release exists upstream yet. -->
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Process" Version="1.16.0-rc.1" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.16.0-beta.1" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.16.0" />
+    <!-- OTLP/HTTP log exporter -> self-hosted Loki (Epic 107). Optional/fail-open, wired
+         only when Observability:LokiOtlpEndpoint is set; keeps the sidecar backend-agnostic (§7). -->
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.16.0" />
+
+    <!-- Automates the real browser SMART login/consent step for QA token minting (GitLab issue
+         #30) - removes the manual "open this URL, log in, paste back the redirect" step from
+         OpenEmrQaFixture/tools/MintQaIdentityToken/tools/LoadTestChat. -->
+    <PackageVersion Include="Microsoft.Playwright" Version="1.61.0" />
+
+    <!-- Composition root plumbing for the integration test host (real HttpClient, real config
+         binding from environment variables - never hard-coded QA credentials/URLs) -->
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.9" />
+
+    <!--
+      Data tier (Week 2 - AgentForge.Data): EF Core over PostgreSQL + pgvector for the
+      hybrid-RAG store and the sidecar-owned DerivedFactStore (ARCHITECTURE-DOCUMENTS.md §5, W2-D14).
+      EF Core provider major MUST match the EF Core major (net10 -> the 10.x line); the pgvector-EF
+      floor (>= 9.0.1) will NOT force it, so these are pinned to 10.x here on purpose. Pgvector packages
+      are 0.x (SemVer allows breaking minors pre-1.0) - bump deliberately, like the FluentAssertions cap.
+      Licenses: EF Core / Npgsql provider = MIT/PostgreSQL; pgvector-dotnet = MIT.
+    -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />
+    <!-- Hermetic test tier only (tests/AgentForge.HermeticTests): runs the REAL DerivedFactStore
+         LINQ with no database process. Same EF major as above; MIT. Never referenced from src/. -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.0" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageVersion Include="MySqlConnector" Version="2.4.0" />
+    <PackageVersion Include="Pgvector" Version="0.3.2" />
+    <PackageVersion Include="Pgvector.EntityFrameworkCore" Version="0.3.0" />
+
+    <!-- Digital-PDF word geometry for pixel-accurate click-to-source citation boxes (FR-CITE-2):
+         reads the actual glyph rectangles so a cited value's region is exact, not a VLM estimate. Read-only
+         PDF parsing; UglyToad.PdfPig is Apache-2.0. -->
+    <PackageVersion Include="PdfPig" Version="0.1.15" />
+
+    <!--
+      Security pin: Microsoft.EntityFrameworkCore.Design's MSBuild/Roslyn tooling pulls
+      System.Security.Cryptography.Xml 9.0.0, which has a high-severity CVE (NU1903). Pin up to a patched
+      release (matches our other MS package cadence). The Design package is design-time only (PrivateAssets),
+      so this never ships at runtime - it exists solely to keep the audit gate green.
+
+      This pin needs re-bumping whenever the pinned version itself picks up an advisory: 10.0.9 was the
+      patched target until GHSA-23rf-6693-g89p / -8q5v-6pqq-x66h / -cvvh-rhrc-wg4q / -g8r8-53c2-pm3f landed
+      against it, which turned every `dotnet build` red under warnings-as-errors. 10.0.10 clears all four.
+      Treat a NU1903 on this package as "bump the pin", not "suppress the audit".
+    -->
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.10" />
+
+    <!-- Test infrastructure (both test projects) -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.7.0" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="coverlet.collector" Version="10.0.1" />
+
+    <!-- JUnit XML test reports, for a CI system that renders failed tests inline -->
+    <PackageVersion Include="JunitXml.TestLogger" Version="8.0.0" />
+
+    <!-- Mocking (unit tier only, per CONVENTIONS.md §8.1) -->
+    <PackageVersion Include="FakeItEasy" Version="9.0.1" />
+
+    <!--
+      FluentAssertions: pinned below 8.0.0. v8+ (Jan 2025) is commercially licensed
+      ($130/dev/yr); 7.x and earlier remain Apache-2.0. Do not raise this floor without
+      confirming license terms (CONVENTIONS.md §2).
+    -->
+    <PackageVersion Include="FluentAssertions" Version="7.2.2" />
+  </ItemGroup>
+
+</Project>

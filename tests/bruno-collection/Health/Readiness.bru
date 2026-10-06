@@ -1,0 +1,29 @@
+meta {
+  name: Readiness (/ready)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/ready
+  body: none
+  auth: none
+}
+
+docs {
+  Real dependency checks (OpenEMR's FHIR SMART discovery document - not /metadata, which cannot
+  answer inside the probe budget - the LLM provider's model lookup, the observability
+  backend, and the vector index - Postgres/pgvector) - REQUIREMENTS.md §13.1's "Dependency down" row. 503
+  when any one of them is down (NFR-HEALTH-1, NFR-HEALTH-W2-1); 200 when the rest are reachable -
+  but READ THE BODY, which is JSON naming every check, its status and its description, so it says
+  which dependency is down without a log dive. 200 covers both `Healthy` and
+  `Degraded`, and `Degraded` means a dependency was never *configured* at all: either
+  `Observability:PrometheusHealthUrl` or `AgentForgeData:ConnectionString` unset - ARCHITECTURE.md
+  D17. Either one SET and not answering is a 503 like any other dependency, and for the vector
+  index "answering" includes having the `vector` extension, the `guideline_chunks` table and its
+  HNSW index. Each probe is bounded by `Readiness:ProbeTimeout` (2s by default), so this request
+  answers in seconds whatever the answer is.
+  No status assertion here since the expected result legitimately depends on whether
+  the environment's dependencies are actually up when this runs - see HealthEndpointReadinessTests
+  for the automated fault-injection version of this check.
+}

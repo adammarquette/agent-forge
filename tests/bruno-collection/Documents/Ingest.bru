@@ -1,0 +1,64 @@
+meta {
+  name: Ingest Lab Document (/documents/ingest)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/documents/ingest
+  body: multipartForm
+  auth: none
+}
+
+body:multipart-form {
+  file: @file(fixtures/synthetic-lab-report.pdf) @contentType(application/pdf)
+  patientId: {{ingestPatientId}}
+  documentReferenceId: {{ingestDocumentReferenceId}}
+  docType: lab_pdf
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: matches ^(Ingested|AlreadyIngested)$
+  res.body.documentReferenceId: isString
+  res.body.factCount: gt 0
+}
+
+docs {
+  UC-9 (REQUIREMENTS.md / REQUIREMENTS.md) - "document-derived pre-visit brief", which extends REQUIREMENTS.md's UC-1
+  and UC-3. Numbered UC-9, not UC-6: REQUIREMENTS.md originally numbered its own Week 2 use cases starting
+  from 6, colliding with REQUIREMENTS.md's own UC-6 ("On-demand day's agenda", the Agenda/ requests below);
+  both docs now use UC-9..UC-11 for the Week 2 set. Implements FR-DOC-1; its idempotency is
+  FR-DOC-3.
+
+  This is the pre-visit half of the evidence flow. The front desk uploads a document through
+  OpenEMR's own Documents workflow; the `oe-module-agentforge` ingestion cron then calls this
+  endpoint with the bytes plus the OpenEMR `DocumentReference` id, so by the time the clinician
+  opens the patient the facts are already derived and citable (ARCHITECTURE-DOCUMENTS.md §4). This request
+  stands in for that cron call.
+
+  NO SESSION, AND THAT IS DELIBERATE (W2-D17). This route carries no clinician authority - it
+  derives facts and makes no user-scoped FHIR call - so it authenticates by trusted origin instead:
+  in the deployed topology the reverse proxy front door does not route `/documents/ingest` at all
+  and the sidecar has no public domain, so only the private network reaches it. Locally there is no
+  proxy in front of the bare sidecar, which is why this request needs no `sessionCookie` while
+  every `Evidence/` request does. A shared-secret header is a deferred hardening option, recorded
+  as such (ARCHITECTURE-DOCUMENTS.md §15 W2-D17).
+
+  SAFE TO RE-RUN. Ingestion is idempotent on the content hash of the bytes (W2-D3), so the first
+  run returns `Ingested` and every later run returns `AlreadyIngested` without re-extracting -
+  hence the `matches` assertion covering both. On the `AlreadyIngested` path the response echoes
+  the DocumentReference id of the *already stored* document rather than the one just sent, so this
+  asserts the field's shape rather than its value; changing `ingestDocumentReferenceId` without
+  also changing the fixture's bytes will not change what comes back.
+
+  `factCount > 0` IS THE REAL ASSERTION. A document whose extraction fails the strict schema gate
+  persists nothing and returns 422, so a 200 with facts on it is the whole ingestion path - upload,
+  vision extraction, schema gate, derived-fact persistence - having actually run.
+
+  `ingestPatientId` DOES NOT HAVE TO MATCH THE SESSION, AND USUALLY WILL NOT. Facts are stored per
+  patient, and `Evidence/Ask.bru` reads back whatever is on file for *the session's* patient. The
+  environment's default is a synthetic id, so this request always runs standalone; to see these
+  facts come back as citations from `Ask.bru`, set `ingestPatientId` to the id `Patient/Patient
+  Context.bru` returns for your launched session. See the README's "Week 2 endpoints".
+}

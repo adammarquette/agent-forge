@@ -1,0 +1,87 @@
+meta {
+  name: Ask With Document (/evidence/ask + lab PDF)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/evidence/ask
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+script:pre-request {
+  // The page this request stands in for renders from GET /patient and sends that response's contextKey;
+  // without it the endpoint answers 409 (EvidenceEndpoints). An empty key fails closed.
+  const axios = require("axios");
+  const res = await axios.get(bru.getEnvVar("baseUrl") + "/patient", {
+    headers: { Cookie: bru.getEnvVar("sessionCookie") || "" },
+    validateStatus: () => true,
+  });
+  bru.setVar("contextKey", res.status === 200 && res.data ? res.data.contextKey || "" : "");
+}
+
+body:multipart-form {
+  context: {{contextKey}}
+  question: Summarize the abnormal results in the attached lab report and what they imply for this patient's cardiology follow-up.
+  file: @file(fixtures/synthetic-lab-report.pdf) @contentType(application/pdf)
+  docType: lab_pdf
+}
+
+assert {
+  res.status: eq 200
+  res.body.answer: isString
+  res.body.answer.length: gt 0
+  res.body.handoffs.length: gte 5
+  res.body.extractedFacts: isString
+  res.body.citations: isArray
+  res.body.citations.length: gt 0
+  res.body.citations[0].page: isNumber
+  res.body.citations[0].factId: isString
+}
+
+docs {
+  UC-9 AND UC-10 (REQUIREMENTS.md / REQUIREMENTS.md) together - "document-derived pre-visit brief" and
+  "evidence-grounded answer" - which extend REQUIREMENTS.md's UC-1, UC-2 and UC-3. These were originally
+  REQUIREMENTS.md's own UC-6/UC-7, renumbered to UC-9/UC-10 because UC-6 collided with REQUIREMENTS.md's own UC-6
+  ("On-demand day's agenda", the Agenda/ requests below); see `Ask.bru` on the numbering.
+
+  The whole product in one call: attach a document, ask a question, get back a verified answer whose
+  document-derived claims carry click-to-source citations (FR-CITE-2). This is `Ask.bru` plus the
+  intake-extractor leg - the same endpoint, one extra pair of multipart parts - so it exercises
+  extraction, retrieval, composition, verification and citation in a single POST.
+
+  THE FIXTURE. `fixtures/synthetic-lab-report.pdf` is a one-page synthetic cardiology panel
+  (potassium 5.4, creatinine 1.8, eGFR 38, INR 3.6, NT-proBNP 1450 - abnormal values chosen to give
+  the critic's cardiology constraint rules something real to flag). It contains no PHI and is not
+  derived from any real report; it is written uncompressed on purpose, so `grep` on the file itself
+  shows exactly what is in it without a PDF viewer.
+
+  WHY `extractedFacts` IS THE LOAD-BEARING ASSERTION. It is null unless the document went through
+  the extractor AND passed the strict schema gate (ARCHITECTURE-DOCUMENTS.md §3, W2-D6) - a rejected
+  extraction returns 200 with the rest of the answer intact and this field null, which is the
+  degradation path (NFR-REL-1), not a failure. Asserting it is a string is therefore the difference
+  between "the request reached the endpoint" and "the document leg actually ran". `citations` is
+  asserted non-empty here (unlike in `Ask.bru`) because the document is attached in-turn: the lab
+  schema requires a citation per extracted test, so a successful extraction always produces some.
+
+  WHAT THE QUOTE CHECK PUTS UNDER THIS, AND WHAT IS NOT VISIBLE HERE. Each citation's quote is located in
+  the PDF's own text layer server-side rather than taken on the model's word: found verbatim it is
+  `exact`, absent it is `unlocatable` and the model's estimated bounding box is DISCARDED, so the
+  overlay opens at page level instead of highlighting text that says something else. This fixture
+  has a real, readable text layer (PdfPig reads 131 words off it), so its citations are checked
+  rather than `unchecked`.
+
+  The response body shows that only indirectly - an `unlocatable` citation arrives with
+  `boundingBox: null`. The three-valued finding itself, and the 1.0 / 0.5 / 0.0 grounding
+  confidence read off it, live on the INGESTION path (`DerivedFactMapper.ConfidenceFrom`, stored on
+  the derived fact); `DocumentCitation` carries no confidence field, so nothing here asserts one.
+
+  NOT IDEMPOTENT IN THE WAY `Documents/Ingest.bru` IS. An in-turn document is extracted fresh every
+  run and persists nothing, so re-running this costs another extraction call. Same session
+  prerequisites as `Ask.bru`; see the README's "Week 2 endpoints".
+}

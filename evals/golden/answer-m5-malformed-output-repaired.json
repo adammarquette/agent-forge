@@ -1,0 +1,35 @@
+{
+    "id": "answer-m5-malformed-output-repaired",
+    "guards": "Guards the ORDER of two gates that look interchangeable and are not. A draft truncated at the token ceiling is rejected against the final-answer contract BEFORE attribution runs, because a line cut off mid-value can be perfectly cited and still wrong - 'her potassium this morning was 5' passes every grounding check there is. Also pins that one repair attempt is offered and that the discarded draft reaches nothing.",
+    "category": "answer",
+    "expect_success": true,
+    "answer": {
+        "metric": "M5",
+        "intent": "REQUIREMENTS.md §13.1's 'unexpected / unparseable model output' row, taking its good branch: a draft truncated at the token ceiling is rejected against the final-answer contract BEFORE the verifier, one bounded repair is issued, and the repaired answer ships. The truncated text - which cut off mid-value - must not appear anywhere in what reached the clinician.",
+        "site": "default",
+        "patient_id": "syn-patient-whiskey",
+        "chart": {
+            "display_name": "Whiskey Testpatient",
+            "problems": [{ "id": "syn-whiskey-cond-1", "display": "Atrial fibrillation" }],
+            "medications": [{ "id": "syn-whiskey-med-1", "display": "Warfarin", "dosage": "5 mg daily" }],
+            "labs": [
+                { "id": "syn-whiskey-obs-1", "display": "INR", "value": 2.8, "unit": null, "reference_range_low": 2.0, "reference_range_high": 3.0 }
+            ]
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }, { "tool_name": "get_labs" }] },
+            { "text": "Her potassium this morning was 5", "stop_reason": "max_tokens" },
+            { "text": "Warfarin 5 mg daily is on the active medication list [MedicationRequest/syn-whiskey-med-1].\nHer INR today is 2.8 [Observation/syn-whiskey-obs-1]." }
+        ],
+        "forbidden_answer_fragments": ["Her potassium this morning was 5"],
+        "expected_log_fragments": [
+            "Rejected malformed model output (stopReason=MaxTokens, hasContent=True); attempting one repair."
+        ]
+    },
+    "expected_values": [
+        "Warfarin 5 mg daily is on the active medication list",
+        "Her INR today is 2.8"
+    ],
+    "phi_tokens": ["Warfarin", "Atrial fibrillation", "potassium"],
+    "rubrics": ["transparent_degradation", "no_phi_in_logs"]
+}

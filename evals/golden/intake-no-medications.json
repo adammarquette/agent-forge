@@ -1,0 +1,21 @@
+{
+    "id": "intake-no-medications",
+    "guards": "A patient on no medications extracts as a present-but-empty list with the rest of the form intact. The empty collection must not be mistaken for a malformed payload and rejected, which would make 'takes nothing' unrepresentable.",
+    "category": "extraction",
+    "doc_type": "intake_form",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"demographics\":{\"full_name\":\"Emeka Sorensen\",\"date_of_birth\":\"1990-08-14\",\"sex\":\"M\"},\"chief_concern\":{\"text\":\"atypical chest discomfort\",\"citation\":{\"page\":1,\"quote\":\"atypical chest discomfort\",\"bounding_box\":null}},\"current_medications\":[],\"allergies\":[],\"family_history\":[{\"text\":\"father: hyperlipidemia\",\"citation\":{\"page\":1,\"quote\":\"father: hyperlipidemia\",\"bounding_box\":null}}],\"citation\":{\"page\":1,\"quote\":\"Patient intake form\",\"bounding_box\":null}}",
+    "expect_success": true,
+    "expected_values": [
+        "atypical chest discomfort"
+    ],
+    "phi_tokens": [
+        "Emeka Sorensen"
+    ],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

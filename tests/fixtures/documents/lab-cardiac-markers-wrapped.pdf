@@ -1,0 +1,80 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Length 2302 >>
+stream
+BT /F2 14 Tf 1 0 0 1 54 740 Tm (AgentForge Synthetic Laboratory) Tj ET
+BT /F1 9 Tf 1 0 0 1 54 722 Tm (TEST FIXTURE - synthetic data, not a real patient or a real report) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 692 Tm (Patient: Demo Rosalind Ng) Tj ET
+BT /F1 11 Tf 1 0 0 1 320 692 Tm (DOB: 1955-11-02) Tj ET
+BT /F1 11 Tf 1 0 0 1 450 692 Tm (MRN: SYN-0692-03) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 674 Tm (Collected: 2026-09-05) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 656 Tm (Panel: Cardiac markers - chest pain protocol) Tj ET
+BT /F2 10 Tf 1 0 0 1 54 620 Tm (Test) Tj ET
+BT /F2 10 Tf 1 0 0 1 190 620 Tm (Result) Tj ET
+BT /F2 10 Tf 1 0 0 1 240 620 Tm (Units) Tj ET
+BT /F2 10 Tf 1 0 0 1 300 620 Tm (Reference) Tj ET
+BT /F2 10 Tf 1 0 0 1 370 620 Tm (Flag) Tj ET
+BT /F2 10 Tf 1 0 0 1 410 620 Tm (Prior \(2026-07-30\)) Tj ET
+BT /F1 10 Tf 1 0 0 1 54 600 Tm (Troponin I, high) Tj ET
+BT /F1 10 Tf 1 0 0 1 54 588 Tm (sensitivity, 0 h) Tj ET
+BT /F1 10 Tf 1 0 0 1 190 600 Tm (18) Tj ET
+BT /F1 10 Tf 1 0 0 1 240 600 Tm (ng/L) Tj ET
+BT /F1 10 Tf 1 0 0 1 300 600 Tm (<=34) Tj ET
+BT /F1 10 Tf 1 0 0 1 410 600 Tm (-) Tj ET
+BT /F1 10 Tf 1 0 0 1 54 570 Tm (Troponin I, high) Tj ET
+BT /F1 10 Tf 1 0 0 1 54 558 Tm (sensitivity, 3 h) Tj ET
+BT /F1 10 Tf 1 0 0 1 190 570 Tm (61) Tj ET
+BT /F1 10 Tf 1 0 0 1 240 570 Tm (ng/L) Tj ET
+BT /F1 10 Tf 1 0 0 1 300 570 Tm (<=34) Tj ET
+BT /F1 10 Tf 1 0 0 1 370 570 Tm (H) Tj ET
+BT /F1 10 Tf 1 0 0 1 410 570 Tm (-) Tj ET
+BT /F1 10 Tf 1 0 0 1 54 540 Tm (BNP) Tj ET
+BT /F1 10 Tf 1 0 0 1 190 540 Tm (412) Tj ET
+BT /F1 10 Tf 1 0 0 1 240 540 Tm (pg/mL) Tj ET
+BT /F1 10 Tf 1 0 0 1 300 540 Tm (<100) Tj ET
+BT /F1 10 Tf 1 0 0 1 370 540 Tm (H) Tj ET
+BT /F1 10 Tf 1 0 0 1 410 540 Tm (288) Tj ET
+BT /F1 10 Tf 1 0 0 1 54 522 Tm (NT-proBNP) Tj ET
+BT /F1 10 Tf 1 0 0 1 190 522 Tm (2350) Tj ET
+BT /F1 10 Tf 1 0 0 1 240 522 Tm (pg/mL) Tj ET
+BT /F1 10 Tf 1 0 0 1 300 522 Tm (<900) Tj ET
+BT /F1 10 Tf 1 0 0 1 370 522 Tm (H) Tj ET
+BT /F1 10 Tf 1 0 0 1 410 522 Tm (1720) Tj ET
+BT /F1 10 Tf 1 0 0 1 54 504 Tm (CK-MB) Tj ET
+BT /F1 10 Tf 1 0 0 1 190 504 Tm (7.9) Tj ET
+BT /F1 10 Tf 1 0 0 1 240 504 Tm (ng/mL) Tj ET
+BT /F1 10 Tf 1 0 0 1 300 504 Tm (<=6.6) Tj ET
+BT /F1 10 Tf 1 0 0 1 370 504 Tm (H) Tj ET
+BT /F1 10 Tf 1 0 0 1 410 504 Tm (3.1) Tj ET
+BT /F1 9 Tf 1 0 0 1 54 466 Tm (H = above, L = below reference range. End of report.) Tj ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000348 00000 n 
+0000000450 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+2803
+%%EOF

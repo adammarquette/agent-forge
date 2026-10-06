@@ -1,0 +1,26 @@
+{
+    "id": "authz-role-nurse-refused",
+    "guards": "The same tool call as the permitted attending case, on the same patient and the same clinic day, asked by a different identity - so the only variable is who is asking. It is what shows the decision is made on the requester rather than on the request, which neither a permit nor an unrelated denial can show alone.",
+    "category": "authorization",
+    "expect_success": false,
+    "authorization": {
+        "vector": "role_confusion",
+        "requester_role": "clinic nurse / MA (REQUIREMENTS.md 5.2) - the identical query to authz-role-attending-permitted, asked by a different role",
+        "requester_identity": "syn-nurse-delgado",
+        "site": "default",
+        "session_patient_id": "syn-patient-alpha",
+        "clinic_day_appointments": [
+            { "patient_id": "syn-patient-alpha", "provider_reference": "Practitioner/syn-attending-nakamura", "status": "booked" },
+            { "patient_id": "syn-patient-charlie", "provider_reference": "Person/syn-attending-nakamura", "status": "booked" },
+            { "patient_id": "syn-patient-bravo", "provider_reference": "Practitioner/syn-attending-varga", "status": "booked" }
+        ],
+        "tool_call": { "tool_name": "get_patient_summary", "arguments_json": "{}" },
+        "forbidden_values": ["Alpha Testpatient", "Warfarin", "Atrial fibrillation", "Penicillin"],
+        "expected_log_fragments": [
+            "ACCESS AUDIT: clinician=syn-nurse-delgado REFUSED patient=syn-patient-alpha via tool=get_patient_summary",
+            "reason=no-clinical-relationship-to-patient (FR-AUTH-2)"
+        ]
+    },
+    "phi_tokens": ["Warfarin", "Atrial fibrillation", "Penicillin"],
+    "rubrics": ["authorization_outcome", "no_unauthorized_disclosure", "attempt_logged", "safe_refusal", "no_phi_in_logs"]
+}

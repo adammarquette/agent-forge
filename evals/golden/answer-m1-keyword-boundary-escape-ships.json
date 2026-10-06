@@ -1,0 +1,29 @@
+{
+    "id": "answer-m1-keyword-boundary-escape-ships",
+    "guards": "Pins a known escape so the number cannot drift into a promise. M1 rests on fourteen ClinicalFactKeywords, so a real clinical claim phrased without one - reduced left ventricular function in words rather than an ejection fraction - ships uncited, and this case says so out loud beside the 100% reading. Widening the keyword list turns it red on purpose: the escape count then has to be restated deliberately rather than improving silently, and nobody can read 'M1 100%' as 'no uncited claim can ship'.",
+    "category": "answer",
+    "expect_success": true,
+    "answer": {
+        "metric": "M1",
+        "intent": "The chart carries a medication and no labs; the draft cites the medication and then asserts reduced left ventricular function in words, with no citation and no ClinicalFactKeywords term in the line. Asserts that line ships.",
+        "site": "default",
+        "patient_id": "syn-patient-hotel",
+        "chart": {
+            "display_name": "Hotel Testpatient",
+            "problems": [{ "id": "syn-hotel-cond-1", "display": "Heart failure with reduced ejection fraction" }],
+            "medications": [{ "id": "syn-hotel-med-1", "display": "Amlodipine", "dosage": "10 mg daily" }],
+            "labs": []
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }] },
+            { "text": "Amlodipine is on the active medication list [MedicationRequest/syn-hotel-med-1].\nHer most recent echocardiogram was reported as showing moderately reduced left ventricular function." }
+        ],
+        "known_keyword_escape": true
+    },
+    "expected_values": [
+        "Amlodipine is on the active medication list",
+        "Her most recent echocardiogram was reported as showing moderately reduced left ventricular function."
+    ],
+    "phi_tokens": ["Amlodipine", "echocardiogram"],
+    "rubrics": ["grounded_answer", "no_phi_in_logs"]
+}

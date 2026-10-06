@@ -1,0 +1,14 @@
+{
+    "id": "lab-prose-refusal",
+    "guards": "A reasoned prose refusal is handled exactly like a flat one. An extractor that fell back to scanning prose for numbers would manufacture results out of a sentence written to say there are none.",
+    "category": "extraction",
+    "doc_type": "lab_pdf",
+    "media_type": "application/pdf",
+    "stub_model_response": "The lab report scan is too faint to read any values with confidence.",
+    "expect_success": false,
+    "rubrics": [
+        "schema_valid",
+        "safe_refusal",
+        "no_phi_in_logs"
+    ]
+}

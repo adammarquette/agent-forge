@@ -1,0 +1,72 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Length 1936 >>
+stream
+BT /F2 14 Tf 1 0 0 1 54 740 Tm (AgentForge Synthetic Laboratory) Tj ET
+BT /F1 9 Tf 1 0 0 1 54 722 Tm (TEST FIXTURE - synthetic data, not a real patient or a real report) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 692 Tm (Patient: Demo Eleanor Castellano) Tj ET
+BT /F1 11 Tf 1 0 0 1 320 692 Tm (DOB: 1952-03-14) Tj ET
+BT /F1 11 Tf 1 0 0 1 450 692 Tm (MRN: SYN-0692-01) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 674 Tm (Collected: 2026-08-28) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 656 Tm (Panel: Lipid panel \(fasting\)) Tj ET
+BT /F2 11 Tf 1 0 0 1 54 620 Tm (Test) Tj ET
+BT /F2 11 Tf 1 0 0 1 200 620 Tm (Result) Tj ET
+BT /F2 11 Tf 1 0 0 1 270 620 Tm (Units) Tj ET
+BT /F2 11 Tf 1 0 0 1 350 620 Tm (Reference) Tj ET
+BT /F2 11 Tf 1 0 0 1 450 620 Tm (Flag) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 600 Tm (Total cholesterol) Tj ET
+BT /F1 11 Tf 1 0 0 1 200 600 Tm (232) Tj ET
+BT /F1 11 Tf 1 0 0 1 270 600 Tm (mg/dL) Tj ET
+BT /F1 11 Tf 1 0 0 1 350 600 Tm (<200) Tj ET
+BT /F1 11 Tf 1 0 0 1 450 600 Tm (H) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 582 Tm (LDL cholesterol) Tj ET
+BT /F1 11 Tf 1 0 0 1 200 582 Tm (151) Tj ET
+BT /F1 11 Tf 1 0 0 1 270 582 Tm (mg/dL) Tj ET
+BT /F1 11 Tf 1 0 0 1 350 582 Tm (<100) Tj ET
+BT /F1 11 Tf 1 0 0 1 450 582 Tm (H) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 564 Tm (HDL cholesterol) Tj ET
+BT /F1 11 Tf 1 0 0 1 200 564 Tm (44) Tj ET
+BT /F1 11 Tf 1 0 0 1 270 564 Tm (mg/dL) Tj ET
+BT /F1 11 Tf 1 0 0 1 350 564 Tm (>=40) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 546 Tm (Triglycerides) Tj ET
+BT /F1 11 Tf 1 0 0 1 200 546 Tm (186) Tj ET
+BT /F1 11 Tf 1 0 0 1 270 546 Tm (mg/dL) Tj ET
+BT /F1 11 Tf 1 0 0 1 350 546 Tm (<150) Tj ET
+BT /F1 11 Tf 1 0 0 1 450 546 Tm (H) Tj ET
+BT /F1 11 Tf 1 0 0 1 54 528 Tm (Non-HDL cholesterol) Tj ET
+BT /F1 11 Tf 1 0 0 1 200 528 Tm (188) Tj ET
+BT /F1 11 Tf 1 0 0 1 270 528 Tm (mg/dL) Tj ET
+BT /F1 11 Tf 1 0 0 1 350 528 Tm (<130) Tj ET
+BT /F1 11 Tf 1 0 0 1 450 528 Tm (H) Tj ET
+BT /F1 9 Tf 1 0 0 1 54 490 Tm (H = above, L = below reference range. End of report.) Tj ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000251 00000 n 
+0000000348 00000 n 
+0000000450 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+2437
+%%EOF

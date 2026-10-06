@@ -1,0 +1,356 @@
+# -----------------------------------------------------------------------------
+# Local demo stack — OpenEMR (this project's fork) + the AgentForge sidecar.
+#
+# Quick start is in README.md ("Run it"). Two tiers, by design:
+#
+#   docker compose up -d                      # OpenEMR + the AgentForge module.
+#                                             # No API key needed.
+#   docker compose --profile copilot up -d    # ...plus the sidecar. Needs an
+#                                             # Anthropic key (see .env.example).
+#
+# WHY TWO TIERS: the sidecar's Llm:ApiKey is [Required] and validated at startup
+# (Program.cs, ValidateOnStart), so it cannot boot without a real Anthropic key.
+# Rather than have `docker compose up` crash-loop for anyone who hasn't got one,
+# the default stack brings up OpenEMR with the module and the front door, which
+# needs no secrets at all, and the sidecar is opt-in behind a profile.
+#
+# WHY EVERYTHING GOES THROUGH THE PROXY, even in the default tier: the SMART EHR
+# launch requires ONE origin. OpenEMR's `site_addr_oath` must equal the sidecar's
+# OpenEmr:BaseUrl or the `aud` check fails, and a launch whose /launch and
+# /callback land on different hosts loses the session cookie ("No pending SMART
+# launch"). See DEPLOYMENT.md. So there is a single entry point,
+# http://localhost:8080, and no service publishes its own port.
+#
+# AND ON THIS STACK THAT ORIGIN HAS TO HOLD INSIDE THE CONTAINERS TOO, which is why
+# the sidecar runs in the proxy's network namespace (`network_mode:` on
+# agent-forge-api, with the reasoning at that service). Over plain http the browser
+# trusts only a loopback origin, and loopback in a container of its own is that
+# container - so the sidecar's own token exchange used to land on its own Kestrel.
+# reference: DEPLOYMENT.md §2, a separate change
+#
+# WHY OPENEMR IS PULLED, NOT BUILT: the image is this project's OpenEMR fork,
+# which carries core patches the launch depends on (SessionUtil's launch-bridge
+# cookie, AuthorizationController, library/auth.inc.php) on top of the
+# oe-module-agentforge module. Stock openemr/openemr plus the module dropped on
+# top does NOT reproduce a working launch. The fork's own pipeline (GitLab project
+# 2046) is MEANT to publish straight to the Docker Hub repo referenced below on a
+# green main, no hand copy, since a separate change - but currently does not; see
+# DEPLOYMENT.md section 1 "Publishing status" before trusting this
+# pin is fresh. Building it here instead would mean cloning a second repo and a
+# ~10 minute Alpine/PHP build.
+#
+# OPENEMR AND THE SIDECAR ARE BOTH PINNED NOW; THE PROXY IS THE ONE LEFT ON A MOVING
+# `-latest` TAG, and the split is deliberate. OpenEMR is only ever PULLED, so a moving tag
+# there meant this file could not say which EHR build anyone ran - it is an explicit
+# `openemr-sha-<12>`. The sidecar's default is PRODUCTION'S explicit `agent-forge-sha-<12>`,
+# because this file mirrors the deployment (see the agent-forge-api service below); the
+# newest-build behaviour moved to docker-compose.dev.yml.
+# The proxy stays on `proxy-latest`, and since 2026-09-21 that is a CHOICE rather than a shortage:
+# `publish-proxy-image` has run (on `staging` pushes then, on every `develop` push), so
+# `proxy-sha-<12>` tags are in the registry. A separate change step 2 pinned the DEPLOYMENT to the first,
+# `proxy-sha-b73635187bcf`, which production pinned until a separate change moved it to the develop build of 49a8a5b5c411; staging runs each develop build. This default did not move with it, because `proxy-latest` is a hand-pushed workstation
+# build that the job deliberately does not publish - so aligning this file with the deployment is
+# its own decision, tracked as a separate change. Until it lands, the proxy is the one service where compose
+# and the deployment knowingly differ.
+# Compose BUILDS the proxy from ./reverse-proxy unless you explicitly pull, so
+# the default is rarely what runs. What it still costs: a `docker compose pull` can change the
+# proxy under you. Set PROXY_IMAGE in .env when it has to be fixed.
+# reference: DEPLOYMENT.md section 1, section 7, a separate change
+# -----------------------------------------------------------------------------
+
+name: agentforge-demo
+
+services:
+  # ---------------------------------------------------------------------------
+  # Front door. The single origin every request enters through - OpenEMR at /,
+  # the sidecar under /agentforge. The only service that publishes a port.
+  # ---------------------------------------------------------------------------
+  reverse-proxy:
+    # `image:` NAMES the artifact, `build:` still BUILDS it. With both set, `docker compose
+    # up` builds from ./reverse-proxy when the image is absent locally and tags the result
+    # with this name - your source edits still win, which is the whole point of the local
+    # loop. `docker compose pull reverse-proxy` fetches the published one instead - and it
+    # STICKS, because compose will not rebuild over a cached image; use `up --build` to get
+    # back to your tree.
+    # DO NOT `docker compose push` FROM HERE. `up --build` tags YOUR build with the published
+    # name above, so a push would replace the tag deployments follow with a workstation build
+    # and nothing would report it - that is exactly how the current proxy-/prometheus-/grafana-
+    # tags came to be workstation builds (DEPLOYMENT.md section 7). To build under a name that
+    # cannot be mistaken for a published one: PROXY_IMAGE=agent-forge-proxy:local docker compose
+    # up --build reverse-proxy
+    # `proxy-latest` IS STILL HAND-PUSHED - a `pull` here gets whatever someone last pushed,
+    # and a separate change did not change that: `publish-proxy-image` deliberately does not move it.
+    # What the job DID produce, first on 2026-09-21, is `proxy-sha-<12>` - so a provenanced
+    # tag exists to pin, and deployed Railway pins one (step 2, moved) rather than building
+    # the proxy from a GitHub `develop` BRANCH nothing mirrors this project to. Moving THIS
+    # default onto that pin is a separate change; until then the compose default and the deployment
+    # deliberately differ, which is the one place they do.
+    # Build it, do not pull it, unless you know what is in that tag.
+    # reference: DEPLOYMENT.md section 1, a separate change
+    image: ${PROXY_IMAGE:-docker.io/amarquette/gauntletai:proxy-latest}
+    build:
+      context: ./reverse-proxy
+    # SAME NUMBER ON BOTH SIDES OF THE MAPPING, and that is now load-bearing rather than
+    # tidy. The sidecar shares this container's network namespace (see agent-forge-api
+    # below), so the `localhost:${DEMO_PORT}` its OpenEmr__BaseUrl names has to be THIS
+    # nginx from inside the namespace as well as from the browser - which it is only if
+    # nginx listens on DEMO_PORT itself. A fixed container-side 8080 under a moved
+    # DEMO_PORT would leave the browser working and the sidecar's token exchange
+    # connecting to nothing.
+    #
+    # AND DEMO_PORT CANNOT BE SIDECAR_PORT. It used to be host-side only, so any value was safe;
+    # now it is the listen port in the SAME namespace as the sidecar's Kestrel, and 8081 is the
+    # obvious next number when 8080 is taken. nginx starts first and wins the bind, Kestrel
+    # crash-loops on "address already in use", and /agentforge/* 502s exactly as a forgotten
+    # `--profile copilot` does - while `docker compose config` validates it. The proxy image's
+    # 15-assert-sidecar-port.sh refuses to start on it rather than serve that ambiguity.
+    # reference: DEPLOYMENT.md §2, a separate change
+    ports:
+      - "${DEMO_PORT:-8080}:${DEMO_PORT:-8080}"
+    environment:
+      PORT: ${DEMO_PORT:-8080}
+      OPENEMR_UPSTREAM: openemr:80
+      # A LOOPBACK LITERAL, not a service name: the sidecar is inside this namespace, so
+      # its Kestrel is reachable here and nowhere else by that address. It publishes no
+      # port of its own - 127.0.0.1:${SIDECAR_PORT} is this namespace's loopback, and the
+      # only published port is the one above. Absent (default tier, no `copilot` profile)
+      # this is a closed port, so /agentforge/ 502s exactly as it did when the upstream
+      # was a name that did not resolve.
+      SIDECAR_UPSTREAM: 127.0.0.1:${SIDECAR_PORT:-8081}
+      # Docker's embedded DNS, for `openemr:80` - which is now the only upstream that
+      # needs resolving at all. nginx still resolves at request time, so the proxy
+      # starts before OpenEMR is up. The sidecar being absent (default tier) still
+      # gives /agentforge/ a 502, but by a closed port rather than an unresolved name.
+      DNS_RESOLVER: 127.0.0.11
+    depends_on:
+      - openemr
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # OpenEMR, from this project's fork. Module + core launch patches baked in.
+  # ---------------------------------------------------------------------------
+  openemr:
+    # EXPLICIT PIN, BY DECISION - this names an immutable openemr-sha-<12> rather than
+    # following `openemr-latest`, so `docker compose pull` fetches the same build every
+    # time and the tag records WHICH build you ran. Reverted alongside the sidecar pins in
+    # .railway/railway.ts for the same reason: a moving tag leaves nothing to roll back to
+    # (DEPLOYMENT.md §1, §6). Override OPENEMR_IMAGE in .env to run a different build.
+    image: ${OPENEMR_IMAGE:-docker.io/amarquette/gauntletai:openemr-sha-1b5c2d659fb9}
+    # `openemr-latest` IS NOT WHAT THIS PINS - do not substitute it. See
+    # DEPLOYMENT.md section 1 "Publishing status" for why: the two
+    # tags are not interchangeable, and the fork's CI that is meant to publish both from one
+    # build currently does not run at all.
+    # The fork is a SEPARATE repository - adammarquette/openemr, GitLab 2046 - not vendored here.
+    # .railway/railway.ts carries the same reference; keep the two in step. To run a locally-built fork image, override OPENEMR_IMAGE in .env under
+    # a name that cannot be mistaken for a published tag. reference: DEPLOYMENT.md section 1
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_ROOT_PASS: ${MYSQL_ROOT_PASSWORD:-rootpass}
+      MYSQL_USER: openemr
+      MYSQL_PASS: ${MYSQL_PASSWORD:-openemr}
+      MYSQL_DATABASE: openemr
+      OE_USER: admin
+      # Zero-config LOCAL default so `docker compose up` just works. Deliberately
+      # a real credential - this stack is ephemeral, localhost-only, synthetic
+      # data, so a known throwaway default is fine and can't reach anything
+      # shared. Override in .env for a non-throwaway
+      # stack. `admin` is the only login a fresh boot creates; `cardio1` + demo
+      # patients need the seed/bootstrap, not built-in.
+      OE_PASS: ${OPENEMR_ADMIN_PASSWORD:-LocalDev1!}
+      # Named volumes mount EMPTY - they do not inherit image contents. The
+      # OpenEMR image only restores its sites/ skeleton from /swarm-pieces (and
+      # runs first-boot setup) when SWARM_MODE=yes and the replica elects itself
+      # leader. Without this it crash-loops on a missing sites/default/sqlconf.php.
+      # Single replica => always leader => safe. reference: DEPLOYMENT.md §7
+      SWARM_MODE: "yes"
+      # A fresh OpenEMR ships the REST and FHIR APIs OFF, so RegisterSmartClients -
+      # the first bootstrap step - dies on `404 {"message":"OpenEMR Error: API is
+      # disabled"}` before it registers anything. The image applies every
+      # OPENEMR_SETTING_<global> to the `globals` table on EVERY boot, not just the
+      # first (docker/release/openemr.sh -> setGlobalSettings), so these survive a
+      # volume reset. reference: DEPLOYMENT.md §4, a separate change
+      OPENEMR_SETTING_rest_api: "1"
+      OPENEMR_SETTING_rest_fhir_api: "1"
+      OPENEMR_SETTING_rest_system_scopes_api: "1"
+    volumes:
+      - openemr-sites:/var/www/localhost/htdocs/openemr/sites
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:9.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+      MYSQL_DATABASE: openemr
+      MYSQL_USER: openemr
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-openemr}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      # openemr's first boot fails outright against a half-started MySQL, so the
+      # dependency above gates on this rather than on container start.
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-rootpass}"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # profile: copilot — the sidecar and its own datastore.
+  # ---------------------------------------------------------------------------
+  agent-forge-api:
+    profiles: [copilot]
+    # Same `image:` + `build:` pairing as the proxy - the name of the published sidecar
+    # artifact, built from this tree when the image is ABSENT LOCALLY, so on a fresh clone a
+    # local `src/` change is what you run. `docker compose pull agent-forge-api` swaps in the
+    # published build - and THAT STICKS: once the pulled image is in your cache compose stops
+    # rebuilding, and your `src/` edits silently stop taking effect. `up --build` (or
+    # `docker image rm` on this tag) is what gets the local loop back.
+    # DO NOT `docker compose push` FROM HERE. With this file alone, `up --build` tags your build
+    # with PRODUCTION'S EXPLICIT PIN - pushing that would replace an immutable tag two environments
+    # and every rollback depend on, which is the worst push in this repository. To build under an
+    # unmistakable name:
+    #   SIDECAR_IMAGE=agent-forge-api:local docker compose --profile copilot up --build
+    # THIS FILE MIRRORS THE DEPLOYED ENVIRONMENT, so the default is the SAME EXPLICIT BUILD
+    # `.railway/railway.ts` pins for production - not a moving tag. That is what makes "it works
+    # on my machine" and "it works in production" statements about the same bytes (the same artifact local and deployed),
+    # which the old moving default did not have. Keep this pin and production's in step.
+    # WANT THE NEWEST BUILD INSTEAD? That is development, and it has its own file:
+    #   docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile copilot up
+    # reference: DEPLOYMENT.md section 1, a separate change
+    image: ${SIDECAR_IMAGE:-docker.io/amarquette/gauntletai:agent-forge-sha-49a8a5b5c411}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # ONE ORIGIN MEANS ONE NETWORK NAMESPACE HERE. `OpenEmr__BaseUrl` below is read by two
+    # different consumers with incompatible needs: the BROWSER follows the authorize URL built
+    # from it, and the SIDECAR issues the token exchange, introspection and every FHIR call
+    # against it as a Refit base address. Over plain http the browser accepts only a LOOPBACK
+    # origin as a trustworthy context, so OpenEMR's OAuth session cookie survives on
+    # `localhost` and on nothing else - `host.docker.internal` was tried and dies a hop
+    # earlier, at /authorize, with "Application client_id was missing when it shouldn't have
+    # been". And loopback inside an ordinary container is that container. So the sidecar used
+    # to POST /oauth2/default/token at its OWN Kestrel, collect its own 404 for an unmapped
+    # route, and 500 the callback with a Refit.ApiException - after a login, a patient select
+    # and a consent had all succeeded. OpenEMR's access log showed no token request at all.
+    #
+    # Sharing the proxy's namespace makes the two readings THE SAME MACHINE: in here
+    # `localhost:${DEMO_PORT}` IS nginx, so one written origin is one actual origin and §2's
+    # invariant holds for the container as well as the browser. The same namespace is also
+    # why Kestrel moves off 8080 - nginx already has that port - and why this service declares
+    # no `ports:`, no `networks:` and no `hostname:`, all of which compose rejects alongside
+    # `network_mode`. What it costs: the sidecar has NO DNS NAME OF ITS OWN any more. Anything
+    # on the compose network that used to reach `agent-forge-api:8080` reaches
+    # `reverse-proxy:${SIDECAR_PORT}` instead (the Prometheus overlay is the one such caller
+    # in this repo), and recreating reverse-proxy takes this container's network with it, so
+    # restart the pair together. reference: DEPLOYMENT.md §2, §7, a separate change
+    network_mode: "service:reverse-proxy"
+    environment:
+      # NOT 8080, and not free to change alone: nginx owns ${DEMO_PORT} in this shared
+      # namespace, and SIDECAR_PORT has THREE consumers that must agree - this Kestrel port,
+      # reverse-proxy's SIDECAR_UPSTREAM above, and (under docker-compose.observability.yml)
+      # Prometheus's SIDECAR_TARGET. All three interpolate the same variable, which is why that
+      # overlay builds the first-party Prometheus image instead of mounting a static config
+      # holding a literal port. Move it only if DEMO_PORT collides, and it must never equal it.
+      PORT: ${SIDECAR_PORT:-8081}
+      # Both of these must be the FRONT DOOR, never a service's own hostname:
+      # OpenEmr__BaseUrl has to match OpenEMR's site_addr_oath or the SMART `aud`
+      # check fails, and a redirect_uri on a different host loses the session.
+      OpenEmr__BaseUrl: http://localhost:${DEMO_PORT:-8080}
+      Bff__PublicBaseUrl: http://localhost:${DEMO_PORT:-8080}/agentforge
+      Bff__PathBase: /agentforge
+      OpenEmr__Site: default
+      # Plain http is fine for a local demo but is rejected by default - these
+      # options exist precisely for this case (BffOptions/OpenEmrOptions).
+      OpenEmr__AllowInsecureHttpForLocalDevelopment: "true"
+      Bff__AllowInsecureHttpForLocalDevelopment: "true"
+      # Registered + admin-ENABLED confidential SMART client. Freshly-registered
+      # clients land disabled; see the README bootstrap steps.
+      # Deliberately `:-` (empty default) and NOT `:?` (required): compose
+      # interpolates EVERY service's variables during config, including ones
+      # behind a profile it is not starting. A `:?` here made the default,
+      # keyless `docker compose up` fail on a variable only the sidecar needs -
+      # exactly the crash the two-tier split exists to avoid. Empty values fail
+      # later, in the sidecar's own startup validation, with a clearer message.
+      OpenEmr__ClientId: ${OPENEMR_CLIENT_ID:-}
+      OpenEmr__ClientSecret: ${OPENEMR_CLIENT_SECRET:-}
+      # Contiguous 0-based list - a gap truncates the bound array at the first
+      # missing index. Casing matters: patient/encounter.read is rejected.
+      # Index 15 is not a data need: FR-AUTH-2's relationship gate resolves the
+      # clinician-patient relationship from the clinic day's Appointment
+      # participants on EVERY launch, and without the scope that search 401s, the
+      # gate fails closed and the launch is refused 403. A separate change
+      OpenEmr__Scopes__0: openid
+      OpenEmr__Scopes__1: fhirUser
+      OpenEmr__Scopes__2: launch
+      OpenEmr__Scopes__3: launch/patient
+      OpenEmr__Scopes__4: api:fhir
+      OpenEmr__Scopes__5: patient/Patient.read
+      OpenEmr__Scopes__6: patient/Encounter.read
+      OpenEmr__Scopes__7: patient/Observation.read
+      OpenEmr__Scopes__8: patient/DocumentReference.read
+      OpenEmr__Scopes__9: patient/Binary.read
+      OpenEmr__Scopes__10: patient/Condition.read
+      OpenEmr__Scopes__11: patient/AllergyIntolerance.read
+      OpenEmr__Scopes__12: patient/MedicationRequest.read
+      OpenEmr__Scopes__13: patient/Procedure.read
+      OpenEmr__Scopes__14: patient/DiagnosticReport.read
+      OpenEmr__Scopes__15: patient/Appointment.read
+      # Same reasoning as OpenEmr__ClientId above - `:-`, not `:?`, so the
+      # default keyless tier still starts. The sidecar's Llm:ApiKey is [Required]
+      # with ValidateOnStart, so an empty value here fails at ITS startup with an
+      # explicit message rather than blocking compose for everyone.
+      Llm__ApiKey: ${ANTHROPIC_API_KEY:-}
+      Llm__Model: ${LLM_MODEL:-claude-sonnet-5}
+      # claude-sonnet-5's list rate. Nothing validates these against Llm__Model, so a model
+      # change that leaves them behind mis-reports agentforge_llm_cost_usd_total in silence -
+      # which is what shipped. Change all three together, here and in
+      # .railway/railway.ts and .env.example. A separate change
+      Llm__InputPricePerMillionTokensUsd: ${LLM_INPUT_PRICE:-2.00}
+      Llm__OutputPricePerMillionTokensUsd: ${LLM_OUTPUT_PRICE:-10.00}
+      AgentForgeData__ConnectionString: Host=postgres;Port=5432;Database=agentforge;Username=agentforge;Password=${POSTGRES_PASSWORD:-agentforge}
+      # The pending-SMART-launch cookie is DataProtection-encrypted; an in-memory
+      # key ring cannot decrypt it after a restart, which surfaces as "No pending
+      # SMART launch" on the callback. Persist the ring on a volume.
+      DataProtection__KeyRingPath: /keys
+    volumes:
+      - dataprotection-keys:/keys
+    depends_on:
+      # `network_mode: service:reverse-proxy` already implies this one; it is written out
+      # because it is now a HARD dependency rather than a routing convenience - without the
+      # proxy container there is no namespace for this one to start in at all.
+      reverse-proxy:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      openemr:
+        condition: service_started
+    restart: unless-stopped
+
+  postgres:
+    profiles: [copilot]
+    # pgvector, not stock postgres: the sidecar's hybrid-RAG store uses a vector
+    # column + HNSW index, and its EF migrations create the extension.
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: agentforge
+      POSTGRES_USER: agentforge
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-agentforge}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentforge -d agentforge"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+  openemr-sites:
+  postgres-data:
+  dataprotection-keys:

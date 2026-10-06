@@ -1,0 +1,26 @@
+{
+    "id": "authz-role-unrelated-attending-refused",
+    "guards": "Holding a clinic today is not the same as holding this patient. The requester is a legitimate, authenticated attending with a booked appointment on the same day, just not this one - the near miss a relationship check written as 'has appointments today' would wave straight through.",
+    "category": "authorization",
+    "expect_success": false,
+    "authorization": {
+        "vector": "role_confusion",
+        "requester_role": "a second attending, holding a clinic the same day but not this patient",
+        "requester_identity": "syn-attending-varga",
+        "site": "default",
+        "session_patient_id": "syn-patient-alpha",
+        "clinic_day_appointments": [
+            { "patient_id": "syn-patient-alpha", "provider_reference": "Practitioner/syn-attending-nakamura", "status": "booked" },
+            { "patient_id": "syn-patient-charlie", "provider_reference": "Person/syn-attending-nakamura", "status": "booked" },
+            { "patient_id": "syn-patient-bravo", "provider_reference": "Practitioner/syn-attending-varga", "status": "booked" }
+        ],
+        "tool_call": { "tool_name": "get_labs", "arguments_json": "{}" },
+        "forbidden_values": ["Potassium", "5.8", "default:syn-patient-alpha"],
+        "expected_log_fragments": [
+            "ACCESS AUDIT: clinician=syn-attending-varga REFUSED patient=syn-patient-alpha via tool=get_labs",
+            "reason=no-clinical-relationship-to-patient (FR-AUTH-2)"
+        ]
+    },
+    "phi_tokens": ["Potassium", "Warfarin"],
+    "rubrics": ["authorization_outcome", "no_unauthorized_disclosure", "attempt_logged", "safe_refusal", "no_phi_in_logs"]
+}

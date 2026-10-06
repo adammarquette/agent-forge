@@ -1,0 +1,27 @@
+{
+    "id": "answer-m2-control-acei-normal-potassium",
+    "guards": "The near-miss control for the ACEi class, and the case that stops the rule reading as 'ACE inhibitor present'. Lisinopril with a normal potassium is guideline-directed therapy for this problem, so flagging it would attach a warning to correct treatment - the shape of false positive that trains a clinician to dismiss the flag on the patient who needs it.",
+    "category": "answer",
+    "expect_success": true,
+    "answer": {
+        "metric": "M2",
+        "intent": "Near-miss control for the ACEi/ARB class: the same lisinopril picture as the seeded case, with a potassium of 4.2 mmol/L - mid-range for the laboratory. An ACEi on its own is the guideline-directed therapy for this problem, not a violation, so nothing may be flagged.",
+        "site": "default",
+        "patient_id": "syn-patient-quebec",
+        "chart": {
+            "display_name": "Quebec Testpatient",
+            "problems": [{ "id": "syn-quebec-cond-1", "display": "Heart failure with reduced ejection fraction" }],
+            "medications": [{ "id": "syn-quebec-med-1", "display": "Lisinopril", "dosage": "10 mg daily" }],
+            "labs": [
+                { "id": "syn-quebec-obs-1", "display": "Potassium", "value": 4.2, "unit": "mmol/L", "reference_range_low": 3.5, "reference_range_high": 5.1 }
+            ]
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }, { "tool_name": "get_labs" }] },
+            { "text": "Lisinopril 10 mg daily is on the active medication list [MedicationRequest/syn-quebec-med-1].\nHer potassium today is 4.2 mmol/L [Observation/syn-quebec-obs-1]." }
+        ],
+        "expect_no_constraint_flags": true
+    },
+    "phi_tokens": ["Lisinopril", "Heart failure", "potassium"],
+    "rubrics": ["constraint_flagged", "no_phi_in_logs"]
+}

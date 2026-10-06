@@ -1,0 +1,20 @@
+{
+    "id": "lab-triglycerides-high",
+    "guards": "An analyte the set carries at two different values in two cases, the other row being inside lab-lipid-panel-multi, where that value is asserted too. Extraction has to follow the document, so a value cached or defaulted per test name disagrees with one of the two.",
+    "category": "extraction",
+    "doc_type": "lab_pdf",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"tests\":[{\"test_name\":\"Triglycerides\",\"value\":\"260\",\"unit\":\"mg/dL\",\"reference_range\":\"<150\",\"collection_date\":\"2026-06-15\",\"abnormal_flag\":true,\"citation\":{\"page\":1,\"quote\":\"Triglycerides 260 (H) mg/dL\",\"bounding_box\":null}}]}",
+    "expect_success": true,
+    "expected_values": [
+        "Triglycerides",
+        "260"
+    ],
+    "phi_tokens": ["Triglycerides 260 (H) mg/dL"],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

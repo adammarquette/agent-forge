@@ -1,0 +1,14 @@
+{
+    "id": "lab-missing-value",
+    "guards": "The complementary half: a named test with no value is refused. Accepting it would put a row in the record that asserts the test was performed and says nothing about what it found.",
+    "category": "extraction",
+    "doc_type": "lab_pdf",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"tests\":[{\"test_name\":\"INR\",\"citation\":{\"page\":1,\"quote\":\"INR\",\"bounding_box\":null}}]}",
+    "expect_success": false,
+    "rubrics": [
+        "schema_valid",
+        "safe_refusal",
+        "no_phi_in_logs"
+    ]
+}

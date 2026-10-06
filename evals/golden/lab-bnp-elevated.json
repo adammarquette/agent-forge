@@ -1,0 +1,20 @@
+{
+    "id": "lab-bnp-elevated",
+    "guards": "A threshold-style reference range - a cut-off, not an interval - must parse and be kept as printed text. Typing reference_range numerically, or splitting it on a hyphen that is not there, rejects this payload and flips schema_valid; that rejection is what the case detects. The range is not an asserted value: the canonical payload escapes the comparison character, so asserting it would pin the escaping, not the range.",
+    "category": "extraction",
+    "doc_type": "lab_pdf",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"tests\":[{\"test_name\":\"BNP\",\"value\":\"820\",\"unit\":\"pg/mL\",\"reference_range\":\"<100\",\"collection_date\":\"2026-06-15\",\"abnormal_flag\":true,\"citation\":{\"page\":1,\"quote\":\"BNP 820 (H) pg/mL\",\"bounding_box\":null}}]}",
+    "expect_success": true,
+    "expected_values": [
+        "BNP",
+        "820"
+    ],
+    "phi_tokens": ["BNP 820 (H) pg/mL"],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

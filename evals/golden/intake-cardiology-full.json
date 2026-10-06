@@ -1,0 +1,22 @@
+{
+    "id": "intake-cardiology-full",
+    "guards": "The fullest intake shape in the set - three medications, two family-history entries, an allergy. The asserted value is drawn from the second medication, so a canonical round-trip that kept only the head of a repeated group fails here and passes on every single-item case.",
+    "category": "extraction",
+    "doc_type": "intake_form",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"demographics\":{\"full_name\":\"Arthur Penhaligon\",\"date_of_birth\":\"1955-09-03\",\"sex\":\"M\"},\"chief_concern\":{\"text\":\"exertional chest pain\",\"citation\":{\"page\":1,\"quote\":\"exertional chest pain\",\"bounding_box\":null}},\"current_medications\":[{\"name\":\"aspirin\",\"dose\":\"81mg daily\",\"citation\":{\"page\":1,\"quote\":\"aspirin 81mg daily\",\"bounding_box\":null}},{\"name\":\"atorvastatin\",\"dose\":\"40mg nightly\",\"citation\":{\"page\":1,\"quote\":\"atorvastatin 40mg\",\"bounding_box\":null}},{\"name\":\"lisinopril\",\"dose\":\"10mg daily\",\"citation\":{\"page\":1,\"quote\":\"lisinopril 10mg\",\"bounding_box\":null}}],\"allergies\":[{\"text\":\"sulfa\",\"citation\":{\"page\":1,\"quote\":\"sulfa\",\"bounding_box\":null}}],\"family_history\":[{\"text\":\"father: MI at 58\",\"citation\":{\"page\":1,\"quote\":\"father: MI at 58\",\"bounding_box\":null}},{\"text\":\"mother: hypertension\",\"citation\":{\"page\":1,\"quote\":\"mother: hypertension\",\"bounding_box\":null}}],\"citation\":{\"page\":1,\"quote\":\"Patient intake form\",\"bounding_box\":null}}",
+    "expect_success": true,
+    "expected_values": [
+        "atorvastatin",
+        "exertional chest pain"
+    ],
+    "phi_tokens": [
+        "Arthur Penhaligon"
+    ],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

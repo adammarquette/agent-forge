@@ -1,0 +1,36 @@
+# docker-compose.dev.yml — the DEV overlay. Use it when you want the newest build rather than the
+# deployed one.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile copilot up
+#
+# WHY THIS FILE EXISTS, AND WHY THE DEFAULT IS NOT THIS.
+#
+# `docker-compose.yml` mirrors the DEPLOYED environment: its sidecar names the same explicit
+# `agent-forge-sha-<12>` that `.railway/railway.ts` pins for production, so "it works on my machine"
+# and "it works in production" are statements about the same bytes: the same artifact runs locally and
+# deployed, a property the compose default did not have while it followed a moving tag.
+#
+# Development wants the opposite: the newest build, not the deployed one. That is a real need and it is
+# what this overlay is for. Keeping the two in SEPARATE FILES is the point — a single file cannot be both
+# a reproduction of production and a moving development target, and every previous attempt to make it
+# both ended with the default silently being the development one.
+#
+# `agent-forge-latest` is the LOCAL tag, and NOTHING DEPLOYED FOLLOWS IT OR ANY OTHER MOVING TAG:
+# production pins an explicit `agent-forge-sha-<12>` in `.railway/railway.ts`, and staging resolves the
+# `agent-forge-sha-<12>` of the develop commit being applied. `agent-forge-develop` moves, but it
+# is a marker of what develop last built (`agent-forge-staging` is its frozen predecessor), read by humans
+# and by nothing else. `.railway/railway.ts` must never name a `-latest` tag in a deployed position, and
+# `docker-compose.yml` must keep pinning production's build — neither rule applies to THIS file, because this
+# overlay is supposed to follow the moving tag. That guard is why the tag is safe to publish at all —
+# the incident was `.railway/railway.ts` following it, which resolved to a seven-week-old build
+# and would have downgraded staging silently.
+#
+# DEPLOYMENT.md section 1
+services:
+  agent-forge-api:
+    # DO NOT `docker compose push` while this overlay is active: `up --build` tags your build
+    # `agent-forge-latest`, and pushing it would put a workstation build under the tag a fresh clone
+    # pulls. Nothing DEPLOYED would move — that is the boundary the guard protects — but everyone
+    # else's local stack would. To build under an unmistakable name instead:
+    #   SIDECAR_IMAGE=agent-forge-api:local docker compose --profile copilot up --build
+    image: ${SIDECAR_IMAGE:-docker.io/amarquette/gauntletai:agent-forge-latest}

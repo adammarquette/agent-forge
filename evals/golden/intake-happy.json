@@ -1,0 +1,12 @@
+{
+  "id": "intake-happy",
+  "guards": "The reference accept for the intake path: a well-formed form still extracts end to end. Without a green accept, every refusal case in the set would still pass against an extractor that rejects everything. It is also where the two halves of the PHI rule meet on one string - the demographic name is an asserted value in the canonical JSON and a forbidden token in the logs.",
+  "category": "extraction",
+  "doc_type": "intake_form",
+  "media_type": "application/pdf",
+  "stub_model_response": "{\"demographics\":{\"full_name\":\"Jane Synthetic\",\"date_of_birth\":\"1960-04-12\",\"sex\":\"F\"},\"chief_concern\":{\"text\":\"palpitations\",\"citation\":{\"page\":1,\"quote\":\"palpitations\",\"bounding_box\":null}},\"current_medications\":[{\"name\":\"metoprolol\",\"dose\":\"50mg BID\",\"citation\":{\"page\":1,\"quote\":\"metoprolol 50mg BID\",\"bounding_box\":null}}],\"allergies\":[{\"text\":\"penicillin\",\"citation\":{\"page\":1,\"quote\":\"penicillin\",\"bounding_box\":null}}],\"family_history\":[{\"text\":\"father: MI at 60\",\"citation\":{\"page\":1,\"quote\":\"father: MI at 60\",\"bounding_box\":null}}],\"citation\":{\"page\":1,\"quote\":\"Patient intake\",\"bounding_box\":null}}",
+  "expect_success": true,
+  "expected_values": ["metoprolol", "Jane Synthetic"],
+  "phi_tokens": ["Jane Synthetic"],
+  "rubrics": ["schema_valid", "citation_present", "factually_consistent", "no_phi_in_logs"]
+}

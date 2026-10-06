@@ -1,0 +1,26 @@
+{
+  "schema_version": "1",
+  "agent": "red_team",
+  "display_name": "Red Team",
+  "status": "defined, not built; prompt is a structure-only DRAFT for the maintainer to rewrite",
+  "role": "Generates attack cases from a directive and its seed cases, mutates partial successes into variants, and runs multi-turn sequences against the allowlisted target only.",
+  "inputs": ["attack_directive", "seed cases named by the directive (evals/adversarial/)"],
+  "outputs": ["attack_transcript", "error"],
+  "trust_level": "lowest: sandboxed, its target origin comes from the committed allowlist and never from a message, and its output is untrusted data until the Judge rules",
+  "may_call_target": true,
+  "target_allowlist": "allowlist.json",
+  "prompt": { "file": "prompts/red_team.md", "version": "0.1.0-draft", "sha256": "df52160f45d3dd9e934681407b76072e86c80850a004efd794fc72a10dc57acb", "status": "draft: structure only, maintainer to rewrite" },
+  "model": {
+    "status": "proposed, awaiting maintainer confirmation",
+    "proposal": "An open-weight model; provider and model id undecided. Not Cursor's API (recommends against it: it is a cloud-agent API, not model inference).",
+    "reason": "SECURITY-PLATFORM.md (cost and scale posture): an open-weight model avoids per-attack API cost and frontier-model refusals of offensive-security work (FR-MAS-W3-10). It must be a different model family from the Judge's.",
+    "provider": null,
+    "model_id": null
+  },
+  "coordinates_with": {
+    "orchestrator": "receives attack_directive",
+    "judge": "sends attack_transcript; never sees a verdict",
+    "documentation": "none"
+  },
+  "traces_to": ["FR-MAS-W3-2", "FR-MAS-W3-3", "FR-MAS-W3-4", "FR-SUITE-W3-3", "SECURITY-PLATFORM.md, trust and safety of the platform", "UC-W3-1", "UC-W3-8"]
+}

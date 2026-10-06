@@ -1,0 +1,21 @@
+{
+    "id": "lab-potassium-normal",
+    "guards": "The in-range member of a three-value potassium trio, asserting the false flag the report printed. The flag must come from the report, so an extractor that inferred it from the analyte, or that surfaced only flagged rows, is caught by the normal case and by no abnormal one.",
+    "category": "extraction",
+    "doc_type": "lab_pdf",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"tests\":[{\"test_name\":\"Potassium\",\"value\":\"4.2\",\"unit\":\"mmol/L\",\"reference_range\":\"3.5-5.1\",\"collection_date\":\"2026-06-15\",\"abnormal_flag\":false,\"citation\":{\"page\":1,\"quote\":\"Potassium 4.2 mmol/L\",\"bounding_box\":null}}]}",
+    "expect_success": true,
+    "expected_values": [
+        "Potassium",
+        "4.2",
+        "\"abnormal_flag\":false"
+    ],
+    "phi_tokens": ["Potassium 4.2 mmol/L"],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

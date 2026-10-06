@@ -1,0 +1,80 @@
+{
+  "file_name": "intake-form-multipage.pdf",
+  "media_type": "application/pdf",
+  "doc_type": "intake_form",
+  "layout": "multi-page",
+  "description": "A two-page intake form: demographics and chief concern on page 1; medications, allergies and family history on page 2.",
+  "patient": {
+    "name": "Demo Walter Ibekwe",
+    "birth_date": "1960-01-09",
+    "sex": "male",
+    "mrn": "SYN-0692-02"
+  },
+  "page_count": 2,
+  "has_text_layer": true,
+  "facts": [
+    {
+      "fact_type": "intake.demographics",
+      "label": "demographics",
+      "value": "Demo Walter Ibekwe",
+      "page": 1,
+      "quote": "Name: Demo Walter Ibekwe"
+    },
+    {
+      "fact_type": "intake.chief_concern",
+      "label": "chief_concern",
+      "value": "Short of breath climbing one flight of stairs",
+      "page": 1,
+      "quote": "Short of breath climbing one flight of stairs"
+    },
+    {
+      "fact_type": "intake.medication",
+      "label": "Warfarin",
+      "value": "5 mg daily",
+      "page": 2,
+      "quote": "Warfarin 5 mg daily"
+    },
+    {
+      "fact_type": "intake.medication",
+      "label": "Losartan",
+      "value": "50 mg daily",
+      "page": 2,
+      "quote": "Losartan 50 mg daily"
+    },
+    {
+      "fact_type": "intake.medication",
+      "label": "Furosemide",
+      "value": "40 mg daily",
+      "page": 2,
+      "quote": "Furosemide 40 mg daily"
+    },
+    {
+      "fact_type": "intake.medication",
+      "label": "Rosuvastatin",
+      "value": "20 mg nightly",
+      "page": 2,
+      "quote": "Rosuvastatin 20 mg nightly"
+    },
+    {
+      "fact_type": "intake.allergy",
+      "label": "allergy",
+      "value": "Lisinopril (angioedema)",
+      "page": 2,
+      "quote": "Lisinopril (angioedema)"
+    },
+    {
+      "fact_type": "intake.family_history",
+      "label": "family_history",
+      "value": "Mother - myocardial infarction at 55",
+      "page": 2,
+      "quote": "Mother - myocardial infarction at 55"
+    },
+    {
+      "fact_type": "intake.family_history",
+      "label": "family_history",
+      "value": "Father - stroke at 60",
+      "page": 2,
+      "quote": "Father - stroke at 60"
+    }
+  ]
+}

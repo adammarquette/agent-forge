@@ -1,0 +1,19 @@
+**/bin/
+**/obj/
+**/.vs/
+**/*.csproj.user
+.git/
+documentation/
+tests/
+# The Dockerfile's `evals` stage runs the eval gate against the image's own source, so the gate's project
+# comes back in; the rest of tests/ stays out. A workstation's scratch results.json never enters the
+# context - the stage writes its own. A separate change
+!tests/AgentForge.Evals/
+tests/AgentForge.Evals/bin/
+tests/AgentForge.Evals/obj/
+evals/results.json
+**/node_modules/
+# Kept after the OpenEMR fork stopped being vendored here: the directory no longer exists in
+# a fresh clone, but an older one keeps ~85MB of leftover PHP on disk, and without this line that gets
+# uploaded to the daemon on every sidecar build. Costs nothing when the path is absent.
+external/

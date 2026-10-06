@@ -1,0 +1,31 @@
+meta {
+  name: Patient Context (/patient)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/patient
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.patientId: isString
+}
+
+docs {
+  UC-1 (REQUIREMENTS.md), and the tail of the UC-6 drill-down: the launched patient's identity plus
+  problem/medication/allergy reachability, the one data call behind the per-patient landing
+  confirmation (`PatientEndpoints`, REQUIREMENTS.md's pre-visit-brief entry point). Reads whatever
+  PatientSessionContext is already in the session the `sessionCookie` cookie names - either a direct
+  single-patient `/launch` -> `/callback`, or Select Patient.bru's drill-down (same cookie, no
+  separate login). With no PatientSessionContext, PatientEndpoints.HandleGetPatientAsync returns 401
+  before reaching OpenEMR, so these assertions fail closed rather than reporting green with nothing
+  behind them.
+}

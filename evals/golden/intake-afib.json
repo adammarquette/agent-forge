@@ -1,0 +1,23 @@
+{
+    "id": "intake-afib",
+    "guards": "Both medications in a two-item list are asserted, so a list truncated to its head fails here rather than passing as a shorter but still plausible medication list. An anticoagulant missing from an otherwise successful extraction is the failure that reads as success. Whether an uncited medication rejects the form is intake-med-missing-citation's to detect - this fixture cites everything.",
+    "category": "extraction",
+    "doc_type": "intake_form",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"demographics\":{\"full_name\":\"Cormac Deschamps\",\"date_of_birth\":\"1949-11-22\",\"sex\":\"M\"},\"chief_concern\":{\"text\":\"palpitations\",\"citation\":{\"page\":1,\"quote\":\"palpitations\",\"bounding_box\":null}},\"current_medications\":[{\"name\":\"apixaban\",\"dose\":\"5mg BID\",\"citation\":{\"page\":1,\"quote\":\"apixaban 5mg BID\",\"bounding_box\":null}},{\"name\":\"diltiazem\",\"dose\":\"120mg daily\",\"citation\":{\"page\":1,\"quote\":\"diltiazem 120mg\",\"bounding_box\":null}}],\"allergies\":[{\"text\":\"penicillin\",\"citation\":{\"page\":1,\"quote\":\"penicillin\",\"bounding_box\":null}}],\"family_history\":[{\"text\":\"brother: atrial fibrillation\",\"citation\":{\"page\":1,\"quote\":\"brother: atrial fibrillation\",\"bounding_box\":null}}],\"citation\":{\"page\":1,\"quote\":\"Patient intake form\",\"bounding_box\":null}}",
+    "expect_success": true,
+    "expected_values": [
+        "apixaban",
+        "palpitations",
+        "diltiazem"
+    ],
+    "phi_tokens": [
+        "Cormac Deschamps"
+    ],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

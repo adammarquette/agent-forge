@@ -1,0 +1,17 @@
+{
+    "id": "intake-missing-citation-top",
+    "guards": "The form-level citation is the grounding gate. An intake extraction with no source anchor is refused outright, which is the invariant that stops an uncited claim entering the record at the one boundary where it could enter.",
+    "category": "extraction",
+    "doc_type": "intake_form",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"demographics\":{\"full_name\":\"Liesl Okonjo\",\"date_of_birth\":\"1966-04-02\",\"sex\":\"F\"},\"chief_concern\":{\"text\":\"hypertension\",\"citation\":{\"page\":1,\"quote\":\"hypertension\",\"bounding_box\":null}},\"current_medications\":[],\"allergies\":[],\"family_history\":[]}",
+    "expect_success": false,
+    "phi_tokens": [
+        "Liesl Okonjo"
+    ],
+    "rubrics": [
+        "schema_valid",
+        "safe_refusal",
+        "no_phi_in_logs"
+    ]
+}

@@ -1,0 +1,22 @@
+{
+    "id": "intake-syncope",
+    "guards": "The extractor takes the form as written rather than filtering to cardiology: the non-cardiac medication here is precisely the one that explains a syncopal episode, and it is an asserted value. An extractor tuned to keep only cardiac drugs would drop the clinically decisive line and fail this case.",
+    "category": "extraction",
+    "doc_type": "intake_form",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"demographics\":{\"full_name\":\"Ignatius Rautenbach\",\"date_of_birth\":\"1944-01-25\",\"sex\":\"M\"},\"chief_concern\":{\"text\":\"syncopal episode\",\"citation\":{\"page\":1,\"quote\":\"syncopal episode\",\"bounding_box\":null}},\"current_medications\":[{\"name\":\"tamsulosin\",\"dose\":\"0.4mg daily\",\"citation\":{\"page\":1,\"quote\":\"tamsulosin 0.4mg\",\"bounding_box\":null}}],\"allergies\":[],\"family_history\":[{\"text\":\"father: sudden cardiac death\",\"citation\":{\"page\":1,\"quote\":\"father: sudden cardiac death\",\"bounding_box\":null}}],\"citation\":{\"page\":1,\"quote\":\"Patient intake form\",\"bounding_box\":null}}",
+    "expect_success": true,
+    "expected_values": [
+        "syncopal episode",
+        "tamsulosin"
+    ],
+    "phi_tokens": [
+        "Ignatius Rautenbach"
+    ],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

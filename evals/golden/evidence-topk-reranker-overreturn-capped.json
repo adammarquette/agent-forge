@@ -1,0 +1,107 @@
+{
+    "id": "evidence-topk-reranker-overreturn-capped",
+    "guards": "The topK cut on the reranked path, which a reranker that keeps its promise hides. IReranker returns at most topK and the Cohere provider sends topK as top_n, so HybridEvidenceRetriever's own .Take(topK) after the rerank is a defence against a provider that ignores it - and the only way to test a defence is to break the promise it defends against. This reranker returns all six chunks it was handed; the retriever must still return five. Delete that cut and the sixth comes back, the pinned order no longer matches, and the draft's citation of that sixth chunk - real, in the corpus, supported by its text, but not retrieved - resolves and ships.",
+    "category": "evidence",
+    "expect_success": true,
+    "evidence": {
+        "intent": "Sparse returns [warfarin-inr, doac-renal, acei-potassium] and dense [bb-ccb, statin, rate-control], so RRF fuses [warfarin-inr, bb-ccb, doac-renal, statin, rate-control, acei-potassium]; the reranker is pinned to return all six as [warfarin-inr, doac-renal, bb-ccb, statin, rate-control, acei-potassium], ignoring topK. Asserts the retriever cut that to the first five, that the DOAC citation survives, and that the ACE-inhibitor line is suppressed although its chunk is in the corpus and was reranked. acei-potassium is last in the fused order as well, so a retriever ignoring the reranker changes only the order here - which keeps retrieval_hit and evidence_grounded independent on this case.",
+        "patient_id": "syn-patient-yankee-two",
+        "question": "Testpatient Yankee is on apixaban and has just started lisinopril, with falling renal function - what monitoring do the guidelines ask for?",
+        "corpus": [
+            {
+                "chunk_id": "syn-gl-af-warfarin-inr-01",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Anticoagulation",
+                "section": "Warfarin INR target",
+                "text": "For most patients with atrial fibrillation on warfarin, the target INR is 2.0 to 3.0."
+            },
+            {
+                "chunk_id": "syn-gl-af-doac-renal-02",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Anticoagulation",
+                "section": "DOAC renal dosing",
+                "text": "Direct oral anticoagulants require dose reduction or avoidance in renal impairment. Assess creatinine clearance before starting a DOAC and periodically thereafter."
+            },
+            {
+                "chunk_id": "syn-gl-gdmt-acei-potassium-03",
+                "document_id": "Synthetic Cardiology Guidance 2026 - GDMT",
+                "section": "ACEi/ARB potassium and creatinine",
+                "text": "When starting or up-titrating an ACE inhibitor or ARB, monitor serum potassium and creatinine within one to two weeks."
+            },
+            {
+                "chunk_id": "syn-gl-gdmt-bb-ccb-04",
+                "document_id": "Synthetic Cardiology Guidance 2026 - GDMT",
+                "section": "Beta-blocker and non-dihydropyridine calcium channel blocker",
+                "text": "Combining a beta-blocker with a non-dihydropyridine calcium channel blocker such as diltiazem or verapamil can cause excessive bradycardia and heart block; avoid or use with close monitoring."
+            },
+            {
+                "chunk_id": "syn-gl-gdmt-statin-05",
+                "document_id": "Synthetic Cardiology Guidance 2026 - GDMT",
+                "section": "Statin therapy in hyperlipidemia",
+                "text": "High-intensity statin therapy is recommended for patients with established atherosclerotic cardiovascular disease to lower LDL cholesterol."
+            },
+            {
+                "chunk_id": "syn-gl-af-rate-control-11",
+                "document_id": "Synthetic Cardiology Guidance 2026 - Rate Control",
+                "section": "Resting rate target in permanent atrial fibrillation",
+                "text": "In permanent atrial fibrillation a lenient resting rate target of under 110 beats per minute is reasonable initially, tightening only if symptoms or ventricular function demand it."
+            }
+        ],
+        "sparse_ranking": [
+            "syn-gl-af-warfarin-inr-01",
+            "syn-gl-af-doac-renal-02",
+            "syn-gl-gdmt-acei-potassium-03"
+        ],
+        "dense_ranking": [
+            "syn-gl-gdmt-bb-ccb-04",
+            "syn-gl-gdmt-statin-05",
+            "syn-gl-af-rate-control-11"
+        ],
+        "rerank_ranking": [
+            "syn-gl-af-warfarin-inr-01",
+            "syn-gl-af-doac-renal-02",
+            "syn-gl-gdmt-bb-ccb-04",
+            "syn-gl-gdmt-statin-05",
+            "syn-gl-af-rate-control-11",
+            "syn-gl-gdmt-acei-potassium-03"
+        ],
+        "rerank_ignores_top_k": true,
+        "expected_chunk_ids": [
+            "syn-gl-af-doac-renal-02"
+        ],
+        "expected_top_chunk_id": "syn-gl-af-warfarin-inr-01",
+        "expected_chunk_order": [
+            "syn-gl-af-warfarin-inr-01",
+            "syn-gl-af-doac-renal-02",
+            "syn-gl-gdmt-bb-ccb-04",
+            "syn-gl-gdmt-statin-05",
+            "syn-gl-af-rate-control-11"
+        ],
+        "expected_guideline_citations": [
+            "Guideline/syn-gl-af-doac-renal-02"
+        ],
+        "expected_suppressed_citations": [
+            "Guideline/syn-gl-gdmt-acei-potassium-03"
+        ],
+        "forbidden_answer_fragments": [
+            "Recheck serum potassium and creatinine within two weeks of starting the ACE inhibitor"
+        ],
+        "model_script": [
+            {
+                "text": "Assess creatinine clearance before starting a DOAC and periodically after [Guideline/syn-gl-af-doac-renal-02].\nRecheck serum potassium and creatinine within two weeks of starting the ACE inhibitor [Guideline/syn-gl-gdmt-acei-potassium-03]."
+            }
+        ]
+    },
+    "expected_values": [
+        "Assess creatinine clearance before starting a DOAC and periodically after"
+    ],
+    "phi_tokens": [
+        "syn-patient-yankee-two",
+        "apixaban",
+        "lisinopril",
+        "falling renal function"
+    ],
+    "rubrics": [
+        "retrieval_hit",
+        "evidence_grounded",
+        "no_phi_in_logs"
+    ]
+}

@@ -1,0 +1,33 @@
+{
+    "id": "answer-m5-llm-timeout-deterministic-fallback",
+    "guards": "REQUIREMENTS.md 13.1's deterministic non-LLM fallback, scored on the answer production code composes rather than one this case pinned. Guards that an exhausted provider yields SOURCE-CITED RAW DATA under an explicit banner - not an apology, not a blank, and above all not synthesis, since the one moment the model is unavailable is the worst possible moment to invent a summary. The tool results gathered before the failure still reach the clinician.",
+    "category": "answer",
+    "expect_success": false,
+    "answer": {
+        "metric": "M5",
+        "intent": "REQUIREMENTS.md §13.1's 'LLM timeout / provider error' row, at the point the resilience pipeline is already exhausted. The answer here is NOT pinned - the orchestrator composes it - so what is scored is production behaviour: raw source-cited tool data under an explicit banner, never nothing and never synthesis.",
+        "site": "default",
+        "patient_id": "syn-patient-uniform",
+        "chart": {
+            "display_name": "Uniform Testpatient",
+            "problems": [{ "id": "syn-uniform-cond-1", "display": "Atrial fibrillation" }],
+            "medications": [{ "id": "syn-uniform-med-1", "display": "Warfarin", "dosage": "5 mg daily" }],
+            "labs": []
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }] },
+            { "fails_with": "timeout" }
+        ],
+        "expected_log_fragments": [
+            "Degraded to deterministic fallback: Synthetic provider timeout: no response before the per-attempt timeout, retries exhausted."
+        ]
+    },
+    "expected_values": [
+        "Summary unavailable right now - here is the source data retrieved this turn instead:",
+        "Source 1:",
+        "Uniform Testpatient",
+        "syn-uniform-med-1"
+    ],
+    "phi_tokens": ["Warfarin", "Atrial fibrillation"],
+    "rubrics": ["transparent_degradation", "no_phi_in_logs"]
+}

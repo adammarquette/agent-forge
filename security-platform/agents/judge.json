@@ -1,0 +1,27 @@
+{
+  "schema_version": "1",
+  "agent": "judge",
+  "display_name": "Judge",
+  "status": "defined, not built",
+  "role": "Rules on every transcript, independently of the Red Team, against the case's expected safe behaviour: defense held, partial, exploit confirmed, or inconclusive; plus regression, severity and exploitability.",
+  "inputs": ["attack_transcript", "target-side evidence by correlation id (planned, SECURITY-PLATFORM.md section 9)"],
+  "outputs": ["verdict", "confirmed_exploit", "error"],
+  "trust_level": "high and independent: a different model family from the Red Team, not steered by it, and calibrated against a labelled ground-truth set",
+  "may_call_target": false,
+  "invariant": "the Judge never approves a confirmed exploit",
+  "prompt": { "file": "prompts/judge.md", "version": "1.0.0", "sha256": "ce4e0a49fabe8e39cb65e0318d9a3c8305196355af3b8e2d2d3e915139e506ea", "status": "proposed" },
+  "model": {
+    "status": "proposed, awaiting maintainer confirmation",
+    "proposal": "The 'Jev model', the maintainer's proposal. Provider, API and exact model id still to be named by the maintainer.",
+    "proposed_by": "maintainer, 2026-09-28",
+    "reason": "Maintainer: cheaper than other frontier models, and it 'just needs to make a judgement against what the other models do'. A vendor and family different from the Red Team and the Copilot under test also keeps the Judge independent (FR-MAS-W3-9). Whether it is good enough is measured by calibration against the ground-truth set, not assumed.",
+    "provider": null,
+    "model_id": null
+  },
+  "coordinates_with": {
+    "red_team": "receives attack_transcript; sends nothing back",
+    "orchestrator": "writes every verdict to the run records the Orchestrator reads",
+    "documentation": "sends confirmed_exploit only for outcome exploit_confirmed"
+  },
+  "traces_to": ["FR-MAS-W3-5", "FR-MAS-W3-9", "NFR-TESTDESIGN-W3-1", "SECURITY-PLATFORM.md, trust and safety of the platform", "UC-W3-2", "UC-W3-8"]
+}

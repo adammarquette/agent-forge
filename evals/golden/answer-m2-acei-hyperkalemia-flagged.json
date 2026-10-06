@@ -1,0 +1,27 @@
+{
+    "id": "answer-m2-acei-hyperkalemia-flagged",
+    "guards": "An ACE inhibitor and a potassium above the laboratory's own range is the interaction most likely to be missed on a fast read, because each half is unremarkable alone and the two live on different screens. Guards the same medication-plus-lab join as the DOAC case on a different rule, so a regression that broke the join for one class rather than all of them still turns something red.",
+    "category": "answer",
+    "expect_success": true,
+    "answer": {
+        "metric": "M2",
+        "intent": "Seeded violation of FR-VERIF-2's ACEi/ARB-with-hyperkalemia constraint: lisinopril is active while the potassium sits above the laboratory's own reference range, which is hyperkalemia by the lab's definition rather than by the rule's constant.",
+        "site": "default",
+        "patient_id": "syn-patient-lima",
+        "chart": {
+            "display_name": "Lima Testpatient",
+            "problems": [{ "id": "syn-lima-cond-1", "display": "Heart failure with reduced ejection fraction" }],
+            "medications": [{ "id": "syn-lima-med-1", "display": "Lisinopril", "dosage": "20 mg daily" }],
+            "labs": [
+                { "id": "syn-lima-obs-1", "display": "Potassium", "value": 5.9, "unit": "mmol/L", "reference_range_low": 3.5, "reference_range_high": 5.1 }
+            ]
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }, { "tool_name": "get_labs" }] },
+            { "text": "Lisinopril 20 mg daily is on the active medication list [MedicationRequest/syn-lima-med-1].\nHer potassium today is 5.9 mmol/L [Observation/syn-lima-obs-1]." }
+        ],
+        "expected_flag_rule_ids": ["acei-arb-hyperkalemia"]
+    },
+    "phi_tokens": ["Lisinopril", "Heart failure", "potassium"],
+    "rubrics": ["constraint_flagged", "no_phi_in_logs"]
+}

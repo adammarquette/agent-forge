@@ -1,0 +1,27 @@
+{
+    "id": "answer-m2-control-doac-normal-renal-function",
+    "guards": "The near-miss control for the renal class: apixaban with a creatinine inside the laboratory's range and no renal diagnosis on the problem list. A rule that flagged every DOAC regardless of renal function would fire on most anticoagulated patients in the panel, which is indistinguishable from the rule being switched off.",
+    "category": "answer",
+    "expect_success": true,
+    "answer": {
+        "metric": "M2",
+        "intent": "Near-miss control for the renal-DOAC class: the same apixaban picture as the seeded case, with a creatinine of 0.9 mg/dL - inside the laboratory's reference range and with no renal diagnosis on the problem list. Nothing may be flagged.",
+        "site": "default",
+        "patient_id": "syn-patient-papa",
+        "chart": {
+            "display_name": "Papa Testpatient",
+            "problems": [{ "id": "syn-papa-cond-1", "display": "Atrial fibrillation" }],
+            "medications": [{ "id": "syn-papa-med-1", "display": "Apixaban", "dosage": "5 mg twice daily" }],
+            "labs": [
+                { "id": "syn-papa-obs-1", "display": "Creatinine", "value": 0.9, "unit": "mg/dL", "reference_range_low": 0.6, "reference_range_high": 1.1 }
+            ]
+        },
+        "model_script": [
+            { "tool_calls": [{ "tool_name": "get_patient_summary" }, { "tool_name": "get_labs" }] },
+            { "text": "Apixaban 5 mg twice daily is on the active medication list [MedicationRequest/syn-papa-med-1].\nHer creatinine today is 0.9 mg/dL [Observation/syn-papa-obs-1]." }
+        ],
+        "expect_no_constraint_flags": true
+    },
+    "phi_tokens": ["Apixaban", "Atrial fibrillation", "creatinine"],
+    "rubrics": ["constraint_flagged", "no_phi_in_logs"]
+}

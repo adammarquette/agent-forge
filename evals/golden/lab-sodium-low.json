@@ -1,0 +1,21 @@
+{
+    "id": "lab-sodium-low",
+    "guards": "A value below an interval-style range, as opposed to below a greater-than threshold (lab-hdl-low), with the range asserted. The two low cases differ in how the range is written, which is exactly where a parser that interpreted the range rather than carrying its text would diverge.",
+    "category": "extraction",
+    "doc_type": "lab_pdf",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"tests\":[{\"test_name\":\"Sodium\",\"value\":\"128\",\"unit\":\"mmol/L\",\"reference_range\":\"135-145\",\"collection_date\":\"2026-06-15\",\"abnormal_flag\":true,\"citation\":{\"page\":1,\"quote\":\"Sodium 128 (L) mmol/L\",\"bounding_box\":null}}]}",
+    "expect_success": true,
+    "expected_values": [
+        "Sodium",
+        "128",
+        "135-145"
+    ],
+    "phi_tokens": ["Sodium 128 (L) mmol/L"],
+    "rubrics": [
+        "schema_valid",
+        "citation_present",
+        "factually_consistent",
+        "no_phi_in_logs"
+    ]
+}

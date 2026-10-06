@@ -1,0 +1,43 @@
+# Single-binary Tempo for the AgentForge observability stack. Receives the sidecar's spans over
+# OTLP/HTTP (:4318, path /v1/traces) and serves them to Grafana over its query API (:3200). Local
+# filesystem storage, one instance, no clustering - the trace twin of observability/loki/loki-config.yaml.
+#
+# WHAT ARRIVES HERE IS ALREADY SCRUBBED. Every span passes SpanPhiScrubber in the sidecar before an exporter
+# reads it: URLs keep their origin and a path whose identifier segments read {id}, and query strings,
+# client addresses and free-text status descriptions never leave the process (ARCHITECTURE-DOCUMENTS.md section 12).
+# Tempo has no auth of its own, so it stays PRIVATE in every wiring - loopback in local compose, no domain
+# on Railway.
+#
+# Local compose uses this as-is. The deployed image (Dockerfile) is the same file; the receiver below binds
+# every interface, IPv6 included, for the same reason the deployed Loki and Prometheus bind [::].
+# DEPLOYMENT.md
+server:
+  http_listen_port: 3200
+  log_level: info
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        http:
+          # Tempo's default is localhost:4318, which is unreachable from another container.
+          endpoint: "[::]:4318"
+
+ingester:
+  max_block_duration: 5m
+
+compactor:
+  compaction:
+    # Synthetic/demo data only - keep a bounded window, the same 7 days Loki keeps.
+    block_retention: 168h
+
+storage:
+  trace:
+    backend: local
+    wal:
+      path: /var/tempo/wal
+    local:
+      path: /var/tempo/blocks
+
+usage_report:
+  reporting_enabled: false

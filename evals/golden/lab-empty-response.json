@@ -1,0 +1,13 @@
+{
+    "id": "lab-empty-response",
+    "guards": "An empty model response - a dropped stream, a zero-token completion, a provider returning success with no body - is rejected rather than read as an empty result set. Without this, that failure and lab-empty-tests' legitimate empty panel would land on the same record. It declares no no_phi_in_logs: an empty reply carries nothing that could leak, and that rubric refuses a case with nothing to scan for.",
+    "category": "extraction",
+    "doc_type": "lab_pdf",
+    "media_type": "application/pdf",
+    "stub_model_response": "",
+    "expect_success": false,
+    "rubrics": [
+        "schema_valid",
+        "safe_refusal"
+    ]
+}

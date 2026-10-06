@@ -1,0 +1,26 @@
+{
+    "id": "authz-role-attending-permitted",
+    "guards": "One of the set's four permits, and the simplest: a plain entitled read on the session patient. A gate hardened into deny-everything satisfies all nine denial cases perfectly and fails every permit, because authorization_outcome requires the entitled chart to actually come back rather than assuming it did. This case's clinic day is also the fixture the denial and scope-widening cases are steered against.",
+    "category": "authorization",
+    "expect_success": true,
+    "authorization": {
+        "vector": "role_confusion",
+        "requester_role": "attending cardiologist - the provider participant on this appointment",
+        "requester_identity": "syn-attending-nakamura",
+        "site": "default",
+        "session_patient_id": "syn-patient-alpha",
+        "clinic_day_appointments": [
+            { "patient_id": "syn-patient-alpha", "provider_reference": "Practitioner/syn-attending-nakamura", "status": "booked" },
+            { "patient_id": "syn-patient-charlie", "provider_reference": "Person/syn-attending-nakamura", "status": "booked" },
+            { "patient_id": "syn-patient-bravo", "provider_reference": "Practitioner/syn-attending-varga", "status": "booked" }
+        ],
+        "tool_call": { "tool_name": "get_patient_summary", "arguments_json": "{}" },
+        "forbidden_values": ["Bravo Testpatient", "Digoxin", "syn-patient-bravo"],
+        "expected_log_fragments": [
+            "ACCESS AUDIT: clinician=syn-attending-nakamura accessed patient=syn-patient-alpha via tool=get_patient_summary"
+        ]
+    },
+    "expected_values": ["Alpha Testpatient", "Warfarin", "default:syn-patient-alpha"],
+    "phi_tokens": ["Warfarin", "Atrial fibrillation", "Penicillin"],
+    "rubrics": ["authorization_outcome", "no_unauthorized_disclosure", "attempt_logged", "factually_consistent", "no_phi_in_logs"]
+}

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MySqlConnector" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- For SmartLaunchScopes: a client registered before a scope was added to the superset is
+         reconciled against the same list RegisterSmartClients registers. -->
+    <ProjectReference Include="..\..\src\AgentForge.Integration.OpenEmr\AgentForge.Integration.OpenEmr.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,94 @@
+meta {
+  name: Ask (/evidence/ask)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/evidence/ask
+  body: multipartForm
+  auth: none
+}
+
+headers {
+  Cookie: {{sessionCookie}}
+}
+
+script:pre-request {
+  // The page this request stands in for renders from GET /patient and sends that response's contextKey;
+  // without it the endpoint answers 409 (EvidenceEndpoints). An empty key fails closed.
+  const axios = require("axios");
+  const res = await axios.get(bru.getEnvVar("baseUrl") + "/patient", {
+    headers: { Cookie: bru.getEnvVar("sessionCookie") || "" },
+    validateStatus: () => true,
+  });
+  bru.setVar("contextKey", res.status === 200 && res.data ? res.data.contextKey || "" : "");
+}
+
+body:multipart-form {
+  context: {{contextKey}}
+  question: Given this patient's latest potassium and kidney function, what do the guidelines say about continuing an ACE inhibitor?
+}
+
+assert {
+  res.status: eq 200
+  res.body.answer: isString
+  res.body.answer.length: gt 0
+  res.body.handoffs: isArray
+  res.body.handoffs.length: gte 4
+  res.body.evidence: isArray
+  res.body.citations: isArray
+  res.body.suppressedClaimCount: isNumber
+}
+
+docs {
+  UC-10 (REQUIREMENTS.md / REQUIREMENTS.md) - "evidence-grounded answer", which extends REQUIREMENTS.md's UC-2 and
+  UC-3. Numbered UC-10, not UC-7: REQUIREMENTS.md's Week 2 use cases were originally UC-6/UC-7/UC-8, which
+  collided with REQUIREMENTS.md's own UC-6 ("On-demand day's agenda", the Agenda/ requests below); both docs
+  now use UC-9..UC-11 for the Week 2 set. See `Documents/Ingest.bru` for UC-9.
+
+  This is the evidence path, and it is what the collection could not reach before. A single
+  multipart POST runs the whole Week 2 supervisor graph (ARCHITECTURE-DOCUMENTS.md §6): evidence-retriever
+  over the guideline corpus, answer-composer, then the Week 1 verifier reused as the `critic` node,
+  which suppresses any claim it cannot attribute to a retrieved source.
+  `METRICS.md` calls this the canonical "Week 2 core flow" a grader runs.
+
+  IT IS NOT THE COLLECTION'S ONLY AGENT REQUEST, AND SAYING SO WOULD BE WRONG. `GET /agenda` runs
+  the agent loop too: `AgendaRosterService` fans `AgendaPatientSummaryRunner` per patient, which
+  calls `IAgentOrchestrator.StartAgendaSummaryAsync` - the SAME `RunTurnAsync` the chat brief uses,
+  verification gate included - so `AgendaRow.Summary` is a cited summary and `AgendaRow.SafetyFlags`
+  are FR-VERIF-2 constraint flags. What was missing was not agent behaviour; it was the *evidence*
+  path: a question answered against the guideline corpus and the patient's document facts.
+
+  IT IS NOT THE MULTI-TURN HALF OF UC-2. `/evidence/ask` is stateless - a fresh graph run per
+  request, no conversation store - so it produces UC-2's *cited answer* but not its turn-to-turn
+  context. That half lives on the SignalR chat hub, which a plain HTTP collection cannot drive (see
+  the README's "What's not covered, and why").
+
+  `question` is the only required part; `Ask With Document.bru` adds the document leg. The patient
+  is taken from the session and is NOT a request field - EvidenceEndpoints.HandleAskAsync reads
+  `session.PatientId` and re-checks the clinician-patient relationship on every call, so a launched
+  session cannot name another patient (FR-AUTH-2's third choke point). There is
+  no request field to point elsewhere, so the 403 path is not something this request can provoke:
+  it fires when the *session's own* clinician-patient relationship no longer holds at call time,
+  and returns a refusal body rather than data.
+
+  WHAT THE ASSERTIONS MEAN. `handoffs.length >= 4` is the graph's own floor with no document
+  attached - supervisor->evidence-retriever, supervisor->answer-composer, answer-composer->critic,
+  critic->supervisor - so a short trace means a node was skipped, not that the answer was merely
+  returned. `citations` is asserted as an array, not as non-empty: it carries click-to-source
+  citations for *document-derived* facts, so it is legitimately empty until something has been
+  ingested for this patient (`Documents/Ingest.bru`) or attached in-turn. `evidence` is the
+  guideline snippets retrieved this turn.
+
+  BOUND TO A PAGE'S PATIENT. The `context` part is the `contextKey` GET /patient returns,
+  read by the pre-request script, because evidence.html sends the key of the patient its header
+  shows and the endpoint answers any other key - or none - 409 instead of answering about whichever
+  patient the session now holds. Both Evidence/ requests share the script, and it costs one
+  GET /patient (four FHIR reads, one `patient_context` audit row) per request.
+
+  NEEDS A SESSION, AND NEEDS WEEK 2 CONFIGURED. Without a `sessionCookie` this returns 401 before
+  any retrieval or LLM work happens, so the assertions fail closed. Without
+  `AgentForgeData__ConnectionString` set, the route is never mapped at all and this returns 404 -
+  the same red, a different cause. The README's "Week 2 endpoints" section has both.
+}

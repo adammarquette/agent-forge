@@ -1,0 +1,10 @@
+{
+  "id": "lab-empty-tests",
+  "guards": "A report the model parsed but found no results in extracts as an empty set, which is a different outcome from a report it could not read at all (lab-empty-response). It is also the only accepted case declaring no citation_present rubric - there is nothing to cite - so it is what keeps that rubric from being satisfied by any payload that merely contains the word. It declares no no_phi_in_logs, the same ruling as lab-empty-response: a reply with no string value in it carries nothing that could leak, and that rubric refuses a case with nothing to scan for.",
+  "category": "extraction",
+  "doc_type": "lab_pdf",
+  "media_type": "application/pdf",
+  "stub_model_response": "{\"tests\":[]}",
+  "expect_success": true,
+  "rubrics": ["schema_valid"]
+}

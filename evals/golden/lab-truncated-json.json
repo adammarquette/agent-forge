@@ -1,0 +1,14 @@
+{
+    "id": "lab-truncated-json",
+    "guards": "Output cut off mid-object, as a max-token stop or a dropped connection produces it, is refused. There is no closing brace, so the fragment is never salvaged into a partial record; the alternative is persisting whichever fields arrived before the cut, which looks exactly like a complete result.",
+    "category": "extraction",
+    "doc_type": "lab_pdf",
+    "media_type": "application/pdf",
+    "stub_model_response": "{\"tests\":[{\"test_name\":\"Potassium\",\"value\":\"5.0\",",
+    "expect_success": false,
+    "rubrics": [
+        "schema_valid",
+        "safe_refusal",
+        "no_phi_in_logs"
+    ]
+}
