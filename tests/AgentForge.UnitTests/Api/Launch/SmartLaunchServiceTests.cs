@@ -154,7 +154,7 @@ public sealed class SmartLaunchServiceTests
     {
         // FR-AUTH-4: a token that OpenEMR reports as no-longer-active (revoked or expired) must not
         // be allowed to start a session, even if introspection still carries a subject claim - this
-        // fork's introspection endpoint has a history of not behaving per RFC 7662 (#44, #47), so
+        // fork's introspection endpoint has a history of not behaving per RFC 7662, so
         // "subject present but active:false" is a plausible real state, not just a spec nicety.
         var (_, pending) = _sut.BeginLaunch("launch-token-abc");
         A.CallTo(() => _authClient.ExchangeAuthorizationCodeAsync(

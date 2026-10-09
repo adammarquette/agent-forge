@@ -13,7 +13,7 @@ namespace AgentForge.Agents.Ingestion;
 /// at it (the same reasoning as <c>RecordOutOfScopeToolCall</c>'s deliberate untagging). So the label
 /// is the fact's <i>kind</i>, every value of which is a literal in this file, and
 /// <see cref="ToFieldLabel"/> collapses anything else into one <see cref="Other"/> bucket rather than
-/// admitting it. A separate change
+/// admitting it.
 /// </remarks>
 public static class DerivedFactType
 {

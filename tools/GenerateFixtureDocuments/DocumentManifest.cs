@@ -31,7 +31,7 @@ public static class DocumentLayout
 /// <summary>
 /// One fact a correct extraction of the document yields, and the exact span of printed text it cites. The
 /// span is what a reader sees, in reading order - which is not always how the text layer sequences it, and
-/// that gap is what the set exists to measure. A separate change
+/// that gap is what the set exists to measure.
 /// </summary>
 public sealed record ExpectedFact
 {
@@ -106,7 +106,7 @@ public sealed record ExpectedFact
 /// <summary>
 /// What one document in the set is and what a correct extraction of it yields - committed beside the document
 /// as <c>&lt;file&gt;.manifest.json</c> so any tier (Bruno, evals, the integration smoke) can use it without
-/// this project. A separate change
+/// this project.
 /// </summary>
 public sealed record DocumentManifest
 {

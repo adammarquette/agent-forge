@@ -499,16 +499,16 @@ docker-compose.override.yml
 debug-*.html
 debug-*.png
 
-# Local GitLab->GitHub migration archive. NEVER commit: the export's project.json
-# carries a live GitLab runners_token (gitleaks rule: gitlab-rrt), and the archive
-# also mirrors CI variables. It is read locally by the importer only, and must not
-# reach GitHub or any other remote. The agent-forge fork ignores this too.
+# Local archive of a previous CI host's project export. NEVER commit: it carries
+# that host's runner credentials and mirrors its CI variables. It is read locally
+# only, and must not reach any remote. The OpenEMR fork ignores this too.
+#
 gitlab-export/
 
-# The coupled OpenEMR fork (GitLab project 1457), cloned here for reference after the
+# The coupled OpenEMR fork, cloned here for reference after the
 # submodule was removed. It is a separate repository with its own history, so
 # tracking it would commit a second project tree into this one - which a plain
-# `git add -A` did silently, because nothing matched it. A separate change
+# `git add -A` did silently, because nothing matched it.
 external/
 
 # Claude Code. Per-developer config stays out — permission allowlists, machine-specific

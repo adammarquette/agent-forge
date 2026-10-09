@@ -137,7 +137,7 @@ public static class McpToolCatalog
     /// <summary>
     /// Renders <see cref="AllTools"/> - each tool's name, description and input schema, in catalog order - as
     /// one JSON document (<c>--export-tool-schemas</c>), so the tool-schema rendering is produced rather
-    /// than written and a change to what the model is handed shows as a diff of that file. A separate change
+    /// than written and a change to what the model is handed shows as a diff of that file.
     /// </summary>
     /// <returns>The document, indented with LF line endings and a trailing newline.</returns>
     public static string RenderSchemas()

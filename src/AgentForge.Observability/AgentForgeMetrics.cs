@@ -16,7 +16,7 @@ public sealed class AgentForgeMetrics : IAgentForgeMetrics, IDisposable
     /// first bucket (<c>0</c> — not one checkable quote was located), and keep enough resolution across the
     /// middle to tell a partly-grounded document from a well-grounded one. A fully grounded document does
     /// share the top bucket with a nearly-grounded one; <c>agentforge.extraction_field_outcomes</c> is where
-    /// "was any quote absent at all" is answered exactly. A separate change
+    /// "was any quote absent at all" is answered exactly.
     /// </summary>
     public static readonly IReadOnlyList<double> ExtractionConfidenceBuckets = [0, 0.25, 0.5, 0.75, 1];
 
@@ -42,7 +42,7 @@ public sealed class AgentForgeMetrics : IAgentForgeMetrics, IDisposable
     /// bucket; these put <b>6 on a boundary</b> and step every second through 5-15s, below which the 3.16s
     /// measured mean sits. <c>AlertRuleThresholdTests</c> pins
     /// <c>AgentForgeHighEvidenceRetrievalLatencyP95</c>'s threshold against this list, and
-    /// <c>Week2HistogramExportTests</c> that the exported series carries exactly it. A separate change
+    /// <c>Week2HistogramExportTests</c> that the exported series carries exactly it.
     /// </summary>
     public static readonly IReadOnlyList<double> EvidenceRetrievalDurationBucketBoundariesSeconds =
     [
@@ -54,7 +54,7 @@ public sealed class AgentForgeMetrics : IAgentForgeMetrics, IDisposable
     /// <c>AddView</c> in <c>Program.cs</c>. The defaults leave the 11s ingestion target inside a 10-25s bucket;
     /// these put <b>11 on a boundary</b>, step every second through 5-15s around it, and reach 120s so a slow
     /// outlier lands in a finite bucket rather than <c>+Inf</c>. <c>Week2HistogramExportTests</c> pins that the
-    /// exported series carries exactly this list. A separate change
+    /// exported series carries exactly this list.
     /// </summary>
     public static readonly IReadOnlyList<double> DocumentIngestionDurationBucketBoundariesSeconds =
     [
@@ -100,13 +100,13 @@ public sealed class AgentForgeMetrics : IAgentForgeMetrics, IDisposable
             "agentforge.verification_results", unit: "{result}", description: "Verification-gate outcomes, by pass/fail.");
         // The other Week 1 decision outcome (FR-AUTH-2/UC-4). Its own instrument, never a tag on
         // agentforge.tool_calls: a refusal is correct behaviour and must not move the tool-failure
-        // rate AgentForgeHighToolFailureRate pages on. A separate change
+        // rate AgentForgeHighToolFailureRate pages on.
         _authorizationDecisionsTotal = _meter.CreateCounter<long>(
             "agentforge.authorization_decisions", unit: "{decision}",
             description: "Patient-access decisions below the model, by permit/refuse and bounded reason.");
         // The NG1 scope guardrail's only run-time signal, and its own instrument for the same reason
         // as the row above. Untagged on purpose: the attempted tool name is model-supplied, so it
-        // belongs in a log line and not on an exported label. A separate change
+        // belongs in a log line and not on an exported label.
         _outOfScopeToolCallsTotal = _meter.CreateCounter<long>(
             "agentforge.out_of_scope_tool_calls", unit: "{call}",
             description: "Tool calls refused because the catalog does not offer that tool (REQUIREMENTS.md 12.4 NG1).");
@@ -115,7 +115,7 @@ public sealed class AgentForgeMetrics : IAgentForgeMetrics, IDisposable
         // decides nothing about it - which is why a separate change stopped the authorizer answering expiry
         // with a refusal at all. Untagged beyond `surface`, because the two dimensions that would
         // make it richer - the session and the expiry instant - are the two that would make a dead
-        // session worth replaying. A separate change
+        // session worth replaying.
         _expiredSessionRefusalsTotal = _meter.CreateCounter<long>(
             "agentforge.expired_session_refusals", unit: "{refusal}",
             description: "Refusals caused by an expired SMART access token, by the surface that refused.");
@@ -147,7 +147,7 @@ public sealed class AgentForgeMetrics : IAgentForgeMetrics, IDisposable
             "agentforge.retrieval_degradations", unit: "{degradation}",
             description: "Retrieval stages degraded (a half or the reranker failed; the pipeline continued without it), by stage.");
         // Its own instrument rather than a tag on document_ingestions: an unlocatable quote does not fail
-        // the ingest, so it must not move the ingestion outcome rate. A separate change
+        // the ingest, so it must not move the ingestion outcome rate.
         _citationQuoteMatchesTotal = _meter.CreateCounter<long>(
             "agentforge.citation_quote_matches", unit: "{citation}",
             description: "Extraction citation quote-location outcomes, by exact / unlocatable / unchecked.");
@@ -157,13 +157,13 @@ public sealed class AgentForgeMetrics : IAgentForgeMetrics, IDisposable
         // citation quotes that were located, so the axis means one thing end to end; a document with nothing
         // to check is absent from it rather than parked mid-scale (DocumentIngestionService explains why).
         // Explicit buckets for the reason on the constant, and AgentForgeMetricsTests asserts they reach
-        // this instrument and not only that the constant is well formed. A separate change
+        // this instrument and not only that the constant is well formed.
         _extractionConfidence = _meter.CreateHistogram<double>(
             "agentforge.extraction_confidence", unit: "{confidence}",
             description: "Share of one ingested document's checkable citation quotes located verbatim in its own text (1.0 all, 0.0 none). Grounding/locatability, NOT model-reported; documents with nothing to check are not observed.",
             advice: new InstrumentAdvice<double> { HistogramBucketBoundaries = ExtractionConfidenceBuckets });
         // The other half: an outcome per fact, so the rate has a denominator. `field` is the fact's kind from
-        // a closed set of literals, never the extracted field's model-supplied name. A separate change
+        // a closed set of literals, never the extracted field's model-supplied name.
         _extractionFieldOutcomesTotal = _meter.CreateCounter<long>(
             "agentforge.extraction_field_outcomes", unit: "{fact}",
             description: "Field-level extraction grounding outcomes, by bounded field kind and exact / unlocatable / unchecked.");
@@ -264,7 +264,7 @@ public sealed class AgentForgeMetrics : IAgentForgeMetrics, IDisposable
             new KeyValuePair<string, object?>("outcome", outcome));
 
     // Every instance shares MeterName, so a listener tells this one's instruments apart only by the Meter
-    // object itself. A separate change
+    // object itself.
     internal Meter Meter => _meter;
 
     /// <inheritdoc />

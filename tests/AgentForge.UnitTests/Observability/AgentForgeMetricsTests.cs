@@ -23,7 +23,7 @@ public sealed class AgentForgeMetricsTests : IDisposable
         _listener.InstrumentPublished = (instrument, listener) =>
         {
             // Scoped to the SUT's own Meter, not the shared name: another test class's AgentForgeMetrics
-            // publishes the same instruments in parallel and would otherwise leak into both lists. A separate change
+            // publishes the same instruments in parallel and would otherwise leak into both lists.
             if (ReferenceEquals(instrument.Meter, _sut.Meter))
             {
                 // Kept as well as enabled: the instruments themselves carry the configuration that never
@@ -99,7 +99,7 @@ public sealed class AgentForgeMetricsTests : IDisposable
         EvidenceRetrievalEntryPoint entryPoint, string wireName)
     {
         // Both call sites feed ONE duration series, so the SLO covers the retrieval stage; the label only
-        // says which path a slow sample came from. A separate change
+        // says which path a slow sample came from.
         _sut.RecordEvidenceRetrieval(true, 3, TimeSpan.FromSeconds(2), entryPoint);
 
         foreach (var name in new[] { "agentforge.evidence_retrievals", "agentforge.evidence_retrieval.duration", "agentforge.evidence_retrieval.results" })
@@ -133,7 +133,7 @@ public sealed class AgentForgeMetricsTests : IDisposable
     {
         // OpenTelemetry .NET's DEFAULT boundaries put nothing between 10 and 50 except 25, so
         // histogram_quantile interpolates across a 25-second-wide bucket exactly where the 26s
-        // NFR-PERF-1 threshold sits. 26 has to BE a boundary for the rule to resolve it. A separate change
+        // NFR-PERF-1 threshold sits. 26 has to BE a boundary for the rule to resolve it.
         var boundaries = AgentForgeMetrics.AgentTurnDurationBucketBoundariesSeconds;
 
         // This side pins the INSTRUMENT. AlertRuleThresholdTests pins the other side, reading the
@@ -300,7 +300,7 @@ public sealed class AgentForgeMetricsTests : IDisposable
         // see: the exporter silently falls back to OpenTelemetry's defaults (0, 5, 10, 25, ...), every
         // fraction in [0,1] lands in le="5", and the panel degenerates into the average the histogram exists
         // to avoid - permanently, and without reddening again. Instrument<T>.Advice is the only place that
-        // wiring is observable. A separate change
+        // wiring is observable.
         var histogram = _instruments.OfType<Histogram<double>>()
             .Should().ContainSingle(instrument => instrument.Name == "agentforge.extraction_confidence")
             .Which;
@@ -317,7 +317,7 @@ public sealed class AgentForgeMetricsTests : IDisposable
         // fraction in [0,1] - the share of a document's checkable quotes that were located - so the
         // boundaries must span exactly that, put the fabrication floor (0.0: not one checkable quote was
         // found) alone in the first bucket, and keep enough resolution that a partly-grounded document is
-        // distinguishable from a well-grounded one. A separate change
+        // distinguishable from a well-grounded one.
         var buckets = AgentForgeMetrics.ExtractionConfidenceBuckets;
 
         buckets.Should().BeInAscendingOrder().And.OnlyHaveUniqueItems();
@@ -337,7 +337,7 @@ public sealed class AgentForgeMetricsTests : IDisposable
     {
         // The denominator half of "extraction field-level pass rate": every outcome is counted, so the rate
         // is exact / (exact + unlocatable + unchecked) per field rather than a numerator with nothing under
-        // it. A separate change
+        // it.
         _sut.RecordExtractionFieldOutcome(field, outcome);
 
         _measurements.Should().Contain(m =>

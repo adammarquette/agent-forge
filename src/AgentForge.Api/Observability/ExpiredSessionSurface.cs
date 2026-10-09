@@ -11,7 +11,7 @@ namespace AgentForge.Api.Observability;
 /// is derived from where the refusal happened and never from the patient, the requester, the
 /// session or the correlation id (CONVENTIONS.md §7's no-PHI rule, which covers telemetry
 /// as well as logs). The launch gate has no value here because it does not refuse — it 500s, which
-/// <c>ARCHITECTURE.md</c> §5.7 records as an open gap rather than a choke point. A separate change
+/// <c>ARCHITECTURE.md</c> §5.7 records as an open gap rather than a choke point.
 /// </remarks>
 public static class ExpiredSessionSurface
 {

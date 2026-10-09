@@ -12,7 +12,7 @@ namespace AgentForge.Api.Chat;
 /// support session state inside SignalR: under long-polling the hub is handed a clone of the
 /// connecting request that carries <c>Items</c> but not <c>ISessionFeature</c>, so the hub reading
 /// <c>HttpContext.Session</c> itself threw on that transport. Every transport's connecting request
-/// does run this middleware, and every transport's hub sees its <c>Items</c>. A separate change
+/// does run this middleware, and every transport's hub sees its <c>Items</c>.
 /// </summary>
 /// <remarks>
 /// Must run after <c>UseSession()</c>. Touches only requests under <see cref="ChatHub.Route"/>, and

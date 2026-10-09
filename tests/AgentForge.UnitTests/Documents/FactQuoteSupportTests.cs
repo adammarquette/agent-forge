@@ -8,7 +8,7 @@ namespace AgentForge.UnitTests.Documents;
 /// the quote it cites. <b>Failure mode guarded (regression, FR-CITE-2):</b> an invented fact paired with a
 /// real quote - the quote is found on its page, so without this rule the invented text was stored at 1.0
 /// with the real line's box. The rule errs towards "not supported": a false "not found" marks a real fact,
-/// a false "found" launders an invented one. A separate change
+/// a false "found" launders an invented one.
 /// </summary>
 public sealed class FactQuoteSupportTests
 {

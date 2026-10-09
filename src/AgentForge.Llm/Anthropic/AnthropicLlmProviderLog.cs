@@ -27,7 +27,7 @@ internal static partial class AnthropicLlmProviderLog
     // null when the call never reached a response; {Reason} is the exception's type name only. The
     // provider's error body can echo request fields, so it reaches no log at all: {ErrorType} is
     // Anthropic's fixed error.type and {RequestId} its opaque request-id header, each allow-listed
-    // (AnthropicErrorReason), and "none" when the failure had no response. A separate change
+    // (AnthropicErrorReason), and "none" when the failure had no response.
     [LoggerMessage(Level = LogLevel.Warning, EventId = 9102, Message =
         "llm.call model={Model} status={StatusCode} reason={Reason} error_type={ErrorType} " +
         "request_id={RequestId} latency_ms={LatencyMs} outcome=error")]

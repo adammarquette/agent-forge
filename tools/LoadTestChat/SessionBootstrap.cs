@@ -3,8 +3,8 @@ using Microsoft.Playwright;
 namespace AgentForge.LoadTestChat;
 
 /// <summary>
-/// Automates obtaining a real chat session cookie for load testing (GitLab issue #20, following up
-/// on #30's Playwright login automation). Drives the deployed sidecar's own real
+/// Automates obtaining a real chat session cookie for load testing (following up
+/// on the Playwright login automation). Drives the deployed sidecar's own real
 /// <c>/launch</c> -&gt; OpenEMR login/consent -&gt; <c>/callback</c> flow, then reads the resulting
 /// session cookie straight out of the browser context. Unlike
 /// <c>PlaywrightLoginAutomation</c> (which registers a throwaway OAuth client and talks to OpenEMR's

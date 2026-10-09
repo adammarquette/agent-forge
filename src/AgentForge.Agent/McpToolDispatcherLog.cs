@@ -14,7 +14,7 @@ internal static partial class McpToolDispatcherLog
     // The name is the whole content of this line: the counter records that an attempt happened, and
     // only this says what was asked for - which is what tells a model typo apart from record content
     // steering the copilot toward an action. No patient id: this is not an FR-AUTH-4 access-audit
-    // event, and it is not routed to audit storage. A separate change
+    // event, and it is not routed to audit storage.
     [LoggerMessage(
         Level = LogLevel.Warning,
         Message = "Out-of-scope tool call refused: {ToolName} is not offered by the catalog, so it was not " +

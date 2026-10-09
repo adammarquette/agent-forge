@@ -1,6 +1,6 @@
 /*
  * Theme tokens for the Daily Agenda and Copilot chat views, mirrored from the OpenEMR fork's new frontend
- * (GitLab 2046, openemr-frontend/src/theme/tokens.ts and theme.ts at develop 1deeb73c) so the embedded views
+ * (openemr-frontend/src/theme/tokens.ts and theme.ts at develop 1deeb73c) so the embedded views
  * read as part of the same product. Change a value there first, then here.
  * Selection: html[data-theme] (set by theme.js) wins; with none, the device's prefers-color-scheme decides.
  */

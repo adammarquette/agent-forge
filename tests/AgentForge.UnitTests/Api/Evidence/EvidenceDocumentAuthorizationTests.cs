@@ -182,7 +182,7 @@ public sealed class EvidenceDocumentAuthorizationTests
     {
         // A page rendered for SessionPatient clicks a citation after another tab switched the session to AnotherPatient.
         // Answered 409 so the page reloads, before the ownership check could log the clinician as reaching for a
-        // document outside their patient. A separate change
+        // document outside their patient.
         var httpContext = SessionFor(SessionPatient);
         var stalePageKey = PatientContextBinding.KeyFor(httpContext.Session.Id, PatientSession(SessionPatient));
         httpContext.Session.SavePatientSession(PatientSession(AnotherPatient));

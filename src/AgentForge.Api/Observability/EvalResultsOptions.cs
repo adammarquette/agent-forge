@@ -3,7 +3,7 @@ namespace AgentForge.Api.Observability;
 /// <summary>
 /// Where the sidecar finds the eval run it publishes as <c>agentforge_eval_*</c> series. Optional
 /// telemetry, so nothing here is validated on start: a missing run is logged and the sidecar serves
-/// traffic without the series. A separate change
+/// traffic without the series.
 /// </summary>
 public sealed class EvalResultsOptions
 {

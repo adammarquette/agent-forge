@@ -53,8 +53,8 @@
          only when Observability:LokiOtlpEndpoint is set; keeps the sidecar backend-agnostic (§7). -->
     <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.16.0" />
 
-    <!-- Automates the real browser SMART login/consent step for QA token minting (GitLab issue
-         #30) - removes the manual "open this URL, log in, paste back the redirect" step from
+    <!-- Automates the real browser SMART login/consent step for QA token minting
+         - removes the manual "open this URL, log in, paste back the redirect" step from
          OpenEmrQaFixture/tools/MintQaIdentityToken/tools/LoadTestChat. -->
     <PackageVersion Include="Microsoft.Playwright" Version="1.61.0" />
 

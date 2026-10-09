@@ -5,7 +5,7 @@ namespace AgentForge.Api.Ingestion;
 // PublishedFormContractTests is what holds this record and the hand-parsed handler to the same field names.
 // Said here rather than in the doc comment below, which is published verbatim as this schema's description
 // in the OpenAPI document: which fixture drives the code is true of the code only, and
-// CONVENTIONS.md §13 keeps that out of external API copy. A separate change
+// CONVENTIONS.md §13 keeps that out of external API copy.
 
 /// <summary>
 /// The multipart request contract for <c>POST /documents/ingest</c> — the published shape of the form the

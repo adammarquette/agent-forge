@@ -6,7 +6,7 @@ namespace AgentForge.UnitTests.Api.OpenApi;
 /// <summary>
 /// The contract test is only as useful as what it says when it goes red. These pin the three drifts the
 /// requirement names - a route the code serves that the spec lacks, a route the spec keeps that the code
-/// dropped, and a changed shape - and that each one is <i>named</i>, not just detected. A separate change
+/// dropped, and a changed shape - and that each one is <i>named</i>, not just detected.
 /// </summary>
 public sealed class OpenApiDocumentDiffTests
 {

@@ -166,7 +166,7 @@ public sealed class DocumentSetIngestionTests
     /// <b>Failure mode guarded (regression, FR-CITE-2):</b> a lab result the report does not print, paired
     /// with a row that it does - the value filed under another analyte, or a value read off the reference
     /// range. The row's quote is printed, so without the lab rule both were stored at 1.0 with the real row's
-    /// box. A separate change
+    /// box.
     /// </summary>
     [Fact]
     public async Task Ingest_LabReportWithInventedResultsOnRealRows_StoresThemAtZeroWithNoBoxBesideTheRealOnes()
@@ -338,7 +338,7 @@ public sealed class DocumentSetIngestionTests
     /// <summary>
     /// <b>Failure mode guarded (invariant, FR-AUTH-2):</b> the click-to-source fetch cannot tell whose document
     /// an id is. <c>GET /evidence/document/{id}</c> refuses any id whose owner the store does not return as the
-    /// session's patient, so the lookup must find what ingestion stored and nothing it did not. A separate change
+    /// session's patient, so the lookup must find what ingestion stored and nothing it did not.
     /// </summary>
     [Fact]
     public async Task FindPatientIdByDocumentReferenceId_AfterIngestion_ReturnsTheOwningPatientAndNullForAnUnknownId()
@@ -373,7 +373,7 @@ public sealed class DocumentSetIngestionTests
     /// <summary>
     /// <b>Failure mode guarded (boundary):</b> the refusal above must count distinct <i>patients</i>, not rows. Two
     /// documents filed under one id for the same patient still have one owner, and refusing it would break
-    /// click-to-source for that patient. A separate change
+    /// click-to-source for that patient.
     /// </summary>
     [Fact]
     public async Task FindPatientIdByDocumentReferenceId_OneIdFiledTwiceUnderOnePatient_ReturnsThatPatient()

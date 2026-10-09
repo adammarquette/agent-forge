@@ -48,8 +48,8 @@ them is not the same**, so each bullet below says which run mode it describes.
 > reference: [`../reverse-proxy/README.md`](../reverse-proxy/README.md)
 
 - Grafana (**A and B**): <http://localhost:3000> (`admin`/`admin` by default). **Both** modes publish it on
-  `127.0.0.1` only and take the credential from `GRAFANA_ADMIN_USER` / `GRAFANA_ADMIN_PASSWORD` (reference:
-  #438). It matters most under **B**, where Grafana shares a network with the databases. **Where that
+  `127.0.0.1` only and take the credential from `GRAFANA_ADMIN_USER` / `GRAFANA_ADMIN_PASSWORD`.
+  It matters most under **B**, where Grafana shares a network with the databases. **Where that
   credential lives differs by mode**, because compose resolves the default `.env` from the first compose
   file's directory: under **B** that is the repo root, so the repo-root `.env` is read with no flag; under
   **A** it is `observability/`, so the credential belongs in `observability/.env`
@@ -92,7 +92,6 @@ them is not the same**, so each bullet below says which run mode it describes.
   `SIDECAR_PORT` moves Kestrel and the proxy together and a literal target would silently be left behind -
   blank dashboards behind a `/ready` that still says `Healthy` being the only symptom. Editing
   `prometheus.deployed.yml` under **B** therefore needs `up --build`; the alert rules are still a live mount.
-  reference: #417, a separate change
 - Loki (**A and B**): <http://localhost:3100> - query logs from **Grafana → Explore → Loki**, e.g.
   `{service_name="agentforge-api"}`. How the sidecar reaches it is what differs: under **A** it pushes
   automatically in Development (`appsettings.Development.json` sets `Observability:LokiOtlpEndpoint` to
@@ -201,7 +200,7 @@ the reference wiring, not a special local-only mode. Two things travel with them
   their own**; keep them on the private network. Grafana's admin credentials come from `GF_SECURITY_ADMIN_USER` /
   `GF_SECURITY_ADMIN_PASSWORD` in the environment — **never baked into the image**, and never left at the
   `admin`/`admin` default outside a local run. Both compose files wire that passthrough
-  (`GRAFANA_ADMIN_USER` / `GRAFANA_ADMIN_PASSWORD`, reference: #438) — but a passthrough is not a value: a
+  (`GRAFANA_ADMIN_USER` / `GRAFANA_ADMIN_PASSWORD`) — but a passthrough is not a value: a
   deployment built from these images still has to supply a real one from its own environment.
 - **Loki needs a durable mount at `/loki`** so ingested logs survive a container restart, the same way the
   sidecar needs one at `/keys`. The root overlay provides one (the `loki-data` volume); **this folder's
@@ -237,7 +236,7 @@ Staging holds synthetic data only. **Enabling production after a separate change
     unsolved PHI problem;
   - a shipper service adds a component that only relays what the sidecar can already send.
 - **Private.** No domain, and no auth of its own (`auth_enabled: false`), exactly like Prometheus.
-  - `loki-data`: 1024 MB in `sfo`, mounted at `/loki`.
+  - `loki-data`: 1024 MB in `REGION` (`us-east4-eqdc4a`), mounted at `/loki`.
   - Retention: `168h`, from `loki/loki-config.yaml`, enforced by the compactor.
   - The image runs as root because a Railway volume mounts root-owned.
 - **Absent means invisible, not red.** Without Loki:
@@ -267,7 +266,7 @@ call: one line in that map plus lifting the refusal.
 
 - **Transport: direct OTLP/HTTP push from the sidecar** to `http://<tempo private domain>:4318/v1/traces`,
   the exporter both local wirings use. Grafana reads it at `TEMPO_URL=http://<tempo private domain>:3200`.
-- **Private.** No domain and no auth of its own. `tempo-data`: 1024 MB in `sfo`, mounted at `/var/tempo`;
+- **Private.** No domain and no auth of its own. `tempo-data`: 1024 MB in `REGION` (`us-east4-eqdc4a`), mounted at `/var/tempo`;
   retention `168h` from `tempo/tempo.yaml`; the image runs as root for Loki's root-owned-volume reason.
 - **Read through the front door.** Traces open in Grafana **Explore** at `/grafana`, the route Grafana is
   already served on. Tempo gets no proxy route and no dashboard panel, so no panel count changes.
@@ -300,7 +299,7 @@ rate window long enough to satisfy a shorter `for:` by itself. The histogram's e
 **26 on a boundary**, which is what lets the quantile resolve the threshold at all. Changing one side
 without the other blunts the rule silently, so the two are pinned together: `AlertRuleThresholdTests` reads
 this file, parses the threshold out of the rule's own `expr`, and asserts it is one of those boundaries -
-editing `> 26` here and editing the boundary list both redden the unit suite. A separate change
+editing `> 26` here and editing the boundary list both redden the unit suite.
 
 | Group | Rule | Fires when | Response action lives |
 |---|---|---|---|
@@ -433,7 +432,7 @@ only the status code cannot tell "never contacted" from a full pass - read the b
 every check and its status, so it says which one degraded.
 Deliberate: this stack is optional infra, and a sidecar that serves clinicians perfectly well should not leave
 rotation because a dashboard is down. The decision and its residual risk are
-[`ARCHITECTURE.md`](../ARCHITECTURE.md) **D17**. A separate change
+[`ARCHITECTURE.md`](../ARCHITECTURE.md) **D17**.
 
 **Setting it, on the other hand, is a commitment.** For this check, `Degraded` covers *unconfigured* only
 (the LLM-provider check has its own `Degraded`, a 429; `ARCHITECTURE.md` D17). Once the URL is
@@ -447,4 +446,4 @@ variable automatically wherever `OBSERVABILITY_IMAGES` is filled, so **both** de
 staging, production since its 2026-09-24 promotion. **Probed live on 2026-09-24: both
 read 200 `Healthy`**, with `/ready`'s body naming `observability: Healthy, "Prometheus reachable."` — re-probe
 rather than trust this line as time passes. Point the URL at a Prometheus you expect to answer, or leave it
-unset. A separate change
+unset.

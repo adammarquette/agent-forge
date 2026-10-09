@@ -33,7 +33,7 @@ namespace AgentForge.Documents;
 /// <b>Containment is not assertion</b>: a quote that negates the text still carries it, so
 /// <c>penicillin</c> is supported by <c>NO penicillin allergy</c>. Whether the quote asserts the fact is
 /// outside this rule.
-/// <b>Lab results</b> have their own rule, <see cref="IsLabResultSupported"/>. A separate change
+/// <b>Lab results</b> have their own rule, <see cref="IsLabResultSupported"/>.
 /// </remarks>
 public static class FactQuoteSupport
 {
@@ -90,7 +90,7 @@ public static class FactQuoteSupport
     /// unit, or prefixes the name with a word (<c>Serum potassium 5.3</c>) marks a real result, and so do a
     /// bare <c>K 4.1</c> claimed without its unit, a value dashed onto its name (<c>Sodium-136</c>), a value
     /// with a dash after it (<c>Glucose 100- fasting</c>) and a unit followed by a spaced slash
-    /// (<c>mg/dL / 5.6 mmol/L</c>). Separate changes
+    /// (<c>mg/dL / 5.6 mmol/L</c>).
     /// </remarks>
     public static bool IsLabResultSupported(string testName, string value, string? unit, string quote)
     {

@@ -10,7 +10,7 @@ namespace AgentForge.UnitTests.Api.Chat;
 /// Pins the one registration both <c>Program.cs</c> and the hand-built <c>ChatHubHost</c> use for the turn
 /// budget, so a test host cannot wire it differently from the host that ships. Named failure mode
 /// (regression): a hand-built host missing the budget let every hub connection close before its first invoke,
-/// seen only after merge. Separate changes
+/// seen only after merge.
 /// </summary>
 public sealed class ConversationBudgetRegistrationTests
 {

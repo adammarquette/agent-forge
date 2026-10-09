@@ -4,6 +4,7 @@ using FluentAssertions;
 using AgentForge.Api.Health;
 using AgentForge.Llm;
 using AgentForge.Llm.Anthropic;
+using AgentForge.Llm.Gemini;
 using AgentForge.UnitTests.TestSupport;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
@@ -91,6 +92,80 @@ public sealed class LlmProviderHealthCheckTests
         request.RequestUri!.ToString().Should().Be("https://api.anthropic.example/v1/models/test-model");
         request.Headers.GetValues("x-api-key").Should().ContainSingle().Which.Should().Be(ApiKey);
         request.Headers.Contains("anthropic-version").Should().BeTrue();
+    }
+
+    private static readonly LlmProviderOptions GeminiOptions = new()
+    {
+        Provider = LlmProviderKind.Gemini,
+        ApiKey = ApiKey,
+        Model = "gemini-test-model",
+        InputPricePerMillionTokensUsd = 0,
+        OutputPricePerMillionTokensUsd = 0,
+    };
+
+    /// <summary>The check as the host wires it for Gemini: behind <see cref="GeminiAuthHandler"/>.</summary>
+    private static LlmProviderHealthCheck CreateGeminiSut(HttpMessageHandler provider)
+    {
+        var llmOptions = Options.Create(GeminiOptions);
+        var authenticated = new GeminiAuthHandler(llmOptions) { InnerHandler = provider };
+        return new LlmProviderHealthCheck(new HttpClient(authenticated), llmOptions, Readiness);
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_GeminiConfigured_GetsTheModelFromTheGenerativeLanguageApiWithTheKeyInAHeader()
+    {
+        // the probe follows the configured provider. GET v1beta/models/{model} is Gemini's token-free
+        // model lookup, answering 200 only when the key is accepted and the model exists.
+        var provider = Responding(HttpStatusCode.OK);
+        var sut = CreateGeminiSut(provider);
+
+        var result = await sut.CheckHealthAsync(new HealthCheckContext(), CancellationToken.None);
+
+        result.Status.Should().Be(HealthStatus.Healthy);
+        var request = provider.LastRequest!;
+        request.Method.Should().Be(HttpMethod.Get);
+        request.RequestUri!.AbsoluteUri.Should().Be(
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-test-model");
+        request.RequestUri.Query.Should().BeEmpty("the key never travels in the URL");
+        request.Headers.GetValues("x-goog-api-key").Should().ContainSingle().Which.Should().Be(ApiKey);
+        request.Headers.Contains("x-api-key").Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.BadRequest)]
+    [InlineData(HttpStatusCode.Forbidden)]
+    [InlineData(HttpStatusCode.NotFound)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    public async Task CheckHealthAsync_GeminiAnswersWithAFailureStatus_ReturnsUnhealthy(HttpStatusCode status)
+    {
+        // Google answers a bad key with 400 INVALID_ARGUMENT or 403, and an unknown model with 404.
+        var sut = CreateGeminiSut(Responding(status));
+
+        var result = await sut.CheckHealthAsync(new HealthCheckContext(), CancellationToken.None);
+
+        result.Status.Should().Be(HealthStatus.Unhealthy);
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_GeminiIsRateLimiting_ReturnsDegraded()
+    {
+        var sut = CreateGeminiSut(Responding(HttpStatusCode.TooManyRequests));
+
+        var result = await sut.CheckHealthAsync(new HealthCheckContext(), CancellationToken.None);
+
+        result.Status.Should().Be(HealthStatus.Degraded);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.OK)]
+    [InlineData(HttpStatusCode.NotFound)]
+    public async Task CheckHealthAsync_GeminiAnyAnswer_DescriptionNamesNeitherTheKeyNorTheEndpoint(HttpStatusCode status)
+    {
+        var sut = CreateGeminiSut(Responding(status));
+
+        var result = await sut.CheckHealthAsync(new HealthCheckContext(), CancellationToken.None);
+
+        result.Description.Should().NotContain(ApiKey).And.NotContain("googleapis");
     }
 
     [Fact]

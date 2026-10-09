@@ -62,7 +62,7 @@ EOF
 # The real thing, as the drift job's railway-drift.txt holds it.
 cat >"$tmp/real-destructive.txt" <<'EOF'
 Railway configuration
-Using /builds/adammarquette/agent-forge/.railway/railway.ts
+Using /work/agent-forge/.railway/railway.ts
 Project fearless-abundance
 Environment production
 
@@ -108,7 +108,7 @@ EOF
 # The CLI's own words for "no drift".
 cat >"$tmp/clean.txt" <<'EOF'
 Railway configuration
-Using /builds/adammarquette/agent-forge/.railway/railway.ts
+Using /work/agent-forge/.railway/railway.ts
 Project fearless-abundance
 Environment production
 
@@ -176,7 +176,7 @@ Plan: 2 to add, 7 to change, 0 to destroy
 ! 4 changes will remove Railway resources or variables.
 EOF
 
-# A clean plan whose captured stderr carries a wrapped warning beginning `- word`. GitLab captures
+# A clean plan whose captured stderr carries a wrapped warning beginning `- word`. CI captures
 # the plan with `2>&1`, so any stderr line lands in this same file. The `-` fragment rule used to
 # run before the CLI's own "already up to date" statement and called this a plan that deletes
 # production.
@@ -281,7 +281,7 @@ EOF
 
 # The green counterpart to the two refusals above, and the reason they are scoped rather than a bare
 # document-wide grep: an all-zero header whose file also carries a wrapped stderr line beginning
-# `- word`. Both hosts capture the plan with stderr merged in, so this shape is ordinary. Prose at
+# `- word`. CI captures the plan with stderr merged in, so this shape is ordinary. Prose at
 # the left margin is not a change line, and a healthy environment must stay green.
 cat >"$tmp/zero-header-with-prose.txt" <<'EOF'
 Railway configuration
@@ -304,7 +304,7 @@ EOF
 # verdict that way: the reworded trailer read as safe drift (exit 0), the fragment as undecidable
 # rather than destructive, the clean log as undecidable. The tail line is deliberately inert to every
 # rule in the guard: no keyword, no `Plan:`, no change marker.
-long_tail() { yes '  Warning: padding line standing in for a long captured tail' | head -n 4000; }
+long_tail() { yes '  Warning: padding line standing in for a long captured tail, nothing more' | head -n 5000; }
 { cat "$tmp/trailer-reworded.txt"; long_tail; } >"$tmp/trailer-reworded-long-tail.txt"
 { cat "$tmp/fragment.txt"; long_tail; } >"$tmp/fragment-long-tail.txt"
 { cat "$tmp/clean.txt"; long_tail; } >"$tmp/clean-long-tail.txt"
@@ -455,7 +455,7 @@ json '{ "message": "404 Not Found" }' not-a-plan.json
 # THE KIND CHECK, ISOLATED. not-a-plan.json above lacks .destructive too, so the very next check
 # backstops it as well — deleting the kind check there still ends up undecidable, for a different
 # reason. This one is shaped like a real plan everywhere except its kind, so only that check can call
-# it undecidable. A separate change
+# it undecidable.
 json '{
   "kind": "not-a-railway-plan",
   "destructive": false,
@@ -491,13 +491,13 @@ expect 11 ".changeSet.changes present but not an array is UNDECIDABLE" "$tmp/cha
 expect 11 "a plan whose two signals disagree is UNDECIDABLE" "$tmp/contradictory.json"
 expect 11 "a changed plan header is UNDECIDABLE, not zero-to-destroy" "$tmp/header-changed.txt"
 expect 11 "an unparseable header count is UNDECIDABLE" "$tmp/header-unparseable.txt"
-# Finding 1 of the !434 review: the trailer had no schema check behind it, and for a destructive
+# Finding 1 of a review: the trailer had no schema check behind it, and for a destructive
 # UPDATE it is the only signal there is.
 expect 11 "a reworded destructive trailer is UNDECIDABLE, never safe drift" "$tmp/trailer-reworded.txt"
 expect 11 "--require-clean does not soften a reworded trailer either" --require-clean "$tmp/trailer-reworded.txt"
 expect 11 "a removal claim with no 'destructive' keyword is UNDECIDABLE" "$tmp/trailer-no-keyword.txt"
 expect 11 "a header contradicting its own deletion lines is UNDECIDABLE" "$tmp/header-contradicts.txt"
-# Round 2 of the !434 review: the refusal above went into ONE of the two branches that claim nothing
+# Round 2 of that review: the refusal above went into ONE of the two branches that claim nothing
 # is being destroyed, and the count read validated three numbers and nothing else. Each of the four
 # below was a pass at bd4a323, and each kills a mutant that passed all 34 assertions before them.
 expect 11 "an all-zero header contradicting its own deletion lines is UNDECIDABLE" "$tmp/zero-header-contradicts.txt"

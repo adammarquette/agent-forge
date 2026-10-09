@@ -21,7 +21,7 @@ public sealed record ExtractionCitation
     /// Whether <see cref="Quote"/> was found in the source document's own text, and how. <b>Stamped by the
     /// extractor on every citation, below the model</b> — anything the model sends here is overwritten, for
     /// the same reason authorization is never enforced by prompt text. Absent means
-    /// <see cref="CitationQuoteMatch.Unchecked"/>: nothing looked. A separate change
+    /// <see cref="CitationQuoteMatch.Unchecked"/>: nothing looked.
     /// </summary>
     public CitationQuoteMatch Match { get; init; }
 }

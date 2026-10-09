@@ -112,7 +112,7 @@ internal sealed class ScriptedReranker(EvidenceScenario scenario, string caseId)
                 $"Evidence case '{caseId}' has the reranker returning '{id}', which neither half retrieved - "
                 + "the reranker reorders the fused pool, it does not add to it.")).ToArray();
 
-        // Honouring topK hides the retriever's own cap on this path; a case opts out to reach it. A separate change
+        // Honouring topK hides the retriever's own cap on this path; a case opts out to reach it.
         return Task.FromResult<IReadOnlyList<RerankedCandidate>>(
             scenario.RerankIgnoresTopK ? ranked : [.. ranked.Take(topK)]);
     }

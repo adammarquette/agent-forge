@@ -6,9 +6,9 @@ namespace AgentForge.SeedDemoPatients;
 
 /// <summary>
 /// Gets a real user-role OpenEMR access token for this one-time seeding run, via a genuine
-/// interactive <c>authorization_code</c> + PKCE login (GitLab issue #26) - <c>client_credentials</c>
+/// interactive <c>authorization_code</c> + PKCE login - <c>client_credentials</c>
 /// grants are hard-coded server-side to OpenEMR's system role, which cannot write any resource on
-/// this fork (confirmed while investigating issue #22).
+/// this fork (confirmed against the fork).
 /// </summary>
 public static class AuthBootstrap
 {

@@ -4,7 +4,7 @@ namespace AgentForge.MintQaIdentityToken;
 
 /// <summary>
 /// Mints a second, real patient-scoped OpenEMR access token via a genuine SMART standalone-launch
-/// <c>authorization_code</c> + PKCE login (GitLab issue #27) - the entitlement
+/// <c>authorization_code</c> + PKCE login - the entitlement
 /// <c>CrossIdentityAuthorizationTests</c> needs a distinct identity to test can only come from a real
 /// login, the same way the original (now-superseded) <c>OpenEmrQa__TestAccessToken</c> was obtained.
 /// Unlike <c>tools/SeedDemoPatients</c>' <c>AuthBootstrap</c> (a <c>user/*</c>-scoped client that can
@@ -26,7 +26,7 @@ public static class TokenBootstrap
     // fetches all four resources, not just Patient. offline_access (confirmed supported in the live
     // .well-known/openid-configuration's scopes_supported) is what actually gets a refresh_token back
     // in the token response - without it the server issues access-token-only, silent about the
-    // omission (GitLab issue #29: makes these tokens durable instead of needing re-minting hourly).
+    // omission (this makes these tokens durable instead of needing re-minting hourly).
     private static readonly string[] Scopes =
     [
         "openid", "fhirUser", "launch/patient", "api:fhir", "offline_access",

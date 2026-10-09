@@ -161,7 +161,7 @@ public sealed class McpToolDispatcherGateCoverageTests
         // Both directions of the 1:1, read off the router itself. The theory above cannot see the
         // switch-only direction: the scope gate refuses an unoffered name before ExecuteAsync is
         // reached, so an arm the catalog does not list is unobservable through DispatchAsync. That is
-        // where a gate bypass keyed on a new name would sit. Separate changes
+        // where a gate bypass keyed on a new name would sit.
         var router = typeof(McpToolDispatcher).GetMethod(
             "ExecuteAsync", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
         router.Should().NotBeNull("the enumeration reads McpToolDispatcher's router by name");

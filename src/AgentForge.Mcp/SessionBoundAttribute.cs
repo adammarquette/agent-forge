@@ -7,7 +7,7 @@ namespace AgentForge.Mcp;
 /// <remarks>
 /// The exclusion is declared on the contract rather than matched by name, so a record that calls its
 /// patient id something other than <c>PatientId</c> is still excluded. A name list would have advertised
-/// it - and any guard written against the same list would have agreed. A separate change
+/// it - and any guard written against the same list would have agreed.
 /// </remarks>
 [AttributeUsage(AttributeTargets.Property)]
 public sealed class SessionBoundAttribute : Attribute;

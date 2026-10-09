@@ -11,7 +11,7 @@
 # whether that environment should carry scheduled volume backups. Where it says `"none"`, `remove` is the
 # operation the environment is allowed to have done to it, `check` expects no schedule and reports one it
 # finds as DRIFT, and `apply` REFUSES rather than quietly contradicting a written decision. Where it says
-# `"daily"`, every particular is the other way round. A separate change
+# `"daily"`, every particular is the other way round.
 #
 # THIS FILE READS `schedules`, AND `refreshable` ONLY TO WARN. That separation is the whole correction
 # the review forced. `refreshable` answers a different question — may `railway-snapshot-guard.sh`
@@ -21,7 +21,7 @@
 # (2026-09-23) it is declared refreshable as well, but the questions stay independent. Driving this file from `refreshable` made
 # `check` demand a DAILY schedule on every production volume and point the operator at the `apply` that
 # re-creates exactly what the ruling retired — an answer nobody wrote, inherited from the other
-# question's. A separate change
+# question's.
 #
 # THE COUPLING THAT MAKES `remove` MORE THAN BOOKKEEPING, and it is why `refreshable` is still read here:
 # a schedule is also what keeps the snapshot guard's MANUAL backup takeable, because Railway caps a
@@ -85,7 +85,7 @@
 #
 # A PROJECT TOKEN CAN DO BOTH, measured 2026-09-22 against fearless-abundance/staging under
 # RAILWAY_TOKEN_STAGING. That mattered enough to check first: the same credential cannot read
-# `workflowStatus` at all. A separate change
+# `workflowStatus` at all.
 #
 # FAILS CLOSED, and `check` fails closed in the direction that costs nothing: a volume whose schedule
 # list it cannot read is reported WRONG, never assumed to be in the intended state. That holds in BOTH
@@ -95,7 +95,7 @@
 # absence into the intended state in both environments, and a check whose expected state is "nothing" and
 # whose every other answer is a shrug is a check that can never go red. So the expectation flips with the
 # declaration rather than going away: where `schedules` is `"none"`, a DAILY that someone set in the
-# dashboard is DRIFT and reported as such. A separate change
+# dashboard is DRIFT and reported as such.
 
 set -euo pipefail
 
@@ -135,7 +135,7 @@ command -v jq >/dev/null 2>&1 \
   || die_env "scripts/lib/jq-crlf.sh refused to load."
 
 # The same reader `railway-snapshot-guard.sh` uses, so the two can never disagree about which
-# environment holds throwaway data. A separate change
+# environment holds throwaway data.
 [ -f "$(dirname "${BASH_SOURCE[0]}")/railway-data-refreshable.sh" ] \
   || die_env "scripts/railway-data-refreshable.sh is missing; this script cannot read the per-environment data-refreshable declaration without it."
 # shellcheck source=scripts/railway-data-refreshable.sh
@@ -193,7 +193,7 @@ gql_checked() { # gql_checked <what> <query> <variables-json>
 # --- target resolution ------------------------------------------------------------------------------
 # THE CREDENTIAL PICKS THE ENVIRONMENT, NOT A NAME — identical reasoning to the snapshot guard, and for
 # the same reason: a Volume is PROJECT-scoped, so another environment's volume of the same name
-# resolves perfectly well and names the wrong disk. A separate change
+# resolves perfectly well and names the wrong disk.
 resolve_scope() {
   if [ -n "${RAILWAY_TOKEN:-}" ]; then
     local out pid eid
@@ -269,7 +269,7 @@ EOF
 # failures, and both print the same exit 3 — what changes is which one is wrong and what fixes it.
 # An unreadable list is a failure under either expectation: "I could not see it" has never been
 # evidence of anything, and reading it as "as declared" would be the permissive direction that the
-# 2026-09-18 incident already paid for once. A separate change
+# 2026-09-18 incident already paid for once.
 do_check() {
   local rows vi name mount kinds wrong=0 total=0 want_daily=1
   # THE `schedules` FIELD, NOT `refreshable`. Reading the latter here is the defect caught: it
@@ -320,7 +320,7 @@ EOF
       # THE DECLARATION FIRST, apply SECOND — mirroring the DRIFT branch below. Both environments are
       # declared schedules: none as, so this branch firing at all means either the declaration
       # changed or the document could not be read; pointing at apply before the file risks re-creating
-      # exactly what the maintainer's ruling retired. A separate change
+      # exactly what the maintainer's ruling retired.
       red "BACKUP SCHEDULES" "Check $(data_refreshable_file) first — if it still says \"schedules\": \"none\" for this environment, this MISSING finding means the document is stale or unreadable, not that a schedule is owed. Only if it says \"daily\", run: scripts/railway-backup-schedules.sh apply   (or set them in each service's Backups tab)"
     else
       red "BACKUP SCHEDULES" "$wrong of $total volume instance(s) in environment $ENVIRONMENT_ID carry a schedule the declaration says they should not."
@@ -339,7 +339,7 @@ do_apply() {
   local rows vi name mount kinds newkinds out ok changed=0 total=0
   # SETTING A SCHEDULE WHERE A WRITTEN DECISION SAYS NONE BELONGS CONTRADICTS IT, so it refuses rather
   # than doing it quietly. The fix is one field, and saying which one is the difference between a guard
-  # and an obstacle. A separate change
+  # and an obstacle.
   data_schedules_resolve "$ENVIRONMENT_ID"
   if [ "$DATA_SCHEDULES" = "none" ]; then
     die_failed "environment $ENVIRONMENT_ID is declared to carry NO scheduled backups ($DATA_SCHEDULES_WHY), so they were deliberately retired for it. Refusing to set one. If that decision has changed, set \"schedules\": \"daily\" for it in $(data_refreshable_file) — with a schedulesReason — and run this again. Do NOT change \"refreshable\": that answers whether railway-snapshot-guard.sh may skip its pre-destruction backup, which is a different question."
@@ -383,13 +383,13 @@ EOF
 #
 # IT EXISTS BECAUSE A HAND CLICK IS NOT A RECORDED OPERATION. Retiring the schedules was a decision; a
 # decision carried out in the Railway dashboard leaves no trace anyone can re-run, diff or disprove —
-# which is the same argument that made `apply` a script rather than a runbook line. A separate change
+# which is the same argument that made `apply` a script rather than a runbook line.
 do_remove() {
   local rows vi name mount kinds newkinds out ok changed=0 total=0
   # TAKING THE SCHEDULES AWAY WITHOUT A DECLARATION SAYING TO IS THE TRAP THIS WHOLE CHANGE IS ABOUT. It
   # removes the protection AND, where the guard still snapshots, unfunds its manual backup in one step,
   # and both failures surface later, somewhere else, as a deploy that refuses or a volume with nothing
-  # to restore. So it refuses unless the document says the word. A separate change
+  # to restore. So it refuses unless the document says the word.
   data_schedules_resolve "$ENVIRONMENT_ID"
   if [ "$DATA_SCHEDULES" != "none" ]; then
     die_failed "environment $ENVIRONMENT_ID is NOT declared to carry no scheduled backups ($DATA_SCHEDULES_WHY). Removing its schedules would take away the backups AND unfund railway-snapshot-guard.sh's manual snapshot, which Railway caps at 50% of the volume for a first backup. Set \"schedules\": \"none\" for it in $(data_refreshable_file) — with a schedulesReason — if that is what you mean."
@@ -397,7 +397,7 @@ do_remove() {
   # THE SECOND QUESTION, READ ONLY TO SAY WHAT THIS COSTS. Where the guard still takes a pre-destruction
   # snapshot, removing the schedules is what makes its FIRST manual backup hit Railway's 50% cap. The
   # declaration already decided that trade — this refuses nothing, it just makes the operator meet the
-  # consequence in the log rather than in a deploy that stops weeks later. A separate change
+  # consequence in the log rather than in a deploy that stops weeks later.
   data_refreshable_resolve "$ENVIRONMENT_ID"
   if [ "$DATA_REFRESHABLE" != "yes" ]; then
     note "UNFUNDING" "$ENVIRONMENT_ID is NOT declared data-refreshable ($DATA_REFRESHABLE_WHY), so railway-snapshot-guard.sh still takes a manual snapshot here — and after this removal its FIRST one is subject to Railway's 50%-of-volume cap. That is the trade the declaration records, not an accident."
@@ -406,7 +406,7 @@ do_remove() {
   # environment — including one that sends nothing because every named volume already lacks DAILY. The
   # warning is about the ENVIRONMENT'S posture going forward (its first manual snapshot will meet the
   # cap), not about what this particular run mutated, so gating it on "did anything change" would hide it
-  # on exactly the reruns an operator is most likely to make. A separate change
+  # on exactly the reruns an operator is most likely to make.
   rows="$(selected_rows)"
   while IFS=$'\t' read -r vi name mount; do
     [ -n "${vi:-}" ] || continue
@@ -453,7 +453,7 @@ EOF
 # --- entry point --------------------------------------------------------------------------------------
 # THE LINE NUMBERS ARE THE USAGE BLOCK AT THE TOP OF THIS FILE. Adding a verb there without widening
 # this range prints a usage message missing the verb the reader is looking for — which is how a help
-# text starts lying. Keep them in step. A separate change
+# text starts lying. Keep them in step.
 usage() { sed -n '5,7p' "$0" >&2; exit "$EX_ENV"; }
 
 MODE="${1:-}"; shift || usage

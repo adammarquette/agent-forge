@@ -16,7 +16,7 @@ internal static class EvalCaseRunner
     /// <summary>
     /// Runs the case. A pipeline that throws instead of returning comes back as a faulted outcome, which
     /// fails every rubric the case declares: a stack trace names neither the case nor what it guards, so
-    /// the gate reddened without saying which finding it was. A separate change
+    /// the gate reddened without saying which finding it was.
     /// </summary>
     public static async Task<CaseOutcome> RunAsync(GoldenCase testCase, CancellationToken cancellationToken = default)
     {

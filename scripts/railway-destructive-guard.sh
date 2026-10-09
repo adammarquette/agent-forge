@@ -26,7 +26,7 @@
 # `- Delete variable mysql.MYSQL_URL` instead (gone since a separate change declared it). Still destructive, still exit 10,
 # different row. The example
 # moved and the class did not, which is why the verdict is separate rather than tied to a row - and the
-# CLI is installed UNPINNED on both hosts, so the rows can move again with no diff here.
+# CLI is installed UNPINNED in CI, so the rows can move again with no diff here.
 # DEPLOYMENT.md §10
 #
 # THE STANDING FAILURE MODE THIS IS WRITTEN AGAINST. Everything in this repository's CI fails
@@ -62,7 +62,7 @@
 #       service's `build` config (above): refused, though Railway calls it safe
 #  12   pending changes, all of them safe — only ever returned under --require-clean
 #
-# PORTABILITY. The GitLab lint and gate jobs run `alpine:3.21`, where `date -d` parses nothing and
+# PORTABILITY. Kept BusyBox-safe (the earlier CI jobs ran `alpine:3.21`), where `date -d` parses nothing and
 # awk is not gawk. Nothing here needs either: the parsing is grep/sed/jq. Verify with
 #   docker run --rm -v "$PWD:/w" -w /w alpine:3.21 sh -c 'apk add -q bash jq && bash scripts/railway-destructive-guard-selftest.sh'
 #
@@ -105,7 +105,7 @@ normalize() { tr -d '\r' <"$1" | sed "s/${ESC}\[[0-9;]*[a-zA-Z]//g"; }
 # share status 1: bash spools a long here-string to a temp file, and when that cannot be created the
 # redirection fails with 1 and grep is never started. Only a printed count is an answer; anything
 # else ends the classifier UNDECIDABLE. Callers run inside `$(classify_text ...)`, so the exit
-# leaves that subshell and nothing else. A separate change
+# leaves that subshell and nothing else.
 has() {
     n=$(grep -cE "$1" <<<"$text")
     case "$n" in
@@ -263,11 +263,11 @@ classify_text() {
     # of the two claims - walked straight past it into the only passing verdict. Placed here it
     # covers both, and cannot be defeated by reordering the branches below either. It is the same
     # refusal classify_json makes when .destructive contradicts .severity: two signals disagree,
-    # and neither reading is safe to prefer. A separate change
+    # and neither reading is safe to prefer.
     deletions=$(printf '%s\n' "$text" | grep -E '^[[:space:]]*-[[:space:]]+(Delete|Destroy|Remove)[[:space:]]')
 
     # The change lines as the CLI prints them: INDENTED under the header, one marker, one verb.
-    # Scoped to the header and below, and to indented lines, on purpose - both hosts capture the
+    # Scoped to the header and below, and to indented lines, on purpose - CI captures the
     # plan with stderr merged into it, and an unindented wrapped warning beginning `- word` is
     # prose, not a change line.
     body_changes=$(printf '%s\n' "$text" | sed -n '/^[[:space:]]*Plan:/,$p' |
@@ -299,7 +299,7 @@ classify_text() {
         # `clean`, with `2 to replace` sitting unread on the very same line - three integers
         # outranking the body of the plan, which is the failure this file is written against. Read
         # the header's WHOLE count vocabulary, not the three words this script happens to ask
-        # about, and refuse on a fourth. A separate change
+        # about, and refuse on a fourth.
         unknown_counts=$(printf '%s' "$header" |
             grep -oE '[0-9][0-9]*[[:space:]][[:space:]]*to[[:space:]][[:space:]]*[A-Za-z][A-Za-z]*' |
             sed 's/^[0-9][0-9]*[[:space:]]*to[[:space:]]*//' | grep -vxE 'add|change|destroy')
@@ -355,7 +355,7 @@ classify_text() {
     # only when there is no trailer, no `Plan:` header and no "already up to date" line, i.e. the
     # excerpt-in-an-issue case the header comment describes. Run earlier and unscoped, it outranked
     # the CLI's own "already up to date" statement, so one wrapped stderr warning beginning `- word`
-    # - and GitLab captures stderr into this same file - reported a plan the CLI called clean as one
+    # - and the earlier CI captured stderr into this same file - reported a plan the CLI called clean as one
     # that deletes production.
     if has '^[[:space:]]*-[[:space:]]+[A-Za-z]'; then
         say "$file: no plan envelope, and the fragment contains deletion line(s):"
@@ -463,7 +463,7 @@ if [ "$undecidable" -gt 0 ] || [ "$decided" -eq 0 ]; then
     echo ""
     echo "  Usual causes: the plan command died before printing anything (check the log above for"
     echo "  an auth or network error), the artifact expired, or Railway changed the plan format -"
-    echo "  in which case this script is what needs updating, in its own merge request."
+    echo "  in which case this script is what needs updating, in its own pull request."
     exit "$EX_UNDECIDABLE"
 fi
 
@@ -491,12 +491,11 @@ if [ "$REQUIRE_CLEAN" -eq 1 ] && [ "$changes" -gt 0 ]; then
     echo ""
     echo "Resolve by deciding which side is right:"
     echo "  - the FILE is right  -> re-apply it. NOTHING IN THIS PIPELINE APPLIES ON A SCHEDULE."
-    echo "    Every push to DEVELOP applies to the STAGING environment, via railway-apply-staging,"
+    echo "    Every push to DEVELOP applies to the STAGING environment, via the staging apply,"
     echo "    which deploys the images that push published. A merge to the staging"
     echo "    BRANCH applies nothing - it only gates main."
-    echo "    Production does not apply either: railway-apply-production fails closed for want of a"
-    echo "    pinned plan, so merging to main does not apply. Apply production by hand from the"
-    echo "    merge commit:"
+    echo "    Production applies only when a pull request merges into main (the production apply"
+    echo "    workflow, once its Railway token exists and a reviewer approves). To re-apply it by hand from main's head:"
     echo "      npm ci && railway link && railway config plan --out railway-plan.json 2>&1 | tee railway-plan.txt"
     echo "    then THIS script over that plan - STOP unless it exits 0; production is data-refreshable"
     echo ", so nothing after it refuses a destructive plan:"
@@ -504,9 +503,7 @@ if [ "$REQUIRE_CLEAN" -eq 1 ] && [ "$changes" -gt 0 ]; then
     echo "    and then THE GUARDED ENTRY POINT, never the bare apply:"
     echo "      scripts/railway-snapshot-guard.sh run --plan railway-plan.json \\"
     echo "        -- railway config apply --plan railway-plan.json"
-    echo "    or play the manual railway-plan-production job on main, download its railway-plan.json,"
-    echo "    and run the same two lines over it."
-    echo "  - the LIVE change is right -> promote it into .railway/railway.ts in an MR"
+    echo "  - the LIVE change is right -> promote it into .railway/railway.ts in a pull request"
     echo ""
     echo "Known exception: the reverse-proxy's GENERATED domain is outside the planned graph and"
     echo "cannot drift-report. See DEPLOYMENT.md section 9."

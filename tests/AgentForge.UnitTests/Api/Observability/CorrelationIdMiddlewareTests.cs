@@ -15,7 +15,7 @@ namespace AgentForge.UnitTests.Api.Observability;
 /// written while it is handled, so a full trace is reconstructable from logs alone. Before this
 /// middleware existed, <c>ChatSessionCoordinator</c> held the only <c>BeginScope</c> in the
 /// repository and the non-chat endpoints (<c>/agenda</c>, <c>/agenda/select-patient</c>,
-/// <c>/patient</c>) logged uncorrelated. A separate change
+/// <c>/patient</c>) logged uncorrelated.
 /// <para>
 /// Every assertion about the id itself reads it <em>inside</em> the pipeline: the id is ambient to
 /// the request's logical flow and deliberately does not leak back out to whatever invoked it.

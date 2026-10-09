@@ -15,7 +15,7 @@ namespace AgentForge.Integration.OpenEmr.Http;
 /// BFF session holding one slides on every request, so an <em>active</em> session routinely
 /// outlives its own token. Until this check existed the only thing that noticed was OpenEMR, one
 /// 401 per FHIR read, and NFR-REL-1's degradation turned that into a completed brief written from
-/// almost no chart - 24 of 30 Week 1 tool calls on the live deployment. A separate change
+/// almost no chart - 24 of 30 Week 1 tool calls on the live deployment.
 /// </remarks>
 public sealed class AuthHandler(IAccessTokenProvider tokenProvider, TimeProvider timeProvider) : DelegatingHandler
 {

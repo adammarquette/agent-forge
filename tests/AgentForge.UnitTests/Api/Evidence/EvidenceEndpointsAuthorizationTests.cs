@@ -319,7 +319,7 @@ public sealed class EvidenceEndpointsAuthorizationTests
     public async Task HandleAskAsync_SessionBudgetExhausted_Answers429WithoutRunningTheAgent()
     {
         // The edge limits /evidence/ask per minute, never in total; each ask runs several LLM calls, so it is
-        // charged to the same per-session budget as a chat turn. A separate change
+        // charged to the same per-session budget as a chat turn.
         var httpContext = ContextWithSession(form: new() { ["question"] = "summarise the labs" });
         A.CallTo(() => _turnBudget.TryConsume(httpContext.Session.Id)).Returns(false);
 

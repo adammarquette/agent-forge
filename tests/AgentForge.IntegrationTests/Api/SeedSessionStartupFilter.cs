@@ -20,7 +20,7 @@ internal sealed class SeedSessionStartupFilter : IStartupFilter
 {
     /// <summary>
     /// Seeds a <see cref="PatientSessionContext"/>, answering with the page key a page rendered for it presents
-    /// to the chat hub (<see cref="PatientContextBinding"/>). A separate change
+    /// to the chat hub (<see cref="PatientContextBinding"/>).
     /// </summary>
     public const string SeedSessionPath = "/test-only/seed-patient-session";
 

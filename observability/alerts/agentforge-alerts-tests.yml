@@ -3,7 +3,7 @@
 # fire is a comment, not a gate: these feed each Week 2 rule a synthetic series that must fire it and
 # a near-miss that must not. BOTH HALVES OF THE FAILURE MODE - never fires, and cries wolf - ARE
 # PINNED ONLY IN COMBINATION WITH alert-rules-gate.sh; this file alone pins the second and, as the
-# note below explains, constrains each threshold from below only. Separate changes
+# note below explains, constrains each threshold from below only.
 #
 # WHAT THIS FILE PINS AND WHAT IT DOES NOT, because the shape is not obvious:
 #   - The SILENT half is asserted against the real rule (`alert_rule_test` with `exp_alerts: []`), so
@@ -20,11 +20,11 @@
 #     agentforge-week2 rule's `expr` is, character for character once whitespace is collapsed, an
 #     expression a `promql_expr_test` below asserts on. Edit a threshold in one file and CI is red on
 #     the mismatch; edit it in both and CI is red HERE instead, because the synthetic series no longer
-#     satisfies the raised threshold and the expected sample vanishes. A separate change
+#     satisfies the raised threshold and the expected sample vanishes.
 #   - Bucket layout below is a SUBSET of the retrieval histogram's real explicit boundaries
 #     (AgentForgeMetrics.EvidenceRetrievalDurationBucketBoundariesSeconds: ... 5, 6, 7, ... 10, ... 15
 #     ...), never a boundary the sidecar does not export. 6 is one of them, so the cases show the rule
-#     telling "over 6s" from "over 5s" - which the default 5-10s bucket could not. Separate changes
+#     telling "over 6s" from "over 5s" - which the default 5-10s bucket could not.
 
 rule_files:
   - agentforge-alerts.yml

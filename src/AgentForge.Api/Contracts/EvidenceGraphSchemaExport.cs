@@ -6,7 +6,7 @@ namespace AgentForge.Api.Contracts;
 /// Writes the supervisor↔worker contract's JSON Schema to a file and exits, so the schema is produced by a
 /// repeatable command rather than maintained by hand: <code>AgentForge.Api --export-graph-schema &lt;path&gt;</code>
 /// Unlike the OpenAPI export it needs no host and no configuration - the schema is rendered from the contract
-/// types alone - so it runs before the builder is created. A separate change
+/// types alone - so it runs before the builder is created.
 /// </summary>
 public static class EvidenceGraphSchemaExport
 {

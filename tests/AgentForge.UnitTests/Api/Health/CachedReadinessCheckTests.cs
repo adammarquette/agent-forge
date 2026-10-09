@@ -132,7 +132,7 @@ public sealed class CachedReadinessCheckTests
     [Fact]
     public async Task CheckHealthAsync_CallerAbortsMidProbeThenCallsAgainWithinTheTtl_ProbesOnce()
     {
-        // Regression guard for the !719 review: the probe used to run on the caller's token and its answer
+        // Regression guard from a review: the probe used to run on the caller's token and its answer
         // was dropped when that caller aborted, so a client looping `curl --max-time 0.2 /ready` kept the
         // cache empty and made one dependency request per call. The probe must outlive its caller.
         var gate = new TaskCompletionSource<HealthCheckResult>(TaskCreationOptions.RunContinuationsAsynchronously);

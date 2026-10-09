@@ -114,6 +114,28 @@ public sealed class AgentOrchestratorTests
     }
 
     [Fact]
+    public async Task StartBriefAsync_ToolCallCarriesAReplayToken_ReplaysItWithTheToolUseInTheNextRequest()
+    {
+        // Gemini 3 rejects a replayed functionCall that has lost its thoughtSignature with a 400, so the
+        // opaque token a provider attaches to a call must survive into the history the next round sends.
+        var toolCall = new LlmToolCall("call_1", "get_patient_summary", "{}", ReplayToken: "c2lnbmF0dXJl");
+        var requests = new List<LlmRequest>();
+        A.CallTo(() => _llmProvider.CompleteAsync(A<LlmRequest>._, A<CancellationToken>._))
+            .Invokes((LlmRequest request, CancellationToken _) => requests.Add(request))
+            .ReturnsNextFromSequence(
+                new LlmResponse(string.Empty, [toolCall], LlmStopReason.ToolUse, new LlmUsage(10, 5, 0.01m)),
+                new LlmResponse("Active problems: AFib.", [], LlmStopReason.EndTurn, new LlmUsage(20, 10, 0.02m)));
+        A.CallTo(() => _toolDispatcher.DispatchAsync("default", "1", toolCall, A<CancellationToken>._))
+            .Returns(Task.FromResult(new LlmToolResultContent("call_1", "{}")));
+
+        await _sut.StartBriefAsync("default", "1", CancellationToken.None);
+
+        requests.Should().HaveCount(2);
+        requests[1].Messages.SelectMany(m => m.Content).OfType<LlmToolUseContent>()
+            .Should().ContainSingle().Which.ReplayToken.Should().Be("c2lnbmF0dXJl");
+    }
+
+    [Fact]
     public async Task StartBriefAsync_LlmRequestsMultipleToolsInOneTurn_DispatchesEveryOneOfThem()
     {
         var labsCall = new LlmToolCall("call_1", "get_labs", "{}");
@@ -512,7 +534,7 @@ public sealed class AgentOrchestratorTests
         A.CallTo(() => _metrics.RecordVerificationResult(false)).MustHaveHappenedOnceExactly();
     }
 
-    // --- REQUIREMENTS.md §13.1 "unexpected / unparseable model output": reject -> one repair -> else fallback (#23) ---
+    // --- REQUIREMENTS.md §13.1 "unexpected / unparseable model output": reject -> one repair -> else fallback ---
 
     [Fact]
     public async Task StartBriefAsync_LlmReturnsEmptyFinalAnswer_RepairsOnceAndReturnsTheRepairedAnswer()
@@ -616,7 +638,7 @@ public sealed class AgentOrchestratorTests
     {
         // NFR-PERF-1 budgets ONE of the three entry points - the single-patient RequestBrief turn
         // (UC-1). Without this tag the alert's series mixes all three and the budgeted population
-        // cannot be isolated. A separate change
+        // cannot be isolated.
         A.CallTo(() => _llmProvider.CompleteAsync(A<LlmRequest>._, A<CancellationToken>._))
             .Returns(Task.FromResult(new LlmResponse("ok", [], LlmStopReason.EndTurn, new LlmUsage(1, 1, 0m))));
 
@@ -630,7 +652,7 @@ public sealed class AgentOrchestratorTests
     {
         // UC-6: one of these runs per rostered patient over a 20-30 patient panel
         // (ARCHITECTURE.md 19.4), so these samples outnumber briefs on any morning with a roster.
-        // Tagging them is what stops them swamping the budgeted population. A separate change
+        // Tagging them is what stops them swamping the budgeted population.
         A.CallTo(() => _llmProvider.CompleteAsync(A<LlmRequest>._, A<CancellationToken>._))
             .Returns(Task.FromResult(new LlmResponse("ok", [], LlmStopReason.EndTurn, new LlmUsage(1, 1, 0m))));
 
@@ -657,7 +679,7 @@ public sealed class AgentOrchestratorTests
     public async Task StartAgendaSummaryAsync_LlmProviderThrows_StillRecordsTheTurnAsAnAgendaTurn()
     {
         // The tag must survive the degradation path too: a brief that degrades and an agenda turn
-        // that degrades must not land in the same series. A separate change
+        // that degrades must not land in the same series.
         A.CallTo(() => _llmProvider.CompleteAsync(A<LlmRequest>._, A<CancellationToken>._))
             .ThrowsAsync(new HttpRequestException("LLM provider unreachable"));
 

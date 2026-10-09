@@ -162,7 +162,7 @@ public sealed class PatientRelationshipAuthorizerTests
         // line, and the two need completely different operator responses. It must not name the
         // patient: every caller audits the refusal (AccessAuditLog.RecordRefusal) under the same
         // correlation id, and that is the one stream allowed to (CONVENTIONS.md §7).
-        // The exception message is dropped too - a failed FHIR call can echo the id. A separate change
+        // The exception message is dropped too - a failed FHIR call can echo the id.
         A.CallTo(() => _fhirClient.GetAppointmentsAsync(A<string>._, A<string>._, A<CancellationToken>._))
             .Throws(new HttpRequestException($"GET /fhir/Appointment?patient={Patient} unreachable"));
 

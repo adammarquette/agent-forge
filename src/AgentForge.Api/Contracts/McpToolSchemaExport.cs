@@ -6,7 +6,7 @@ namespace AgentForge.Api.Contracts;
 /// Writes the MCP tool schemas advertised to the model to a file and exits, so the tool schemas are produced by a
 /// repeatable command rather than maintained by hand: <code>AgentForge.Api --export-tool-schemas &lt;path&gt;</code>
 /// Like the graph-schema export it needs no host and no configuration, so it runs before the builder is
-/// created. A separate change
+/// created.
 /// </summary>
 public static class McpToolSchemaExport
 {

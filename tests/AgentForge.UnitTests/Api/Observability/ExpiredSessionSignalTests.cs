@@ -34,7 +34,7 @@ public sealed class ExpiredSessionSignalTests
         // The distinction bought and a separate change must not spend: an aged-out token answers no
         // entitlement question, so re-routing it onto agentforge_authorization_decisions_total (or
         // onto any other existing series) would re-describe expiry as a refusal against the
-        // clinician's own patient - the exact falsehood !472 removed.
+        // clinician's own patient - the exact falsehood an earlier change removed.
         _sut.Record(ExpiredSessionSurface.ChatTurn, SessionId);
 
         A.CallTo(() => _metrics.RecordExpiredSessionRefusal(ExpiredSessionSurface.ChatTurn))

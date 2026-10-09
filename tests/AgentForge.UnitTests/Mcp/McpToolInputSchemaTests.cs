@@ -16,7 +16,7 @@ namespace AgentForge.UnitTests.Mcp;
 /// Driven by purpose-built records rather than the six real ones, because the point is what happens
 /// to a constraint <em>nobody has added yet</em>. A silently-dropped constraint hands the model a
 /// contract it can satisfy and the server will still refuse, which is the asymmetry exists to
-/// remove. A separate change
+/// remove.
 /// </remarks>
 public sealed class McpToolInputSchemaTests
 {
@@ -40,7 +40,7 @@ public sealed class McpToolInputSchemaTests
         // Validator.TryValidateObject applies constraints declared on the TYPE as well as on its properties,
         // and Describe only ever walks properties. A class-level rule is not expressible as a keyword on any
         // one property, so the model would be told nothing and the server would refuse the call - the round-1
-        // asymmetry one level up. Refusing is the only answer that keeps the guarantee true. A separate change
+        // asymmetry one level up. Refusing is the only answer that keeps the guarantee true.
         var act = () => McpToolInputSchema.For<ClassLevelConstraintRequest>();
 
         act.Should().Throw<NotSupportedException>()

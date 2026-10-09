@@ -119,7 +119,7 @@ internal static class EvalGatePolicy
     /// Compares the pinned-escape counts a run observed with the ones <c>baseline.json</c> records, over the
     /// union of both key sets, and returns one gate failure line per kind that differs. A pinned escape is
     /// printed beside its metric rather than inside it; if its case disappeared the line would print zero,
-    /// which reads as the limit having closed. A separate change
+    /// which reads as the limit having closed.
     /// </summary>
     public static IReadOnlyList<string> PinnedEscapeDrift(
         EvalBaseline baseline, IReadOnlyDictionary<string, int> observed)

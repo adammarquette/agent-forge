@@ -18,7 +18,7 @@ namespace AgentForge.UnitTests.Api.Observability;
 /// provider only (maintainer ruling on a separate change item 1, option A). Boots the real host under Production and hangs a
 /// capturing processor on the OpenTelemetry logger provider, which is the pipeline every OTel exporter - console and
 /// OTLP alike - reads from, so the filter under test is the one Program.cs registers, and no configuration rule may
-/// undo it. Separate changes
+/// undo it.
 /// </summary>
 public sealed class AccessAuditOtlpExclusionTests : IDisposable
 {
@@ -45,7 +45,7 @@ public sealed class AccessAuditOtlpExclusionTests : IDisposable
     }
 
     // Each key outranks a plain `AgentForge.AccessAudit` rule in the framework's selector: a longer category, or the
-    // provider's full type name. The review set the first and the exclusion went red. A separate change
+    // provider's full type name. The review set the first and the exclusion went red.
     [Theory]
     [InlineData("Logging:OpenTelemetry:LogLevel:AgentForge.AccessAudit*")]
     [InlineData("Logging:OpenTelemetry:LogLevel:*AgentForge.AccessAudit")]

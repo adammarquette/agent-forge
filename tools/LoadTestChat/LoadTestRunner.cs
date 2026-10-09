@@ -95,7 +95,7 @@ public static class LoadTestRunner
 
         // The hub refuses a connection that does not present the key GET /patient hands the page it renders
         // (ChatHub.PatientChangedMessage), so the worker fetches it once, as index.html does. Untimed: it is
-        // connection setup, not a turn. A separate change
+        // connection setup, not a turn.
         string contextKey;
         try
         {
@@ -158,7 +158,7 @@ public static class LoadTestRunner
         ConcurrentBag<CallResult> results, CancellationToken cancellationToken)
     {
         // /evidence/ask refuses (409) a form without the key GET /patient hands the page it renders, so the worker
-        // fetches it once, as evidence.html does. Untimed setup, like the brief worker's. A separate change
+        // fetches it once, as evidence.html does. Untimed setup, like the brief worker's.
         string contextKey;
         try
         {

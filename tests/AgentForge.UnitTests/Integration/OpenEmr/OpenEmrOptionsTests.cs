@@ -136,7 +136,7 @@ public sealed class OpenEmrOptionsTests
     [Fact]
     public void FhirTimeouts_Defaults_AreTunedForSlowOpenEmr()
     {
-        // Regression (issue #80): staging OpenEMR routinely takes 4-8s per FHIR call and the
+        // Regression: staging OpenEMR routinely takes 4-8s per FHIR call and the
         // framework's 10s attempt default trips under the Daily Agenda's parallel fan-out. These
         // defaults give the OpenEMR client room to complete slow-but-successful calls.
         var options = new OpenEmrOptions

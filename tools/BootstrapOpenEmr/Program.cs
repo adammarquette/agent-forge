@@ -6,7 +6,7 @@
 // Admin-GUI dance repeated on every fresh stack or volume reset — the single reason a deploy of
 // this system was never reproducible end to end.
 //
-// The retired GitLab deploy job did NOT cover this. It re-asserted Railway *service variables*
+// The earlier deploy job did NOT cover this. It re-asserted Railway *service variables*
 // (Llm__ApiKey, BaseUrl, scopes) and said so explicitly: "NOT re-asserted here (cannot be Railway
 // config-as-code): ... the OpenEMR-side module Launch URI/Issuer + EHR-launch-skip settings".
 // .railway/railway.ts now owns the variable half declaratively; this tool owns the database half.
@@ -14,7 +14,7 @@
 // Idempotent by construction — safe to run on every deploy. Globals use the same upsert the fork's
 // own AgentForgeGlobalConfig::save() uses, so this writes exactly what the module's admin page would.
 //
-// reference: labs.gauntletai.com#140, DEPLOYMENT.md §4
+// reference: DEPLOYMENT.md §4
 //
 //   dotnet run --project tools/BootstrapOpenEmr -- <frontDoorBaseUrl>
 //
@@ -103,7 +103,7 @@ var globals = new (string Name, string Value, string Why)[]
 
 // THIS TOOL'S STDOUT IS A GATE INPUT. scripts/post-deploy-verify.sh --globals parses the `ok` /
 // `SET` / `ENABLED` verbs below and the `Done: N changed` summary; renaming either means updating
-// that script and its self-test in the same change. A separate change
+// that script and its self-test in the same change.
 Console.WriteLine("globals:");
 foreach (var (name, value, why) in globals)
 {

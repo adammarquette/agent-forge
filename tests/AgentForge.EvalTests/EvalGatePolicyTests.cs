@@ -49,7 +49,7 @@ public sealed class EvalGatePolicyTests
     /// <summary>
     /// The five rubrics the maintainer's follow-up ruling placed in the zero-tolerance tier,
     /// ordinal-ordered. This list <b>is</b> the ruling; <c>baseline.json</c> is its transcription, and the
-    /// two are asserted equal so the transcription cannot drift in either direction. A separate change
+    /// two are asserted equal so the transcription cannot drift in either direction.
     /// </summary>
     private static readonly string[] RulingSafetyRubrics =
     [
@@ -338,7 +338,7 @@ public sealed class EvalGatePolicyTests
 
     /// <summary>
     /// Given observed pinned-escape counts equal to the ones <c>baseline.json</c> records, when drift is
-    /// checked, then nothing is reported. A separate change
+    /// checked, then nothing is reported.
     /// </summary>
     [Fact]
     public void PinnedEscapeDrift_WhenObservedEqualsRecorded_ReportsNothing()
@@ -352,7 +352,7 @@ public sealed class EvalGatePolicyTests
     /// Given a pinned escape that disappeared — its case deleted or its flag dropped — when drift is
     /// checked, then the gate names the kind and both counts. Without this the summary line quietly prints
     /// "0 pinned NG1 scope escape(s)", which reads as the limit having been closed rather than as the case
-    /// that measured it having gone. A separate change
+    /// that measured it having gone.
     /// </summary>
     [Theory]
     [InlineData(0)]
@@ -372,7 +372,7 @@ public sealed class EvalGatePolicyTests
     /// <summary>
     /// Given an escape kind the run observed but <c>baseline.json</c> never recorded, when drift is checked,
     /// then it is reported — a new limit arrives as a deliberate edit to the policy, not as a number nobody
-    /// agreed to. A separate change
+    /// agreed to.
     /// </summary>
     [Fact]
     public void PinnedEscapeDrift_WhenAnObservedKindIsUnrecorded_ReportsIt()
@@ -387,7 +387,7 @@ public sealed class EvalGatePolicyTests
     /// <summary>
     /// Given the committed golden set, when its flagged escapes are counted, then <c>baseline.json</c>
     /// records exactly those counts — so the gate is green on a clean tree and the transcription cannot
-    /// drift from the cases it describes. A separate change
+    /// drift from the cases it describes.
     /// </summary>
     [Fact]
     public void CommittedBaseline_RecordsExactlyThePinnedEscapesTheGoldenSetCarries()

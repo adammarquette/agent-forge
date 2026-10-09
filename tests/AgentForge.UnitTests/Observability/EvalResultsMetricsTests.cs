@@ -7,7 +7,7 @@ namespace AgentForge.UnitTests.Observability;
 /// <summary>
 /// The per-category eval series <c>AgentForgeEvalCategoryRegression</c> evaluates. Given the eval run
 /// baked into the running build and the baseline it was judged against, when Prometheus scrapes, then
-/// the two gauges carry one bounded <c>category</c> label each, and nothing else. A separate change
+/// the two gauges carry one bounded <c>category</c> label each, and nothing else.
 /// </summary>
 public sealed class EvalResultsMetricsTests : IDisposable
 {

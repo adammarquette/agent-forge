@@ -87,7 +87,7 @@ public sealed class DocumentCitationExtractorTests
     }
 
     // An in-turn document has no DocumentReference id until it is ingested, so source_id is null there; the
-    // other four fields of the brief's shape are read off the extraction. A separate change
+    // other four fields of the brief's shape are read off the extraction.
     [Fact]
     public void Extract_LabPdf_CarriesTheBriefsFiveFieldCitationShape()
     {

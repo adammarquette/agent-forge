@@ -6,7 +6,7 @@ set -eu
 here=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 cd "$here"
 python run_selftest.py --expected "$EXPECTED_ASSERTIONS"
-# The pre-publish check publish-security-platform-image runs in the image; a broken one fails here first. A separate change
+# The pre-publish check publish-security-platform-image runs in the image; a broken one fails here first.
 python check_image_allowlist.py
-# The agent definitions, prompt files and message schemas the image loads. A separate change
+# The agent definitions, prompt files and message schemas the image loads.
 python check_agents.py

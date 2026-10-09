@@ -12,7 +12,7 @@ namespace AgentForge.Api.OpenApi;
 /// generated from the endpoints the app actually maps rather than written out beside them. The same
 /// configuration serves <c>/openapi/v1.json</c> at run time and produces the exported
 /// document (<c>--export-openapi</c>), so the served and the exported document are the same
-/// artifact and cannot describe the surface differently. A separate change
+/// artifact and cannot describe the surface differently.
 /// </summary>
 public static class AgentForgeOpenApi
 {

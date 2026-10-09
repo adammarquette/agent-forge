@@ -7,7 +7,7 @@ namespace AgentForge.EvalTests;
 /// Specifies the golden-case loader's contract around <c>guards</c> — the per-case statement of the failure
 /// mode the case defends (`REQUIREMENTS.md` FR-EVAL-1: "each documents the failure mode it guards"). The slice-level
 /// prose in <c>evals/README.md</c> and the self-describing case ids are both good and both survive; neither
-/// is per-case documentation, and neither reaches someone reading a single file. A separate change
+/// is per-case documentation, and neither reaches someone reading a single file.
 /// </summary>
 public sealed class GoldenCaseLoaderTests
 {
@@ -83,7 +83,7 @@ public sealed class GoldenCaseLoaderTests
         parsed.Guards.Should().Be("Prose instead of JSON is refused, not parsed.");
     }
 
-    // Throws when run (no doc_type) and declares no rubric, so a fault has nothing to fail. A separate change
+    // Throws when run (no doc_type) and declares no rubric, so a fault has nothing to fail.
     private const string ThrowingCaseWithNoRubrics = """
         {
           "id": "intake-throws-no-rubrics",
@@ -99,7 +99,7 @@ public sealed class GoldenCaseLoaderTests
     /// Given a case that declares no rubrics and whose run throws, when it bypasses the loader and is run
     /// and scored, then it faults and scores nothing — so no rubric fails, the case never reaches the gate's
     /// failing list, and the gate would print PASS over a run that crashed. This is the hole the loader
-    /// check below closes. A separate change
+    /// check below closes.
     /// </summary>
     [Fact]
     public async Task ThrowingCaseWithNoRubrics_WhenRunPastTheLoader_FaultsAndScoresNothing()
@@ -124,7 +124,7 @@ public sealed class GoldenCaseLoaderTests
     /// <summary>
     /// Given a case that declares no rubrics, when the loader parses it, then it refuses and names the case
     /// and the field. A case checked by nothing cannot fail, so a fault in it cannot redden the gate —
-    /// every case that loads must declare at least one rubric. A separate change
+    /// every case that loads must declare at least one rubric.
     /// </summary>
     [Fact]
     public void Parse_WhenCaseDeclaresNoRubrics_ThrowsNamingTheCase()
@@ -140,7 +140,7 @@ public sealed class GoldenCaseLoaderTests
     /// <summary>
     /// Given a case whose <c>rubrics</c> is an explicit <c>null</c>, when the loader parses it, then it
     /// refuses too: the serializer does not enforce the non-nullable annotation, so <c>null</c> satisfies
-    /// "the key exists" while declaring nothing. A separate change
+    /// "the key exists" while declaring nothing.
     /// </summary>
     [Fact]
     public void Parse_WhenRubricsIsNull_ThrowsNamingTheCase()

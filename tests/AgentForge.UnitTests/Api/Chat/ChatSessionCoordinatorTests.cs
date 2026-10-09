@@ -217,7 +217,7 @@ public sealed class ChatSessionCoordinatorTests
     public async Task AskFollowUpAsync_PriorStateSavedForAnotherPatient_StartsAFreshConversationWithoutItsHistory()
     {
         // Re-binding the old state to the new patient would still hand the model the previous patient's
-        // tool results as history, so a patient switch must start over, not just swap the id. A separate change
+        // tool results as history, so a patient switch must start over, not just swap the id.
         var otherPatientsState = ConversationState.Start("default", "999") with
         {
             Messages = [LlmMessage.FromText(LlmRole.User, "Is his INR therapeutic?")],

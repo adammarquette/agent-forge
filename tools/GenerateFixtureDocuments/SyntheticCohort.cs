@@ -7,7 +7,7 @@ public sealed record SyntheticPatient(string Name, string BirthDate, string Sex,
 /// The fixed cohort the fixture documents are written for. Every name is a seeded demo patient from
 /// <c>tools/SeedDemoPatients</c> (same name, same date of birth), so a document here and a chart in QA
 /// OpenEMR describe the same fictitious person; every MRN is in a <c>SYN-</c> namespace no real system
-/// issues. Nothing here is, or is derived from, a real record. Separate changes
+/// issues. Nothing here is, or is derived from, a real record.
 /// </summary>
 public static class SyntheticCohort
 {

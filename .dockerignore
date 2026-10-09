@@ -7,7 +7,7 @@ documentation/
 tests/
 # The Dockerfile's `evals` stage runs the eval gate against the image's own source, so the gate's project
 # comes back in; the rest of tests/ stays out. A workstation's scratch results.json never enters the
-# context - the stage writes its own. A separate change
+# context - the stage writes its own.
 !tests/AgentForge.Evals/
 tests/AgentForge.Evals/bin/
 tests/AgentForge.Evals/obj/

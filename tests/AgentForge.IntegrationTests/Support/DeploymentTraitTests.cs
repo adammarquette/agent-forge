@@ -8,9 +8,9 @@ namespace AgentForge.IntegrationTests.Support;
 /// filtered to <c>Deployment=None</c>, so a deployment-free class that loses or never gets the trait drops out
 /// of every merge-request pipeline silently, and a QA-bound class that gains it turns that job red on every
 /// merge request. Named failure mode (regression): a class that needs no deployment ran only after merge, so
-/// a broken hand-built host was seen there. A separate change
+/// a broken hand-built host was seen there.
 /// </summary>
-// Selects this class into the merge-request job integration-tests-no-deployment. A separate change
+// Selects this class into the merge-request job integration-tests-no-deployment.
 [Trait("Deployment", "None")]
 public sealed class DeploymentTraitTests
 {

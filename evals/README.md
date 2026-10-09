@@ -308,7 +308,7 @@ golden reply has the quote `exact`) is handled by the procedure in `CONVENTIONS.
 short: a value that could have come from the document is a leak, so fix the log line. Never edit the golden
 reply or its `phi_tokens` to hide the word. A fixed literal of the code gets a reviewed allowlist entry in
 `RubricEvaluator.cs`, bound to its log category, event and templated field like the access-audit
-exception, never a bare word. The entry needs its own `security` issue and MR, a Code Reviewer Approve,
+exception, never a bare word. The entry needs its own `security` issue and PR, a Code Reviewer Approve,
 the maintainer's merge, and a positive control that the same word elsewhere still fails. There is no such
 entry today. **A number that collides by chance** with a count or timing some log line computes (a
 year-only birth date `1960` against `Processed 1960 bytes`) is neither a leak nor a literal, so it is never
@@ -714,9 +714,10 @@ changed. One commit on the throwaway branch `chore/gl610-gate-verify`, **since d
 what reverses the injection.
 
 **Which path was exercised, because it is not the only one and only one of them is what the brief tests.**
-A regression arriving as a **merge request** reddens at `review-verdict`, the gate that runs first, and
-`evals` is never reached; a regression **pushed to `develop`** gets a branch pipeline with no gate on it and
-reddens at `evals`. Both are real, and *"the pipeline went red"* is true of both. **This verification
+On the CI host where this was verified, a regression arriving as a **merge request** reddened at `review-verdict`,
+the gate that ran first, and `evals` was never reached; a regression **pushed to `develop`** got a branch
+pipeline with no gate on it and reddened at `evals`. (On GitHub, now the only host, `review-verdict`
+runs after the test jobs, so a regression in a pull request reddens at `evals` directly.) Both are real, and *"the pipeline went red"* is true of both. **This verification
 exercised the merge-request path**, so the gate still refused and the pipeline still ran on to `evals` — which is the
 merge-request path reaching the eval gate, the thing the brief's check actually names.
 
@@ -818,7 +819,7 @@ with **all** the tier guards green. Moving four of the five safety rubrics at on
 real tree is unaffected — the equality holds on the five names as committed.
 
 **Local, deliberately, and the reason is on the record.** a separate change established the *pipeline* leg — that an
-injected regression reddens the `evals` job on GitLab rather than being skipped behind the verdict gate —
+injected regression reddens the `evals` job in CI rather than being skipped behind the verdict gate —
 and that leg does not need repeating for a policy change that alters which line the same job prints. What
 a separate change had to show is the arms firing, which is a property of the gate and not of the runner. It is also
 pinned in CI rather than only recorded here: `EvalGatePolicyTests` asserts both arms and the absence of the

@@ -323,10 +323,16 @@ framing is prompt text only, so a stale synthesis in the narrative is mitigated,
 
 ## 12. Model tier
 
-One LLM provider behind `ILlmProvider` (D12), assumed to be under a no-training BAA and used with synthetic
-data only. A mid-tier model suited to grounded summarization is enough; frontier reasoning models are not
-needed. Alternative providers (another hosted API, an air-gapped local model) are seams, not implementations.
-The citation and domain-rule gate applies to any provider and is what equalizes quality across them.
+One LLM provider serves each environment behind `ILlmProvider` (D12), assumed to be under a no-training BAA
+and used with synthetic data only. A mid-tier model suited to grounded summarization is enough; frontier
+reasoning models are not needed. The citation and domain-rule gate applies to any provider and is what
+equalizes quality across them.
+
+`Llm__Provider` chooses the implementation at startup: `Anthropic` (the default, the Messages API) or `Gemini`
+(the Gemini API's `generateContent`). An unknown value stops the host booting. `Llm__Model` and the two prices
+are set with it, per environment. Both providers share the same resilience settings and the same rule never to
+log a key or a request or response body. Gemini's free tier may use prompts and responses to improve Google's products, so it is acceptable only with synthetic demo data, never with real PHI and never in production. An air-gapped local model remains a seam, not an
+implementation.
 
 ---
 
@@ -381,7 +387,7 @@ and [METRICS.md](METRICS.md).
 | D9 | The copilot is a multi-turn conversational agent, not a one-shot synopsis. | Follow-up questions (UC-2) need conversation state and tool chaining. |
 | D10 | Verification has two layers: source attribution and cardiology domain rules. | Attribution alone cannot catch clinically unsafe combinations or out-of-range values. |
 | D11 | Tokens are held server-side in a backend-for-frontend; the browser never holds a bearer token. | No token can leak from browser JavaScript; the session cookie is the only credential the browser carries. |
-| D12 | One LLM provider in v1, behind `ILlmProvider`. | Keeps scope small while preserving the seam to swap or add providers (including an air-gapped model) with one new implementation and configuration. |
+| D12 | One LLM provider per environment, behind `ILlmProvider`: Anthropic, or Gemini for synthetic-data testing. | Keeps scope small while preserving the seam to swap or add providers (including an air-gapped model) with one new implementation and configuration. |
 | D13 | No write-back to OpenEMR. | Removes write authorization surface and certification questions. Enforced at three layers: the tool allowlist, a GET-only FHIR client, and read-only launch scopes; tests fail if any is widened. |
 | D14 | The Morning Triage batch (§18) is a later phase, not v1. | Keeps v1 conversational-agent-first; batch would reuse the same pipeline once trusted. |
 | D15 | A Docker container stack for demo/QA on synthetic data; a customer-supplied HIPAA-eligible environment for production. | Demo optimizes iteration speed with zero PHI; production optimizes compliance under a BAA. Same images both ways. AWS is the costed example, not a required vendor. |

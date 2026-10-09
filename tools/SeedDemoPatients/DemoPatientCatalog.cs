@@ -1,6 +1,6 @@
 namespace AgentForge.SeedDemoPatients;
 
-/// <summary>A synthetic demo patient's demographics (GitLab issue #26 follow-up).</summary>
+/// <summary>A synthetic demo patient's demographics.</summary>
 public sealed record DemoPatient(string GivenName, string FamilyName, string BirthDate, string Gender);
 
 /// <summary>

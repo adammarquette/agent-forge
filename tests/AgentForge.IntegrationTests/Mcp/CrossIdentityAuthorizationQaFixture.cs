@@ -42,8 +42,8 @@ public sealed class CrossIdentityAuthorizationQaFixture
                 "launches are the only way to prove entitlement is per-identity (ARCHITECTURE.md §5.3/§5.6), " +
                 "not one grant standing in for two (CONVENTIONS.md §8.2 - nothing here is mocked). Note this is " +
                 "CrossIdentityTestAccessTokenA, not the shared TestAccessToken: once SystemClientId is " +
-                "configured (issue #22), TestAccessToken is a system-role client_credentials grant that can " +
-                "read every patient, which would make this class's isolation checks meaningless (issue #27).");
+                "configured, TestAccessToken is a system-role client_credentials grant that can " +
+                "read every patient, which would make this class's isolation checks meaningless.");
         }
 
         ToolServerA = new McpToolServer(

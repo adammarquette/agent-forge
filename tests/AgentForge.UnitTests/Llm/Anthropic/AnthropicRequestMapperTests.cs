@@ -28,7 +28,7 @@ public sealed class AnthropicRequestMapperTests
         // Regression test: the real Anthropic API rejects an explicit "temperature" with 400
         // invalid_request_error "`temperature` is deprecated for this model" - confirmed live
         // against the deployed app, where it silently degraded ~10-15% of real chat turns to the
-        // deterministic fallback until diagnosed (GitLab issue #38). Same failure shape as #25's
+        // deterministic fallback until diagnosed. Same failure shape as the earlier
         // "tools": null - the field must be omitted entirely, not sent at all.
         var request = new LlmRequest("system", []);
 
@@ -117,7 +117,7 @@ public sealed class AnthropicRequestMapperTests
     {
         // Regression test: the real Anthropic API rejects an explicit "tools": null with
         // 400 invalid_request_error "tools: Input should be a valid array" - the field must be
-        // omitted entirely, not sent as a JSON null (confirmed against the real API; see #25).
+        // omitted entirely, not sent as a JSON null (confirmed against the real API).
         var request = new LlmRequest("system", [], Tools: null);
 
         var wire = AnthropicRequestMapper.Map(request, "claude-sonnet-5");

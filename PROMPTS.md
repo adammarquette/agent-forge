@@ -16,8 +16,11 @@ egress of patient-adjacent text and belong in any review of what leaves the syst
 
 ## 1. The request envelope
 
-`AnthropicRequestMapper.Map` (in [src/AgentForge.Llm/Anthropic](src/AgentForge.Llm/Anthropic/)) turns an
-`LlmRequest` into the wire request. These are the only fields sent:
+`Llm__Provider` picks the provider, Anthropic (the default) or Gemini, and that provider's mapper turns the same
+`LlmRequest` into its own wire request. The prompts and tool catalog below are identical on both.
+
+**Anthropic.** `AnthropicRequestMapper.Map` (in [src/AgentForge.Llm/Anthropic](src/AgentForge.Llm/Anthropic/))
+turns an `LlmRequest` into the wire request. These are the only fields sent:
 
 | Wire field | Source | Notes |
 |---|---|---|
@@ -32,6 +35,24 @@ prompt-cache `cache_control` markers. Leaving out `temperature` is deliberate: t
 it and the API answers any explicit value with a 400 `invalid_request_error`, which would push every call
 site into its deterministic fallback. `AnthropicMessageRequest` has no such field for that reason. The system
 prompt's "low-temperature, extractive framing" phrase is therefore an instruction to the model, not a setting.
+
+**Gemini.** `GeminiRequestMapper.Map` (in [src/AgentForge.Llm/Gemini](src/AgentForge.Llm/Gemini/)) builds
+the body of `POST {BaseUrl}/v1beta/models/{Llm__Model}:generateContent`, with the key in the `x-goog-api-key`
+header, never the URL. These are the only fields sent:
+
+| Wire field | Source | Notes |
+|---|---|---|
+| `contents` | `LlmRequest.Messages` | the full conversation, oldest first, roles `user` and `model` |
+| `systemInstruction` | `LlmRequest.SystemPrompt` | one text part; omitted when empty |
+| `tools` | `LlmRequest.Tools` | one tool of `functionDeclarations`, schemas as `parametersJsonSchema`; omitted when null or empty |
+| `generationConfig` | `LlmRequest.MaxOutputTokens` | `maxOutputTokens` only |
+
+Images and PDFs travel as `inlineData` parts. A tool result is a `functionResponse` named after the call it
+answers, its result wrapped in an `output` (or `error`) object. A `thoughtSignature` Gemini returns with a
+function call is sent back with that call, because Gemini 3 models reject the replayed call without it.
+`temperature`, safety settings and every other generation setting are never sent. A `STOP` finish on a turn that
+calls a function is a tool-use turn; `SAFETY`, `RECITATION` and the other blocks are never a clean answer.
+Thinking tokens count as output tokens in the cost estimate.
 
 ## 2. The three call sites
 
@@ -190,9 +211,10 @@ bound from `Llm__*` environment variables:
 
 | Setting | Default | Effect |
 |---|---|---|
-| `Llm__ApiKey` | — | provider credential |
+| `Llm__Provider` | `Anthropic` | `Anthropic` or `Gemini`; anything else stops startup |
+| `Llm__ApiKey` | — | credential for that provider |
 | `Llm__Model` | — | the model for all three call sites |
-| `Llm__BaseUrl` | `https://api.anthropic.com` | provider endpoint |
+| `Llm__BaseUrl` | the provider's API | `https://api.anthropic.com`, or `https://generativelanguage.googleapis.com` for Gemini |
 | `Llm__InputPricePerMillionTokensUsd`, `Llm__OutputPricePerMillionTokensUsd` | — | cost estimate only; not sent |
 | `Llm__AttemptTimeoutSeconds` | 60 | timeout for one HTTP attempt |
 | `Llm__TotalRequestTimeoutSeconds` | 150 | timeout across all retries; must exceed the attempt timeout or startup fails |

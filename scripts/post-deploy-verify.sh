@@ -18,7 +18,7 @@
 #
 # Nothing asserted that the application worked after a deploy. Every container could be healthy, the
 # pipeline green and the stack unusable — and on 2026-09-18 it was: each failure was silent, and each
-# was visible in one HTTP response nobody was making. Separate changes
+# was visible in one HTTP response nobody was making.
 #
 # It happened again on 2026-09-23 with this script in place: it probed /agentforge/health, which
 # is liveness only, and passed while /agentforge/ready answered 503. /ready is probed now.
@@ -140,7 +140,7 @@ CHECKS=(
 # How many there are supposed to be. A LITERAL, deliberately: what this guards against is CHECKS
 # losing an entry — an edit, a bad merge, a conditional that emptied it — and a count derived from
 # the array shrinks with it, leaving a comparison that cannot fail. Add or remove a probe above and
-# this number moves in the same commit. A separate change
+# this number moves in the same commit.
 EXPECTED_CHECKS=4
 
 contains() { case "$1" in *"$2"*) return 0 ;; *) return 1 ;; esac; }
@@ -149,8 +149,8 @@ contains() { case "$1" in *"$2"*) return 0 ;; *) return 1 ;; esac; }
 BODY_FILE="$(mktemp)"
 trap 'rm -f "$BODY_FILE"' EXIT
 
-# "<name>=<status>" per /ready check that is not Healthy, one per line. sed rather than jq: the
-# GitLab job installs only bash and curl, and ReadinessResponse writes name then status, in order.
+# "<name>=<status>" per /ready check that is not Healthy, one per line. sed rather than jq, so the
+# check needs only bash and curl wherever it runs, and ReadinessResponse writes name then status, in order.
 unhealthy_checks() {
   grep -o '"name":"[^"]*","status":"[^"]*"' "$BODY_FILE" 2>/dev/null \
     | sed 's/^"name":"\([^"]*\)","status":"\([^"]*\)"$/\1=\2/' | grep -v '=Healthy$' || true
@@ -245,7 +245,7 @@ run_http_checks() { # prints results; returns 0 only when every check passed AND
 # clean — and tools/BootstrapOpenEmr exits 0 whether or not it changed anything, so rc cannot back it
 # up. So the decisive test is the POSITIVE invariant the tool actually promises, `Done: 0 changed`,
 # which survives any rename. Those format strings are a gate input; Program.cs says so where it emits
-# them. A separate change
+# them.
 run_globals_check() {
   local out rc=0 reported drift
   printf '\nglobals (OpenEMR database state, DEPLOYMENT.md §4):\n'

@@ -91,7 +91,7 @@ public sealed class DerivedFactCitationProjectorTests
     }
 
     // The Week 2 brief's minimum citation shape {source_type, source_id, page_or_section, field_or_chunk_id,
-    // quote_or_value} is what the entity persists; the wire citation must carry it too. A separate change
+    // quote_or_value} is what the entity persists; the wire citation must carry it too.
     [Fact]
     public void Project_PersistedFact_CarriesTheBriefsFiveFieldCitationShapeFromTheEntity()
     {

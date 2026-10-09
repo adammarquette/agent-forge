@@ -9,7 +9,7 @@ namespace AgentForge.Documents.Extraction;
 /// could be corroborated against the document's own text — and <b>not</b> a model-reported confidence in the
 /// extracted value. A fact scoring <see cref="Located"/> is one whose quote was found verbatim in the source;
 /// it says nothing about whether the model read the number off it correctly. A reader who assumes otherwise
-/// inverts the meaning of the most important value the column carries. Separate changes
+/// inverts the meaning of the most important value the column carries.
 /// <para>
 /// <b>The round trip is the contract.</b> <see cref="For"/> writes the score at ingestion and
 /// <see cref="MatchFor"/> reads the outcome back off it for the field-level metric, so the two must stay

@@ -7,7 +7,7 @@
 # return. Every later comparison against it — `[ "$id" = "$expected" ]`, `!= null`, a value re-fed to jq
 # via `--argjson` — silently fails or reads as null, which is why railway-stays-up.sh read `deployment
 # null` for every service run natively in Git Bash on Windows, while the identical check passed inside
-# alpine:3.21. A separate change
+# alpine:3.21.
 #
 # THE FIX IS ONE FUNCTION, NOT A `tr -d '\r'` AT EVERY CALL SITE. `jq` is overridden as a shell function
 # for the rest of the sourcing script's process — which includes anything that script itself `.`

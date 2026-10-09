@@ -12,7 +12,7 @@ namespace AgentForge.UnitTests.Api.Observability;
 /// lines are diagnostic, so CONVENTIONS.md §7 bars them; the shipped <c>appsettings.json</c> holds both
 /// categories at Warning, where neither logs a URL. Boots the real host so the file is what is tested, not a copy of
 /// it. The <c>HttpClient</c> loggers are also removed in code, because their URL scope ignores the level; this
-/// level is the backstop, and <c>HostStdoutPhiScanTests</c> the runtime check. Separate changes
+/// level is the backstop, and <c>HostStdoutPhiScanTests</c> the runtime check.
 /// </summary>
 public sealed class FrameworkLogLevelTests : IDisposable
 {

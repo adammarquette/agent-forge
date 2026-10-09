@@ -26,7 +26,7 @@ public sealed class AgendaOptions : IValidatableObject
     /// regenerated (and charged) again. A TTL rather than chart-change invalidation: nothing tells the sidecar a
     /// chart changed, and probing each chart on every load would cost the FHIR calls the fan-out is throttled
     /// for. 30 minutes bounds how stale a glance can be while a reload costs nothing. At most 12 hours - one
-    /// budget window. A separate change
+    /// budget window.
     /// </summary>
     public TimeSpan SummaryCacheTtl { get; init; } = TimeSpan.FromMinutes(30);
 

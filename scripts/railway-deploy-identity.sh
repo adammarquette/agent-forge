@@ -15,7 +15,7 @@
 # service config — `startCommand`, region, replicas. On 2026-09-18 `startCommand` was changed three
 # times and three consecutive `railway redeploy` runs each reported SUCCESS while re-running the
 # stale snapshot: the container started, logged one `Starting Container` line, and did nothing. Only
-# a variable change, which creates a genuinely new deployment, picked the config up. A separate change
+# a variable change, which creates a genuinely new deployment, picked the config up.
 #
 # THE FIRST HALF OF a separate change WAS ALREADY TRUE WHEN THIS WAS WRITTEN, and that is worth stating because
 # the issue says "IF railway-apply deploys via redeploy". It does not, on either host. Both applies
@@ -88,7 +88,7 @@
 #  10   REPLAYED — the deploy reported success and the environment produced no new deployment
 #  11   UNDECIDABLE — nothing could be proven; treated exactly as REPLAYED by every caller
 #
-# PORTABILITY. The GitLab lint and gate jobs run `alpine:3.21` (BusyBox), where `date -d` parses
+# PORTABILITY. Kept BusyBox-safe (the earlier CI jobs ran `alpine:3.21`), where `date -d` parses
 # nothing and awk is not gawk. Nothing here needs either — `date -u +%s` and `+%Y-%m-%dT%H:%M:%SZ`
 # are formatting, which BusyBox does fine, and the parsing is jq. Verify with
 #   docker run --rm -v "$PWD:/w" -w /w alpine:3.21 sh -c \

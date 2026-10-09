@@ -19,7 +19,9 @@ public sealed record LlmTextContent(string Text) : LlmContent;
 /// <param name="Id">The provider-assigned call id this tool use is known by.</param>
 /// <param name="ToolName">Which tool was called.</param>
 /// <param name="ArgumentsJson">The arguments it was called with, as raw JSON.</param>
-public sealed record LlmToolUseContent(string Id, string ToolName, string ArgumentsJson) : LlmContent;
+/// <param name="ReplayToken">The <see cref="LlmToolCall.ReplayToken"/> the call arrived with, sent back unchanged.</param>
+public sealed record LlmToolUseContent(string Id, string ToolName, string ArgumentsJson, string? ReplayToken = null)
+    : LlmContent;
 
 /// <summary>
 /// The result of executing a tool call, linked back to the <see cref="LlmToolUseContent.Id"/> it
@@ -39,7 +41,7 @@ public sealed record LlmToolResultContent(string ToolUseId, string ResultJson, b
 public sealed record LlmImageContent(string MediaType, string Base64Data) : LlmContent;
 
 /// <summary>
-/// A binary document (e.g. a PDF) handed to the model. Anthropic reads PDFs natively, including
+/// A binary document (e.g. a PDF) handed to the model. Anthropic and Gemini both read PDFs natively, including
 /// scanned pages via vision (Week 2 lab-PDF ingestion), base64-encoded.
 /// </summary>
 /// <param name="MediaType">IANA media type, e.g. <c>application/pdf</c>.</param>

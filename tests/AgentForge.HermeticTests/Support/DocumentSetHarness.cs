@@ -17,7 +17,7 @@ namespace AgentForge.HermeticTests.Support;
 /// <c>DocumentIngestionService</c>, <c>DocumentExtractor</c> (schema gate, PdfPig text layer,
 /// <c>CitationBoundingBoxResolver</c>), <c>DerivedFactMapper</c> and <c>DerivedFactStore</c> on EF Core's
 /// in-memory provider. Only the model is scripted - by <see cref="ManifestReplies"/>, keyed on each committed
-/// file's own bytes. A separate change
+/// file's own bytes.
 /// </summary>
 internal sealed class DocumentSetHarness : IAsyncDisposable
 {

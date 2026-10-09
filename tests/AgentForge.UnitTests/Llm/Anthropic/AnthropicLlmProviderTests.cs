@@ -139,7 +139,7 @@ public sealed class AnthropicLlmProviderTests
         // FR-OBS-1 requires every LLM interaction to produce a correlation-tagged record. Token use
         // was recorded as a *metric* only, and metrics carry no correlation id, so no model call was
         // reconstructable from logs on any path - including the chat path, whose scope was open the
-        // whole time. A separate change
+        // whole time.
         var logs = new CapturingLoggerProvider();
         using var loggerFactory = LoggerFactory.Create(builder => builder.AddProvider(logs));
         var api = A.Fake<IAnthropicMessagesApi>();
@@ -224,7 +224,7 @@ public sealed class AnthropicLlmProviderTests
         // The Polly pipeline on this client (Program.cs) surfaces attempt-timeout, total-timeout and
         // circuit-open as its own exception types, never as an ApiException - so a failure filtered
         // on ApiException leaves the whole degrade path (REQUIREMENTS.md §13.1) with no record at
-        // all, which is the one place a trace is most worth having. A separate change
+        // all, which is the one place a trace is most worth having.
         var logs = new CapturingLoggerProvider();
         using var loggerFactory = LoggerFactory.Create(builder => builder.AddProvider(logs));
         var api = A.Fake<IAnthropicMessagesApi>();

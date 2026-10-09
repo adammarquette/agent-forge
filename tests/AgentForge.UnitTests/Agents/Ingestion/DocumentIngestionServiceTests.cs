@@ -174,7 +174,7 @@ public sealed class DocumentIngestionServiceTests
         // histogram's population is documents and a 500-fact lab cannot outvote fifty intake forms.
         // The value is the LOCATED FRACTION over the citations that could be checked - here three located
         // and one absent, so 0.75 - and not the mean of the per-fact scores, which would be 0.7 and would
-        // mean nothing (see the ordering case below). A separate change
+        // mean nothing (see the ordering case below).
         A.CallTo(() => _mapper.Map(A<DocumentExtractionResult>._, A<string?>._))
             .Returns(new List<DerivedFact> { Fact(1.0), Fact(1.0), Fact(1.0), Fact(0.0), Fact(0.5) });
 
@@ -208,7 +208,7 @@ public sealed class DocumentIngestionServiceTests
         // has ONE citation that could be checked and it was not found - every quote the extractor could
         // verify was absent - so it scores 0.0, the fabrication floor. Averaging the per-fact scores instead
         // would score it 0.4 (one 0.0 plus four 0.5s), lifting it ABOVE a wholly unverifiable scan and
-        // burying the only fact the metric is here to surface. Separate changes
+        // burying the only fact the metric is here to surface.
         A.CallTo(() => _mapper.Map(A<DocumentExtractionResult>._, A<string?>._))
             .Returns(new List<DerivedFact> { Fact(0.0), Fact(0.5), Fact(0.5), Fact(0.5), Fact(0.5) });
 
@@ -295,7 +295,7 @@ public sealed class DocumentIngestionServiceTests
         // the citation the mapper builds carries it as FieldOrChunkId - so wiring the label to the citation
         // instead of to the fact type is a one-character mistake that mints a permanent series per lab test
         // and puts document text on an exported label. Driving the REAL mapper with a hostile name is what
-        // makes that fail here; a test over a faked mapper would pass either way. A separate change
+        // makes that fail here; a test over a faked mapper would pass either way.
         const string modelText = "Bruno Kowalczyk potassium";
         var hostile =
             """

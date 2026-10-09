@@ -12,7 +12,7 @@
 # The `agentforge-week2` group below carries NFR-SLO-W2-1's three named alerts - extraction failure
 # rate, RAG retrieval latency, eval regression (>5% per category). Each states, in its own
 # description, the blind spot it has: alerting on telemetry fails by not firing, and a limit written
-# only in an MR description is not read at 3am. A separate change
+# only in an MR description is not read at 3am.
 #
 # WHAT PINS WHAT, precisely - the first version of this header overclaimed it, and on a file whose
 # failure mode is that a rule which never fires looks exactly like a working one, that is the wrong
@@ -170,7 +170,7 @@ groups:
   # own policy. The extraction rule's 20% and its >=5 floor are NOT - nothing on file measures a
   # steady-state rejection rate, so they are shape, and the rule says so in its own description
   # rather than only in the comment below, because Prometheus does not carry YAML comments into an
-  # alert and a responder reads the annotation. Separate changes
+  # alert and a responder reads the annotation.
   # ---------------------------------------------------------------------------------------------
   - name: agentforge-week2
     rules:
@@ -249,7 +249,7 @@ groups:
         # 6 is NFR-SLO-W2-1's evidence-retrieval SLO, derived in METRICS.md §"Week 2 SLO
         # targets" (3.16s measured mean x 1.71, the widest p95/p50 multiple on file, rounded up) - not
         # a number chosen beside the alert. `for: 10m` matches the rate window: a single slow rerank
-        # must not page, a sustained one must. Separate changes
+        # must not page, a sustained one must.
         for: 10m
         labels:
           severity: warning

@@ -22,7 +22,7 @@ internal static partial class DocumentExtractorLog
     public static partial void PdfWordsUnreadable(ILogger logger, Exception exception);
 
     // Counts only. The quote is free text lifted off a clinical document, so the one thing this line must
-    // not contain is the thing it is about. A separate change
+    // not contain is the thing it is about.
     [LoggerMessage(
         Level = LogLevel.Warning,
         Message = "{Unlocatable} of {Total} extraction citations for {DocumentType} quote text that is not in the document, or that does not carry the fact they cite; their model-estimated bounding boxes were discarded")]

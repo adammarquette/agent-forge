@@ -26,7 +26,7 @@ public sealed class McpToolSchemaContractParityTests
     /// <summary>
     /// The wire name the model sees for each model-fillable property, spelled out rather than derived.
     /// Running the generator's own naming policy here would agree with it by construction: the deleted
-    /// schema literals were what pinned these names, and something has to go on doing it. A separate change
+    /// schema literals were what pinned these names, and something has to go on doing it.
     /// </summary>
     private static readonly Dictionary<string, string> WireNames = new(StringComparer.Ordinal)
     {
@@ -40,7 +40,7 @@ public sealed class McpToolSchemaContractParityTests
     /// independently of the generator. Each inner array is one constraint the attribute imposes, and
     /// at least one of its keywords must be advertised. An attribute missing from this table fails the
     /// sweep: either the generator drops it (the bug) or the generator learned it and this guard did
-    /// not (also the bug). A separate change
+    /// not (also the bug).
     /// </summary>
     private static readonly Dictionary<Type, string[][]> ConstraintKeywords = new()
     {
@@ -136,7 +136,7 @@ public sealed class McpToolSchemaContractParityTests
         // Given [RegularExpression] on the record, When the advertised schema carries no `pattern`, Then
         // the model can emit a value that satisfies the schema it was handed and is rejected server-side
         // anyway - the advertised contract being the weaker of the two. Prose in a `description` is not
-        // a constraint; only `pattern` is. A separate change
+        // a constraint; only `pattern` is.
         var advertised = AdvertisedProperties(toolName);
 
         foreach (var property in ModelFillableProperties(RequestContracts[toolName]))
@@ -197,7 +197,7 @@ public sealed class McpToolSchemaContractParityTests
         // ValidationAttribute on the record - not the handful this fixture happens to name. A constraint
         // the generator drops leaves the model a contract it can satisfy and the server still refuses,
         // which is the asymmetry exists to remove, arriving through the generator instead of a
-        // hand-written literal. A separate change
+        // hand-written literal.
         var advertised = AdvertisedProperties(toolName);
 
         foreach (var property in ModelFillableProperties(RequestContracts[toolName]))
@@ -230,7 +230,7 @@ public sealed class McpToolSchemaContractParityTests
         // The sweep above walks properties, and so does the generator - so a rule declared on the TYPE is
         // invisible to both while Validator.TryValidateObject still enforces it. The generator refuses to
         // build such a schema; this says so where the rule is read rather than leaving the only evidence a
-        // TypeInitializationException somewhere else in the suite. A separate change
+        // TypeInitializationException somewhere else in the suite.
         var contract = RequestContracts[toolName];
 
         contract.GetCustomAttributes<ValidationAttribute>(inherit: true).Should().BeEmpty(
@@ -269,7 +269,7 @@ public sealed class McpToolSchemaContractParityTests
     public void AdvertisedSchema_ForAContractBackedTool_RefusesAnEmptyStringWhereItsContractDoes(string toolName)
     {
         // [Required] with AllowEmptyStrings false rejects ""; JSON Schema `required` only demands the key
-        // is present, so `required` alone is the weaker of the two. A separate change
+        // is present, so `required` alone is the weaker of the two.
         var advertised = AdvertisedProperties(toolName);
 
         foreach (var property in ModelFillableProperties(RequestContracts[toolName]))

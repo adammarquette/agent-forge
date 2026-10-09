@@ -93,7 +93,7 @@ public sealed class PatientRelationshipAuthorizer(
         }
     }
 
-    // Separates "the token cannot read the calendar" (401, as) from an outage. A separate change
+    // Separates "the token cannot read the calendar" (401, as) from an outage.
     private static int? StatusCodeOf(Exception ex) => ex switch
     {
         ApiException api => (int)api.StatusCode,

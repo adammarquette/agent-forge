@@ -6,7 +6,7 @@ namespace AgentForge.UnitTests.Api.Session;
 /// <summary>
 /// The key a page is rendered with and its chat connection presents, so a connection that outlives a patient
 /// switch (another tab drilling down, a second launch on the same cookie) can tell it no longer matches the
-/// session's patient. Synthetic ids only. A separate change
+/// session's patient. Synthetic ids only.
 /// </summary>
 public sealed class PatientContextBindingTests
 {

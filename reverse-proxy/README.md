@@ -1,7 +1,7 @@
 # reverse-proxy
 
-Same-origin front door for the deferred reverse-proxy topology (,
-tracked in this repo as `#62`). A stock `nginx:1.30-alpine` container - no custom
+Same-origin front door for the deferred reverse-proxy topology.
+A stock `nginx:1.30-alpine` container - no custom
 application code, just two start-up hooks in the image's own `docker-entrypoint.d/`
 (`10-resolver.envsh`, `15-assert-sidecar-port.sh`) - routes:
 
@@ -58,7 +58,7 @@ out), and its lifetime governs the sidecar's — recreate it and the sidecar's n
 crash-loops on *address already in use*, and `/agentforge/*` `502`s in a way that is **indistinguishable from
 a forgotten `--profile copilot`**. `docker compose config` validates it, so nothing upstream catches it. The
 hook exits non-zero with both knob names instead — and only for a **loopback** upstream, so a stack where the
-sidecar is a separate container with its own port space (Railway) is untouched by it. A separate change
+sidecar is a separate container with its own port space (Railway) is untouched by it.
 
 **`GRAFANA_UPSTREAM` is the third upstream, and it is EMPTY BY DEFAULT — a supported state, not a missing
 value.** Grafana is declared only where `.railway/railway.ts` has both `OBSERVABILITY_IMAGES` pins filled,
@@ -133,9 +133,9 @@ wirings*.
 
 Both prerequisites have shipped:
 
-- Sidecar path-base support (`#60` - `UsePathBase`, prefix-aware SignalR/chat URLs,
+- Sidecar path-base support (`UsePathBase`, prefix-aware SignalR/chat URLs,
   cookie `Path=/agentforge`)
-- OpenEMR-side config (`#25`, `#26` - redirect_uri, launch URI,
+- OpenEMR-side config (- redirect_uri, launch URI,
   `cookie_samesite` revert) - config only, no fork code changes
 
 The per-environment values (Site Address Override, the two OAuth clients and their redirect URIs, the

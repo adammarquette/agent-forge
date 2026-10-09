@@ -6,7 +6,7 @@ namespace AgentForge.Observability;
 /// The budget is stated for a single-patient <c>RequestBrief</c> turn (<see cref="Brief"/>) only;
 /// <see cref="Agenda"/> turns are "1–3 sentences" by design and are fanned out one per rostered
 /// patient across a 20–30-patient panel, so untagged they outnumber the budgeted turns and hold the
-/// p95 down. A separate change
+/// p95 down.
 /// </summary>
 /// <remarks>
 /// <b>This becomes an exported metric label, so its cardinality is its contract.</b> Three values,

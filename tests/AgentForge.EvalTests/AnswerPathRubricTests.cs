@@ -12,7 +12,7 @@ namespace AgentForge.EvalTests;
 /// <para>
 /// `M1` (groundedness), `M2` (constraint recall) and `M5` (transparent degradation) are stated over the
 /// Week 1 <b>answer</b> path, which had no eval population at all until this suite
-/// (<c>METRICS.md</c> §2). Separate changes
+/// (<c>METRICS.md</c> §2).
 /// </para>
 /// </summary>
 public sealed class AnswerPathRubricTests
@@ -54,7 +54,7 @@ public sealed class AnswerPathRubricTests
     /// scored, then scoring fails loudly and names the rubric. Same defect as `M3`'s
     /// (<c>a separate change</c>): the metric's denominator is every case carrying that metric, but its numerator
     /// only counts cases that declare the rubric, so an undeclared case is reported as inspected and found
-    /// clean. A separate change
+    /// clean.
     /// </summary>
     [Theory]
     [InlineData("M1", "grounded_answer")]
@@ -255,7 +255,7 @@ public sealed class AnswerPathRubricTests
     /// citation is what separates this limit from the keyword-boundary one: the line is grounded, so
     /// `ClinicalResponseVerifier` has nothing to object to, and only a scope check could. Without a case the
     /// "does not recommend treatment" limit is asserted in prose and nothing turns red when a lexical filter
-    /// starts suppressing it. A separate change
+    /// starts suppressing it.
     /// </summary>
     [Fact]
     public void ScopeEscapes_OverTheGoldenSet_PinACitedRecommendationThatMustShip()
@@ -293,7 +293,7 @@ public sealed class AnswerPathRubricTests
     /// Given each pinned NG1 scope escape, when it runs through the shipped orchestrator and verifier, then
     /// the recommendation reaches the clinician with nothing suppressed. This is the half that goes red on
     /// purpose: a lexical "recommend" filter added below the model suppresses the line, and the false-positive
-    /// cost `PROMPTS.md` §7 records then has to be restated deliberately. A separate change
+    /// cost `PROMPTS.md` §7 records then has to be restated deliberately.
     /// </summary>
     [Fact]
     public async Task ScopeEscapes_WhenRunThroughTheShippedVerifier_ShipTheRecommendationIntact()

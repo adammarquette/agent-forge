@@ -51,7 +51,7 @@ command -v jq >/dev/null 2>&1 || { echo "SELF-TEST CANNOT RUN: jq is required" >
 # cases. Inject an unbalanced quote into the guard and twenty-four `ok` lines still print, every one of
 # them reporting that the fail-closed machinery works. The suite does redden overall, so nothing broken
 # ships green; what it cannot do without this line is tell "the guard refused" from "the guard is not
-# shell", and that aliasing is invisible to anyone reading the cases later. A separate change
+# shell", and that aliasing is invisible to anyone reading the cases later.
 if ! bash -n "$GUARD" 2>"$tmp/syntax.err"; then
   echo "SELF-TEST CANNOT RUN: $GUARD is not valid shell — every refusal case below would pass for the" >&2
   echo "wrong reason, because a bash syntax error and EX_REFUSED are both exit 2." >&2
@@ -60,7 +60,7 @@ if ! bash -n "$GUARD" 2>"$tmp/syntax.err"; then
 fi
 # AND SO IS THE FILE IT SOURCES. `bash -n` on the guard does not parse what the guard `.`s at run time,
 # so a syntax error in the shared data-refreshable reader lands on the cases as an exit 2 — which every
-# refusal case accepts. Same aliasing as above, one file further out. A separate change
+# refusal case accepts. Same aliasing as above, one file further out.
 if ! bash -n "$HERE/railway-data-refreshable.sh" 2>"$tmp/syntax.err"; then
   echo "SELF-TEST CANNOT RUN: railway-data-refreshable.sh, which the guard sources, is not valid shell." >&2
   cat "$tmp/syntax.err" >&2
@@ -85,7 +85,7 @@ body="$(cat)"
 # LOGGED, COMPACT, so a case can assert on what the guard did NOT ask for. "No snapshot was taken" is
 # not visible in an exit code or in the sentinel: a guard that took one and then permitted looks
 # identical from outside. Compact because `jq -n` pretty-prints, and an assertion written the way
-# anyone would write it would match nothing and pass for free. A separate change
+# anyone would write it would match nothing and pass for free.
 printf '%s' "$body" | jq -c . >> "$REQUESTS" 2>/dev/null || printf '%s\n' "$body" >> "$REQUESTS"
 # A fixture whose first line is TRANSPORT_FAIL makes this exit non-zero with nothing on stdout - curl
 # dying, not GraphQL answering. The distinction is load-bearing: gql_checked writes $ERRFILE on this
@@ -101,7 +101,7 @@ case "$body" in
       # MUTATE_PLAN_EARLY rewrites the plan at the FIRST call the guard makes. The MUTATE_PLAN hook
       # below fires on the backup mutation, which is exactly the call an environment declared
       # data-refreshable never makes — so without an earlier hook the fingerprint check could not be
-      # exercised on that path at all. A separate change
+      # exercised on that path at all.
       [ -n "${MUTATE_PLAN_EARLY:-}" ] && printf '{"kind":"railway.config.plan","destructive":false,"changeSet":{"changes":[]}}' > "$MUTATE_PLAN_EARLY"
       f="projectToken.json" ;;
   *volumeInstanceBackupCreate*)
@@ -206,7 +206,7 @@ JSON
 # declares the live staging environment — so a suite that did not override this would be asserting
 # against deployment policy and would start passing or failing on an edit to a file it is not testing.
 # ENV-A absent from the declaration means "not refreshable", which is the earlier behaviour, so
-# every case written before this existed is unchanged. A separate change
+# every case written before this existed is unchanged.
 declare_refreshable() { # declare_refreshable <json-body|NONE>
   if [ "$1" = "NONE" ]; then
     export RAILWAY_DATA_REFRESHABLE_FILE="$FIX/no-such-declaration.json"
@@ -285,7 +285,7 @@ expect_classify() { # expect_classify <exit> <description> -- <argv...>
 # "label already taken", "workflow failed", "nothing was snapshotted" and more. A case asserting only
 # on the code passes when the guard refuses for a reason the case was not written about - which is
 # indistinguishable from working, and is how `:775` spent its whole life never reaching the check it
-# names. Assert the REASON. A separate change
+# names. Assert the REASON.
 expect_run_says() { # expect_run_says <exit> <ran> <substring> <description> [guard args...] -- <argv...>
   local want="$1" want_ran="$2" needle="$3" desc="$4"; shift 4
   local gargs=()
@@ -329,7 +329,7 @@ expect_classify_says() { # expect_classify_says <exit> <substring> <description>
 
 # An assertion about the REQUESTS the guard made. "It took no snapshot" is invisible in an exit code
 # and in the sentinel — a guard that snapshotted and then permitted looks identical from outside — so
-# the absence of the mutation is the only place the claim is actually checkable. A separate change
+# the absence of the mutation is the only place the claim is actually checkable.
 expect_request() { # expect_request <yes|no> <substring> <description>
   local want="$1" needle="$2" desc="$3" saw="no" how="NOT contain"
   grep -qF -- "$needle" "$REQUESTS" 2>/dev/null && saw="yes"
@@ -392,7 +392,7 @@ expect_run 2 no "a GraphQL error document is a failure, not an empty backup list
 # A team token may create a backup and be refused `workflowStatus` (observed 2026-09-19 against
 # fearless-abundance/staging). The guard then waits on the labelled backup instead. These four cases pin
 # both halves of that: it must still reach a real snapshot, and it must still refuse everything it
-# refused before. A separate change
+# refused before.
 fixture
 echo '{"errors":[{"message":"Not Authorized"}],"data":null}' > "$FIX/workflow.json"
 expect_run 0 yes "an unreadable workflowStatus falls back to the labelled backup and still snapshots" \
@@ -434,7 +434,7 @@ expect_run_says 2 no "backup aborted" "a joined error merely CONTAINING Not Auth
 # is the only state the loop exists for. The suite also caps TIMEOUT=1/POLL=1, so nothing reached a
 # second poll. Here the list answers empty -> a SCHEDULED backup only -> scheduled + this run's label,
 # with the deadline raised so the loop actually iterates. Without the loop the final check sees the
-# scheduled-only answer and refuses; with it, the guard waits and succeeds. A separate change
+# scheduled-only answer and refuses; with it, the guard waits and succeeds.
 fixture
 echo '{"errors":[{"message":"Not Authorized"}],"data":null}' > "$FIX/workflow.json"
 echo '{"data":{"volumeInstanceBackupList":[{"id":"BK-SCHED","name":"daily-2026-09-19","createdAt":"2026-09-19T00:00:00Z"}]}}' > "$FIX/backups-2.json"
@@ -507,6 +507,45 @@ echo 'TRANSPORT_FAIL' > "$FIX/workflow-2.json"
 expect_run_says 2 no "curl: (56)" "a second instance's TRANSPORT failure is not excused by the first's Not Authorized" \
   -- "$tmp/fake-railway" volume delete --yes
 
+# THE SAME CASE ON A HOST WHOSE jq DRAINS STDIN. It failed open on the self-hosted runner
+# (a CI run): `jq` there was a Windows jq.exe through WSL interop, which drains stdin
+# even for `jq -n`, and do_snapshot read its instance rows from stdin - so instance 2 was never visited
+# and the guard exited 0. The shim reproduces that on any Linux host: it swallows stdin for `-n`, then
+# runs the real jq. Reverting the guard's fd-3 read turns both cases below red.
+mkdir -p "$tmp/draining-jq"
+printf '#!/bin/sh\nfor a in "$@"; do [ "$a" = "-n" ] && { cat >/dev/null; break; }; done\nexec %s "$@"\n' "$(command -v jq)" > "$tmp/draining-jq/jq"
+chmod +x "$tmp/draining-jq/jq"
+PATH="$tmp/draining-jq:$PATH" expect_run_says 2 no "curl: (56)" \
+  "with a stdin-draining jq, a second instance's TRANSPORT failure still refuses" \
+  -- "$tmp/fake-railway" volume delete --yes </dev/null
+fixture
+volumes_json_duplicate_names > "$FIX/volumes.json"
+echo '{"data":{"volumeInstanceBackupList":[]}}' > "$FIX/backups-b1.json"
+printf '{"data":{"volumeInstanceBackupList":[{"id":"BK-B","name":"%s","createdAt":"2026-09-18T00:00:00Z"}]}}\n' "$GUARD_LABEL" > "$FIX/backups-b2.json"
+PATH="$tmp/draining-jq:$PATH" expect_run_says 0 yes "2 volume instance(s) snapshotted and verified" \
+  "with a stdin-draining jq, every resolved instance is still snapshotted before the command runs" \
+  -- "$tmp/fake-railway" volume delete --yes </dev/null
+
+# THE COUNT CHECK ON ITS OWN. The fd-3 read and the </dev/null each close the stdin path
+# by themselves, so the cases above do not pin "snapshotted == resolved". This skips a row another way:
+# an instance whose fields are all empty strings resolves to a row of bare tabs, which counts as a resolved
+# line, but tab is IFS whitespace, so `read` yields an empty id and the loop's `continue` skips it. One real
+# instance is snapshotted, one resolved row is not: that must refuse rather than permit.
+fixture
+cat > "$FIX/volumes.json" <<'JSON'
+{"data":{"project":{"name":"stub","volumes":{"edges":[
+ {"node":{"id":"VOL-mysql","name":"mysql-data","volumeInstances":{"edges":[
+   {"node":{"id":"VI-mysql-a","environmentId":"ENV-A","serviceId":"S1","mountPath":"/var/lib/mysql","state":"READY","sizeMB":5120,"currentSizeMB":100}}
+ ]}}},
+ {"node":{"id":"VOL-blank","name":"","volumeInstances":{"edges":[
+   {"node":{"id":"","environmentId":"ENV-A","serviceId":"S9","mountPath":"","state":"READY","sizeMB":"","currentSizeMB":""}}
+ ]}}}
+]}}}}
+JSON
+expect_run_says 2 no "snapshotted 1 of 2 volume instance(s) resolved" \
+  "a resolved instance the loop skipped (here, a row with no id) refuses: snapshotted must equal resolved" \
+  -- "$tmp/fake-railway" volume delete --yes
+
 fixture
 echo '{"data":{"volumeInstanceBackupCreate":{"workflowId":null}}}' > "$FIX/create.json"
 expect_run 2 no "a mutation that returns no workflow id refuses" -- "$tmp/fake-railway" volume delete --yes
@@ -531,7 +570,7 @@ expect_run_says 2 no "no READY volume instances found" \
   "a volume instance that is not READY refuses rather than being snapshotted" \
   -- "$tmp/fake-railway" volume delete --yes
 
-# The project-level/environment-level confusion, from the credential's side. A separate change
+# The project-level/environment-level confusion, from the credential's side.
 fixture
 RAILWAY_ENVIRONMENT_ID=ENV-B expect_run 2 no \
   "a requested environment that disagrees with the token's scope refuses" \
@@ -546,7 +585,7 @@ expect_run 2 no "a first backup of a volume past the 50% manual-backup cap refus
 
 # ASSERTS THE MESSAGE: the exit-code-only version stayed green with gql_checked's own "not JSON" check
 # deleted — the malformed body still ends up as an empty $rows one call later, which do_snapshot's
-# "nothing was snapshotted" backstop then catches for an unrelated reason. A separate change
+# "nothing was snapshotted" backstop then catches for an unrelated reason.
 fixture
 echo 'not json at all' > "$FIX/volumes.json"
 expect_run_says 2 no "is not JSON" "an unreadable project graph refuses" -- "$tmp/fake-railway" volume delete --yes
@@ -593,7 +632,7 @@ esac
 # wiring, and since round 4 it is the only shape in which a pin clears an apply at all: a `config apply`
 # naming no `--plan` re-evaluates the authoring file, so no pin the guard was handed describes what it is
 # about to do, and the guard refuses. A fixture written in a shape the runbook never uses proves only that
-# the author was consistent. A separate change
+# the author was consistent.
 echo "== the plan classifier proves harmless before it permits =="
 
 # Every one of these was HARMLESS under the blocklist the guard shipped with.
@@ -836,7 +875,7 @@ cp "$tmp/rp-create.json" "$tmp/same.json"
 # 0. The relative `--plan ./same.json` needs the cwd to be $tmp; save and restore it in THIS shell
 # instead. Every other path in play ($GUARD, $FIX, $SENTINEL, the fake railway) is absolute, so the cd
 # changes nothing else. Found by the assertion count added below, which read 100 while 101 `ok` lines
-# printed - which is exactly the "no case ran" blindness the count exists to end. A separate change
+# printed - which is exactly the "no case ran" blindness the count exists to end.
 __selftest_cwd="$PWD"; cd "$tmp"
 expect_run 0 yes "the same file reached by a different spelling is the same file" \
   --plan "./same.json" -- "$tmp/fake-railway" config apply --plan "$tmp/same.json"
@@ -955,7 +994,7 @@ expect_snapshot 0 "snapshot --volume resolving to exactly one instance is permit
 # ASSERTS THE MESSAGE, for the same reason its SEVERAL-instances sibling below already does: an
 # exit-code-only check here is backstopped by resolve_instances' OWN generic "no READY volume instances
 # found" refusal once the name filter empties $rows, so it stayed green with the --volume name-resolution
-# count check ([ "$count" = "1" ]) deleted outright. A separate change
+# count check ([ "$count" = "1" ]) deleted outright.
 fixture
 expect_snapshot_says 2 "resolves to 0 volume instances" \
   "snapshot --volume resolving to NO instance refuses" --volume not-a-volume
@@ -964,7 +1003,7 @@ fixture
 volumes_json_duplicate_names > "$FIX/volumes.json"
 # ASSERTS THE MESSAGE. With only an exit-code assertion this passed whether or not the resolution
 # check existed: removing it let the run proceed and refuse at "a backup named ... already exists"
-# instead, which is also exit 2 and looks identical. A separate change
+# instead, which is also exit 2 and looks identical.
 expect_snapshot_says 2 "resolves to 2 volume instances" "snapshot --volume resolving to SEVERAL instances refuses rather than picking one" \
   --volume mysql-data
 
@@ -1064,7 +1103,7 @@ expect_run_says 2 no "names no --plan of its own" \
 #
 # THE PLAN HAS TO BE DESTRUCTIVE for this case to mean anything: a harmless one never reaches
 # do_snapshot, so nothing would call the stub, nothing would rewrite the file, and the case would pass
-# on a green exec without ever testing the fingerprint. A separate change
+# on a green exec without ever testing the fingerprint.
 fixture
 declare_refreshable "$DECL_ENV_A_REFRESHABLE"
 echo '{"kind":"railway.config.plan","destructive":true,"changeSet":{"changes":[{"kind":"resource.delete","address":"database.mysql","severity":"destructive"}]}}' > "$tmp/r-plan-mut.json"
@@ -1105,7 +1144,7 @@ expect_classify 11 "variables --set is not a read"               -- "$tmp/fake-r
 echo
 # Raise this when you add a case. A mismatch is a red suite, deliberately: a suite that quietly stopped
 # running a third of its cases is the failure this number exists to make visible.
-EXPECTED_ASSERTIONS=120
+EXPECTED_ASSERTIONS=123
 if [ "$asserts" -ne "$EXPECTED_ASSERTIONS" ]; then
   printf '\033[31mSELF-TEST FAILED\033[0m  ran %s assertion(s), expected %s — a case stopped firing, or one was added without updating EXPECTED_ASSERTIONS.\n' \
     "$asserts" "$EXPECTED_ASSERTIONS" >&2

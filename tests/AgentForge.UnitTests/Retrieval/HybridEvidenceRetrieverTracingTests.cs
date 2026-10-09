@@ -182,7 +182,7 @@ public sealed class HybridEvidenceRetrieverTracingTests
     public async Task RetrieveAsync_RerankCancelled_EndsTheRerankSpanWithNoOutcomeAndNoErrorAndPropagates()
     {
         // The shape ARCHITECTURE-DOCUMENTS.md §10 documents: cancellation is not a degradation, so the stage span
-        // ends with no outcome, Unset status and nothing counted. A separate change
+        // ends with no outcome, Unset status and nothing counted.
         A.CallTo(() => _reranker.RerankAsync(A<string>._, A<IReadOnlyList<RerankDocument>>._, A<int>._, A<CancellationToken>._))
             .ThrowsAsync(new OperationCanceledException());
         using var recorder = SpanRecorder.Start();

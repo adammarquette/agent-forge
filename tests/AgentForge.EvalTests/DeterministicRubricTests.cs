@@ -21,10 +21,10 @@ public sealed class DeterministicRubricTests
         "schema_valid", "citation_present", "no_phi_in_logs",
         "authorization_outcome", "no_unauthorized_disclosure", "attempt_logged",
         // The answer-path trio (M1/M2/M5) is substring and flag-set inspection over a pinned model turn,
-        // so it is judge-free like the rest of this set. Separate changes
+        // so it is judge-free like the rest of this set.
         "grounded_answer", "constraint_flagged", "transparent_degradation",
         // The evidence pair is set membership, list order, a recorded degradation-stage set and citation
-        // resolution over a pinned corpus - judge-free for the same reason. A separate change
+        // resolution over a pinned corpus - judge-free for the same reason.
         "retrieval_hit", "evidence_grounded",
     ];
 
@@ -63,7 +63,7 @@ public sealed class DeterministicRubricTests
     /// <summary>
     /// Given the golden set, when M3's population is counted, then it is non-empty and holds both permits
     /// and denials — the same guard the console gate enforces, kept here so deleting the authorization cases
-    /// cannot go green in <c>dotnet test</c> either (`FR-AUTH-3`, `M3`). A separate change
+    /// cannot go green in <c>dotnet test</c> either (`FR-AUTH-3`, `M3`).
     /// </summary>
     [Fact]
     public void AuthorizationPopulation_WhenCounted_HasBothPermitsAndDenials()
@@ -87,7 +87,7 @@ public sealed class DeterministicRubricTests
     /// case is counted and inspected by nothing, and the gate prints "0 unauthorized disclosures across 14
     /// cases" over a 14th it never looked at, PASS, exit 0. That is the defect this metric exists to remove,
     /// one level up. Mirrors <c>RubricEvaluator.NoForbiddenValueDisclosed</c>, which already refuses the
-    /// opposite mismatch — a case claiming the rubric with nothing forbidden. A separate change
+    /// opposite mismatch — a case claiming the rubric with nothing forbidden.
     /// </summary>
     [Theory]
     [InlineData("safe_refusal", "no_unauthorized_disclosure", "declares neither M3 rubric")]
@@ -115,7 +115,7 @@ public sealed class DeterministicRubricTests
 
     /// <summary>
     /// Given the committed golden set, when the authorization cases are read, then every one declares both
-    /// M3 rubrics — so the number M3 prints covers exactly the population it names. A separate change
+    /// M3 rubrics — so the number M3 prints covers exactly the population it names.
     /// </summary>
     [Fact]
     public void AuthorizationCases_WhenLoaded_EachDeclareBothM3Rubrics()

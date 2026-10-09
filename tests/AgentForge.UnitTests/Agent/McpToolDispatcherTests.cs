@@ -162,7 +162,7 @@ public sealed class McpToolDispatcherTests
     {
         // An upstream FHIR/HTTP failure (e.g. a 403 for a resource the token can't read) must read
         // as a clean "unavailable" in the brief, not leak raw "Response status code..." text; the
-        // agent still sees IsError:true and won't fabricate (UC-5). A separate change
+        // agent still sees IsError:true and won't fabricate (UC-5).
         A.CallTo(() => _toolServer.GetLabsAsync(A<GetLabsRequest>._, A<CancellationToken>._))
             .Throws(new HttpRequestException("Response status code does not indicate success: 403 (Forbidden)."));
 

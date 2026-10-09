@@ -12,7 +12,7 @@ namespace AgentForge.EvalTests;
 /// <para>
 /// A rubric added with no cases to grade passes vacuously, which is indistinguishable from a working
 /// retriever. Separate changes were deliberately landed together for that reason; these tests are what
-/// keep the pairing true after the fact. Separate changes
+/// keep the pairing true after the fact.
 /// </para>
 /// </summary>
 public sealed class EvidenceRubricTests
@@ -296,7 +296,7 @@ public sealed class EvidenceRubricTests
     /// Given a case whose pipeline threw, when it is scored, then every rubric it declares fails — even
     /// the ones an empty outcome would satisfy. A thrown out-of-corpus control retrieved nothing and
     /// logged nothing, so without this it would score <c>retrieval_hit</c> and <c>no_phi_in_logs</c> as
-    /// passes over a run that never happened. A separate change
+    /// passes over a run that never happened.
     /// </summary>
     [Fact]
     public void Evaluate_WhenTheCaseFaulted_FailsEveryDeclaredRubric()

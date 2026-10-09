@@ -11,7 +11,7 @@ namespace AgentForge.IntegrationTests.Support;
 /// Builds the <see cref="HubConnection"/> every in-process hub test connects with. One place,
 /// because the transport is not a detail of any one test: ASP.NET Core Session is a per-HTTP-request
 /// abstraction, so whether the hub can read it at all is decided entirely here.
-/// <c>TestServerHubSessionTransportTests</c> is the guard on that. A separate change
+/// <c>TestServerHubSessionTransportTests</c> is the guard on that.
 /// </summary>
 public static class TestServerHubConnection
 {
@@ -37,7 +37,7 @@ public static class TestServerHubConnection
     /// <summary>
     /// Connects over exactly <paramref name="transport"/>, for tests whose subject is the transport
     /// itself. ServerSentEvents and LongPolling are plain HTTP, so the cookie-carrying handler
-    /// covers every request they make. A separate change
+    /// covers every request they make.
     /// </summary>
     /// <param name="contextKey">
     /// The page key the chat hub binds the connection to (<c>PatientContextBinding</c>), sent as the

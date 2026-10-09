@@ -3,8 +3,13 @@
 How AgentForge and the OpenEMR it plugs into are built, configured, started, checked and rolled back.
 Everything runs as Docker containers: the repository-root [docker-compose.yml](docker-compose.yml) is the
 reference stack, and [.railway/railway.ts](.railway/railway.ts) describes the same stack for Railway as
-infrastructure as code. There is no automation around any of this; every step below is a command an operator
-runs.
+infrastructure as code. The hosted environments are built and deployed by GitHub Actions in the supplier's
+repository; those workflows are not part of this delivery, so every step below is a command an operator runs,
+and §9 says what the automation does in each hosted environment so you can reproduce it on your own CI.
+
+**Where it runs today.** Staging is live at <https://staging-agent-forge.marqspec.com>, on synthetic data
+(§9 *The hosted environments*). Production is **not yet deployed in the new Railway project**; it follows in a
+later delivery.
 
 The architecture behind these containers is in [ARCHITECTURE.md](ARCHITECTURE.md) (core copilot) and
 [ARCHITECTURE-DOCUMENTS.md](ARCHITECTURE-DOCUMENTS.md) (document pipeline and data tier); the OpenEMR
@@ -21,8 +26,8 @@ interface is in [INTERFACES.md](INTERFACES.md).
 | `postgres` (profile `copilot`) | `pgvector/pgvector:pg17` | The sidecar's data tier: guideline corpus, derived facts, vector index. Must be pgvector, not stock Postgres. | 5432, internal |
 
 **Two tiers.** `docker compose up -d` starts OpenEMR, its module and the front door and needs no secrets.
-`docker compose --profile copilot up -d` adds the sidecar and Postgres, which need an Anthropic API key and a
-registered SMART client. The sidecar's `Llm:ApiKey` is required and validated at start, so it cannot boot
+`docker compose --profile copilot up -d` adds the sidecar and Postgres, which need an LLM API key (Anthropic
+by default, or Gemini) and a registered SMART client. The sidecar's `Llm:ApiKey` is required and validated at start, so it cannot boot
 without a key; the profile split keeps the keyless tier from crash-looping.
 
 **Only the proxy publishes a port.** OpenEMR, the sidecar and both databases are reachable only on the compose
@@ -157,9 +162,10 @@ are the exceptions.
 | `OpenEmr__Scopes__0..15` | FHIR scopes. Casing matters (`patient/encounter.read` is rejected). The list is 0-based and must be contiguous. Index 15, `patient/Appointment.read`, is required for authorization, not data: the FR-AUTH-2 relationship check (a clinician may open only a patient on their own schedule for the clinic day) reads the day's appointments on every launch, and without the scope every per-patient launch is refused 403. |
 | `OpenEmrAgenda__ClientId` / `OpenEmrAgenda__ClientSecret` | **Not in compose.** The roster/agenda client (redirect `/agentforge/agenda/callback`). |
 | `OpenEmrAgenda__Scopes__0..5` | **Not in compose.** `openid`, `fhirUser`, `launch`, `api:fhir`, `user/Appointment.read`, `user/Patient.read`. |
-| `Llm__ApiKey` | Anthropic key, from the environment only (`ANTHROPIC_API_KEY` in `.env`). Required. `/ready` checks it with one token-free model lookup, cached for `Readiness__ResultCacheTtl`; a wrong key or unknown model is a 503. |
-| `Llm__Model` | `claude-sonnet-5` |
-| `Llm__InputPricePerMillionTokensUsd` / `Llm__OutputPricePerMillionTokensUsd` | Defaults `2.00` / `10.00`, the model's list price, so the cost metric reports real spend. Change them whenever the model changes, in `docker-compose.yml`, `.railway/railway.ts` and `.env.example` together; nothing validates the pair. |
+| `Llm__Provider` | `Anthropic` (default) or `Gemini` (`LLM_PROVIDER` in `.env`). Any other value stops the sidecar booting. Gemini's free tier may use prompts and responses to improve Google's products, so it is acceptable only with synthetic demo data, never with real PHI and never in production. |
+| `Llm__ApiKey` | The key for that provider, from the environment only (`ANTHROPIC_API_KEY` in `.env`, whichever provider). Required. Gemini's key is sent only as the `x-goog-api-key` header. `/ready` checks it with one token-free model lookup on the configured provider, cached for `Readiness__ResultCacheTtl`; a wrong key or unknown model is a 503. |
+| `Llm__Model` | `claude-sonnet-5` on Anthropic; on Gemini, a model id from Google's models page, without the `models/` prefix |
+| `Llm__InputPricePerMillionTokensUsd` / `Llm__OutputPricePerMillionTokensUsd` | Defaults `2.00` / `10.00`, the model's list price, so the cost metric reports real spend; `0` / `0` on a free tier. Change them whenever the provider or model changes, in `docker-compose.yml`, `.railway/railway.ts` and `.env.example` together; nothing validates the pair. |
 | `AgentForgeData__ConnectionString` | Postgres/pgvector. Optional: the document and evidence flows are additive and the host boots without it. **Setting it is a commitment**: it enables the startup migrations (§5) and makes the vector index a readiness dependency, so an unreachable store, or one missing the `vector` extension, the `guideline_chunks` table or its HNSW index, makes `/ready` 503. Unset, `/ready` reports the vector index `Degraded` (HTTP 200). |
 | `DataStoreStartup__InitialRetryDelay` / `__MaxRetryDelay` | **Not in compose.** Optional, `00:00:01` / `00:00:30`. Backoff for the startup migration and seed retries; no attempt limit. Invalid values refuse to boot. |
 | `Observability__LokiOtlpEndpoint` | **Not in compose; set by the observability overlay.** OTLP/HTTP log push, fail-open (unset means console logging only). |
@@ -411,6 +417,17 @@ built from (`agent-forge-sha-<12>`). The sha tag is what `.railway/railway.ts` a
 Treat both as immutable: never push a different build over an existing tag, and do not rely on moving `-latest`
 tags for anything that matters.
 
+**The published builds.** The supplier's GitHub Actions build every commit on the development line and publish
+it to the public GitHub Container Registry package **`ghcr.io/marqspec/agent-forge`**, one tag per component
+(`agent-forge-sha-<12>`, `proxy-sha-<12>`, `prometheus-sha-<12>`, `grafana-sha-<12>`, `loki-sha-<12>`,
+`tempo-sha-<12>`, `security-platform-sha-<12>`), plus the moving `agent-forge-latest` and `proxy-latest` tags,
+which nothing that matters should follow. The package
+is public, so Railway and `docker pull` fetch it without registry credentials. Earlier builds, including the
+ones production's pins and `docker-compose.yml`'s defaults still name, are on Docker Hub
+(`docker.io/amarquette/gauntletai`); they move to GHCR only when production is promoted to a build staging ran.
+OpenEMR is built in its fork and stays on Docker Hub. To own your images, copy the tags you run into your own
+registry (below) and point `REGISTRY` and the compose defaults at it.
+
 **Before building a release**, run the gates from the repository root:
 
 ```bash
@@ -595,6 +612,61 @@ public domain. `OpenEmr__BaseUrl` and `Bff__PublicBaseUrl` are derived from
 state and still has to be set by the §4 bootstrap. The deprecated `railway.json` / `railway.toml` format is not
 used.
 
+### The hosted environments
+
+The hosted system is one Railway project with two environments, `staging` and `production`, both declared by
+`.railway/railway.ts`. It is a new project: the hosts named in earlier documents and in
+`security-platform/allowlist.json` belong to the project it replaced.
+
+| Environment | Status | Images |
+|---|---|---|
+| `staging` | **Live** at <https://staging-agent-forge.marqspec.com>. `/agentforge/health`, `/agentforge/ready` and the front-door check pass; the synthetic cardiology demo cohort (§4 step 4) is seeded. | The GHCR build of the commit it deploys (`tracks-develop`, below) |
+| `production` | **Not yet deployed in the new project.** It follows in a later delivery, after staging has run green and production's pins are decided. | Literal pins, today the earlier Docker Hub builds |
+
+**How the supplier's automation drives them** (GitHub Actions only; the workflows are not delivered). Each
+Railway environment has its own Railway project token, and each token is held as a secret of a GitHub
+environment, so a job receives a token only by declaring that environment:
+
+| GitHub environment | Holds | Used for |
+|---|---|---|
+| `Staging` | the staging token | applying staging on every push to the development line |
+| `Production` | the production token, behind required reviewers | applying production, only on a merge into the main line, after a reviewer approves |
+| `Production-plan` | the same production token, no reviewer | planning production for a pull request that changes `.railway/`, and the scheduled drift check |
+
+Every apply, in either environment, runs the sequence in *Plan and apply* below: plan, destructive guard,
+snapshot, apply, **apply result check**, deploy-identity, stays-up, front-door check. Staging is fixed forward:
+a red check after an apply leaves staging on the build it tested, and the fix is the next change. If you run
+your own CI, keep the same split: one token per environment, a reviewer in front of production applies, and
+never the production token in a job that a development-line push starts.
+
+### Bootstrapping a fresh Railway project
+
+`railway.ts` creates services, volumes and variables, but a brand-new project needs a few things it cannot
+express. This is the order the current project was brought up in; on another fresh project, do the same:
+
+1. **Make the image package public**, or give each image service Registry Credentials (a paid Railway plan
+   feature that the file cannot declare). A new GHCR package is private on its first push, and Railway pulls
+   anonymously.
+2. **Remove service records a failed apply left behind.** If an earlier apply failed part-way, the project can
+   hold services with no instance in any environment; delete them before the first real apply.
+3. **Set the environment's shared variables** (*Secrets* below) **before** the first apply: `MYSQL_ROOT_PASSWORD`,
+   `MYSQL_PASSWORD`, `POSTGRES_PASSWORD`, `COHERE_API_KEY`, `GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD`.
+   Grafana accepts `admin/admin` without the last two.
+4. **Apply** (*Plan and apply*). The apply result check names any change Railway rejected; fix it and apply
+   again. Two limits a fresh project meets: volumes cannot exceed the Railway plan's size cap (5000 MB on the
+   current plan; `npm run iac:selftest` holds every declared volume under it), and every volume must be in
+   `REGION`, where Railway places the services.
+5. **Set the service-scoped secrets** once the services exist: `Llm__ApiKey` on `agent-forge-api` (it
+   crash-loops without one) and `OE_PASS` on `openemr` (without it the first boot installs the image's default
+   admin password; change it afterwards).
+6. **Generate the front door's domain** (*The manual steps after an apply*, step 1), then make a new
+   deployment of `agent-forge-api` and `grafana` so they resolve it.
+7. **Run §4's bootstrap** against that front door: `tools/RegisterSmartClients`, read its scope report, set the
+   four OAuth values on `agent-forge-api`, then `tools/BootstrapOpenEmr`, and deploy the sidecar again.
+8. **Seed** the demo data if the environment is a demo (§4 step 4, §4a).
+9. **Verify:** `/agentforge/health` and `/agentforge/ready` answer 200 at the front door, and
+   `bash scripts/post-deploy-verify.sh <front door> --grafana` passes.
+
 ### Adapting the definition to your project
 
 The file knows two environment names, `production` and `staging`, and resolves images per environment:
@@ -608,13 +680,11 @@ The file knows two environment names, `production` and `staging`, and resolves i
   12- or 40-character commit of the version you built.
 - **Unknown environments throw** for the sidecar and proxy rather than borrowing another environment's image.
   To add an environment, add its entries.
-- **Sites volume.** `LEGACY_SITES_VOLUME` maps `production` and `staging` onto two hand-created volumes from
-  the original project. In a new Railway project remove those entries so every environment uses the declared
-  `openemr-sites` volume; a name from the wrong environment resolves cleanly and attaches the wrong disk.
+- **Sites volume.** Every environment mounts the declared `openemr-sites` volume (2048 MB, in `REGION`).
 - **Optional services.** Loki, Tempo and the security platform are declared only where their maps
   (`LOKI_IMAGE_BY_ENV`, `TEMPO_IMAGE_BY_ENV`, `SECURITY_PLATFORM_IMAGE_BY_ENV`) have an entry; none has a
   production entry, and the self-test refuses one.
-- **Region.** `REGION` is `sfo`; volumes cannot change region in place.
+- **Region.** `REGION` is `us-east4-eqdc4a`, where Railway places the project's services; volumes cannot change region in place.
 
 `npm run iac:selftest` (`.railway/sites-volume-selftest.mjs`) renders the graph in memory, with no token and no
 network, and checks the conventions above: per-environment volumes, no two environments sharing a volume, every
@@ -655,8 +725,9 @@ bash scripts/railway-destructive-guard.sh railway-plan.json railway-plan.txt
 # STOP unless exit 0 (10 destructive, 11 undecidable)
 
 bash scripts/railway-deploy-identity.sh run --state railway-deploy-identity.json --plan railway-plan.json \
-  -- bash scripts/railway-snapshot-guard.sh run --plan railway-plan.json \
-       -- railway config apply --plan railway-plan.json
+  -- bash scripts/railway-apply-result.sh run --out railway-apply-result.json \
+     -- bash scripts/railway-snapshot-guard.sh run --plan railway-plan.json \
+          -- railway config apply --plan railway-plan.json --yes --json
 
 bash scripts/railway-stays-up.sh --state railway-deploy-identity.json --plan railway-plan.json
 bash scripts/post-deploy-verify.sh https://<front door> --wait 120
@@ -666,8 +737,8 @@ What each step does:
 
 - **The plan** is computed client-side by the Railway CLI from the evaluated file and the live environment
   config. `--out` pins it, so the apply executes exactly what you read. Read `jq -r .cliVersion
-  railway-plan.json`: different CLI versions can produce different plans from the same inputs, and nothing pins
-  the CLI.
+  railway-plan.json`: different CLI versions can produce different plans from the same inputs. The hosted
+  environments install the CLI pinned at 5.63.4 (`npm install -g @railway/cli@5.63.4`); pin yours the same way.
 - **[railway-destructive-guard.sh](scripts/railway-destructive-guard.sh)** reads the plan and exits 0 only
   when it proves nothing is removed. Exit 10 means a resource or variable would be deleted; 11 means it could
   not decide (including a plan that changes a service's build config, which redeploys the service while Railway
@@ -678,6 +749,14 @@ What each step does:
   runs the command, and fails (exit 10) if the environment produced no new deployment, so an apply that reports
   success but ships nothing is caught. It must wrap the snapshot guard, not the other way round, because the
   snapshot guard refuses a command line carrying two `--plan` arguments.
+- **[railway-apply-result.sh](scripts/railway-apply-result.sh)** is the apply result check. `railway
+  config apply --plan` prints "Applied pinned Railway configuration." and exits 0 for every result except a
+  no-op, including `failed` and `partially_applied`, so its message and exit code cannot be trusted. The
+  script runs the apply with `--json` and passes only when Railway answers `applied` with no failed change (or
+  `noop` with no changes); anything else exits 12 (11 when the output cannot be read), printing each change's
+  kind, path, status and Railway's diagnostics. It sits inside deploy-identity, so a rejected apply is reported
+  as itself rather than as "nothing moved", and outside the snapshot guard, which must see exactly one
+  `--plan`. `railway-apply-result.sh check <file>` judges a saved result.
 - **[railway-snapshot-guard.sh](scripts/railway-snapshot-guard.sh)** takes and verifies a volume backup
   before the apply unless the plan is provably harmless (§10).
 - **[railway-stays-up.sh](scripts/railway-stays-up.sh)** watches every service the apply moved for about 60
@@ -783,8 +862,8 @@ another.
 **Data-refreshable environments.** [scripts/railway-data-refreshable.json](scripts/railway-data-refreshable.json)
 lists environments by **id** with two independent answers: `refreshable` (may the snapshot guard skip its
 backup, because the data can be re-seeded rather than restored) and `schedules` (`"none"` or `"daily"`, read only
-by the backup-schedules script). The shipped entries describe the original project's demo environments, both
-synthetic and refreshable. **Your environments are not listed, so the strict answers apply: a verified snapshot
+by the backup-schedules script). The shipped entries describe the environments of the Railway project the current one
+replaced, both synthetic and refreshable; the current project's environments are not listed. **Your environments are not listed, so the strict answers apply: a verified snapshot
 is required, and a daily schedule is expected.** Any malformed or missing answer reads as strict. Add an entry
 for an environment only when its data truly can be thrown away; for real patient data it cannot. A refreshable
 environment still runs every other check, but nothing on the apply path then stops a destructive plan except

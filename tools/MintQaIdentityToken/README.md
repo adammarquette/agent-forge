@@ -1,7 +1,7 @@
 # MintQaIdentityToken
 
 One-time operational script that mints a real, patient-scoped OpenEMR access token for the QA integration
-suite (GitLab issue #27). Not part of the shipped product and not run by CI - `dotnet build` and
+suite. Not part of the shipped product and not run by CI - `dotnet build` and
 `dotnet format` cover it, but the `unit-tests` and `integration-tests` CI jobs filter by project filename
 and never invoke it.
 
@@ -12,7 +12,7 @@ real, distinct patient-scoped tokens, each from a separate SMART login:
 
 - `OpenEmrQa__CrossIdentityTestAccessTokenA` - identity A, scoped to `OpenEmrQa__TestPatientId` (Ada
   Testpatient). **Not** the same as `OpenEmrQa__TestAccessToken`: once `SystemClientId` is configured
-  (issue #22's fix), that one is a system-role `client_credentials` grant that can read every patient,
+  (the client_credentials fix), that one is a system-role `client_credentials` grant that can read every patient,
   which would make an isolation check against it meaningless.
 - `OpenEmrQa__SecondTestAccessToken` / `OpenEmrQa__SecondTestPatientId` - identity B, scoped to a second,
   distinct patient.
@@ -26,14 +26,14 @@ original `TestAccessToken` was obtained. It prints back whatever patient context
 login/consent step resolves to - it does not assume or force which patient gets selected.
 
 Run it **twice**: once logging in as/selecting Ada Testpatient for identity A, once for a second, distinct
-patient for identity B. Issue #26 seeded 20 synthetic demo patients into QA OpenEMR - use any one of those
-for identity B (see MR !41's description for the full pid/uuid table). No need for a dedicated QA patient:
+patient for identity B. SeedDemoPatients seeded 20 synthetic demo patients into QA OpenEMR - use any one of those
+for identity B (the seeding run prints each one's pid and uuid). No need for a dedicated QA patient:
 the test only needs two patients whose data don't leak into each other.
 
-**Durability (issue #29):** the scope also includes `offline_access`, so if this OpenEMR deployment grants
+**Durability:** the scope also includes `offline_access`, so if this OpenEMR deployment grants
 a refresh token, use *that* instead of the raw access token - see Output below. `OpenEmrQaFixture` will
 exchange it for a fresh access token every test run, the same durable pattern already used for
-`OpenEmrQa__TestAccessToken` via `client_credentials` (issue #22), except this preserves patient scoping
+`OpenEmrQa__TestAccessToken` via `client_credentials`, except this preserves patient scoping
 instead of a system-role grant.
 
 ## Running it
@@ -81,7 +81,7 @@ OpenEmrQa__CrossIdentityRefreshTokenB = <refresh token>
 OpenEmrQa__SecondTestPatientId        = <patient uuid>
 
 # If no refresh token was granted (this deployment doesn't support offline_access - falls back to a
-# static, ~1hr-lived access token, same as before issue #29):
+# static, ~1hr-lived access token, as without offline_access):
 OpenEmrQa__CrossIdentityTestAccessTokenA = <token>   # identity A run
 # or, identity B run:
 OpenEmrQa__SecondTestAccessToken = <token>
@@ -95,5 +95,6 @@ first run's printed `CrossIdentityClientId`/`ClientSecret` before running the se
 > **A stored refresh token survives one run** (`DEPLOYMENT.md` §5 *Surviving a
 > reseed*). OpenEMR rotates refresh tokens on use: at the pinned fork, `league/oauth2-server`'s
 > `AuthorizationServer` revokes the redeemed token and issues a new one. So the `CrossIdentityRefreshToken*`
-> lines above are for a local, one-off run only. GitLab's `staging-integration-tests` stores none, and mints the
+> lines above are for a local, one-off run only. A post-deploy integration run should store none and
+> mint the
 > patient-scoped tokens per run through the Playwright login instead.

@@ -31,12 +31,12 @@
 # re-creates what the maintainer's ruling retired. Every case here encoded that as intended, so nothing
 # reddened. The PRODUCTION-SHAPED block below is what would have caught it, and the pair that matters is
 # `refreshable: false` WITH `schedules: "none"`: compliant-with-no-schedules, and still DRIFT if a
-# schedule turns up. A separate change
+# schedule turns up.
 #
 # EVERY RED CASE ASSERTS ON THE REASON, not only on the exit code. Exit 2 is this script's answer to
 # "no credential", "unreadable graph", "unknown volume name", "the mutation failed" and more, so a case
 # asserting only on the code passes when it refused for a reason the case was not written about —
-# indistinguishable from working. Separate changes
+# indistinguishable from working.
 #
 # AND THE SUITE STATES HOW MANY ASSERTIONS IT RAN. A parser that stops matching, a fixture path that
 # moves, a `case` that stops firing — all of them turn a suite into one that reaches no cases and
@@ -131,7 +131,7 @@ JSON
 # declares the live staging environment — so a suite that did not override this would be reading
 # production policy, and would start passing or failing on an edit to a file it is not testing.
 # ENV-A absent from the declaration means "not refreshable", which is the earlier expectation, so
-# every case written before this existed is unchanged. A separate change
+# every case written before this existed is unchanged.
 declare_refreshable() { # declare_refreshable <json-body|NONE>
   if [ "$1" = "NONE" ]; then
     export RAILWAY_DATA_REFRESHABLE_FILE="$FIX/no-such-declaration.json"
@@ -149,7 +149,7 @@ DECL_ENV_A_STAGING='{"kind":"agentforge.railway.data-refreshable","environments"
 # PRODUCTION'S SHAPE FROM a separate change TO a separate change, AND THE ONE THE FIRST VERSION OF THIS CHANGE COULD NOT
 # REPRESENT: the guard must still snapshot here, AND no schedule belongs here. Driving both from
 # `refreshable` made the second answer "DAILY everywhere". Production no longer declares it;
-# the case stays, because the questions are still independent. Separate changes
+# the case stays, because the questions are still independent.
 DECL_ENV_A_PRODUCTION='{"kind":"agentforge.railway.data-refreshable","environments":[{"environmentId":"ENV-A","name":"stub-production","refreshable":false,"schedules":"none","reason":"fill never measured; the guard is the only control in front of the apply","schedulesReason":"ruling: neither environment carries schedules"}]}'
 # THE OTHER DISAGREEMENT, asserted so the separation is proven in both directions rather than in one:
 # throwaway data that is nonetheless declared to carry DAILY schedules.
@@ -348,7 +348,7 @@ fixture
 # schedules:"none" ON PURPOSE: without a decisive value here, data_schedules_decl's own "neither none
 # nor daily" fallback ALSO answers "daily" once the entry is matched, backstopping the kind check
 # invisibly — deleting it left this case green. "none" is what a working match on this entry would
-# answer, so only the kind guard's own fallback can still produce "daily" here. A separate change
+# answer, so only the kind guard's own fallback can still produce "daily" here.
 declare_refreshable '{"environments":[{"environmentId":"ENV-A","schedules":"none","schedulesReason":"stub"}]}'
 expect 3 "no DAILY schedule" "a declaration that does not name its kind is read as DAILY-expected" check
 
@@ -470,7 +470,7 @@ expect 2 "returned 'false' rather than true" "remove refuses when the mutation i
 # pipefail: grep exits at the match, printf dies of SIGPIPE writing the rest, and the 141 read as "no
 # DAILY". Before the mutation that skipped a volume still carrying one; after it, it passed a removal
 # that had not happened. DAILY first, then ~280 KB of WEEKLY, so every line after the match is the
-# SIGPIPE. One case per read. Separate changes
+# SIGPIPE. One case per read.
 long_schedules() { # long_schedules <DAILY|none> <file>
   awk -v daily="$1" 'BEGIN {
     printf "{\"data\":{\"volumeInstanceBackupScheduleList\":["
@@ -535,7 +535,7 @@ echo "== the reader answers nothing about an environment nobody named =="
 # probed at the reader directly. `.environmentId? // "" == $env` matches when BOTH sides are empty, so
 # an empty argument against an entry that has no `environmentId` key would otherwise match and answer
 # out of an entry written for nothing. The file promises "nothing here can make an environment
-# refreshable by breaking" without qualification, and this is the one input that could. A separate change
+# refreshable by breaking" without qualification, and this is the one input that could.
 # shellcheck source=scripts/railway-data-refreshable.sh
 . "$HERE/railway-data-refreshable.sh"
 printf '%s\n' '{"kind":"agentforge.railway.data-refreshable","environments":[{"name":"no id at all","refreshable":true,"schedules":"none","reason":"r","schedulesReason":"r"}]}' > "$tmp/no-id.json"

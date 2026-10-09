@@ -8,7 +8,7 @@ namespace AgentForge.UnitTests.Api.OpenApi;
 /// bytes wherever it runs. <see cref="OpenApiSpecExport.Normalize"/> is what makes that true, and the case
 /// that bites is invisible: descriptions come from doc comments joined with <see cref="Environment.NewLine"/>,
 /// so a Windows run and a Linux run of the same command would otherwise disagree on every multi-line
-/// description in the file and the spec would never settle. A separate change
+/// description in the file and the spec would never settle.
 /// </summary>
 public sealed class OpenApiSpecExportTests
 {

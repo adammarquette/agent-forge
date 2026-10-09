@@ -20,7 +20,7 @@ if (!Directory.Exists(goldenDir) || !File.Exists(baselinePath))
 // Through the shared loader, which is what refuses a case stating no failure mode - the xUnit tier loads the
 // same way, so a case cannot be added past one and caught only by the other. A malformed or undocumented case
 // is an asset problem, not a rubric result, so it exits 2 like a missing golden/ does rather than surfacing as
-// an unhandled exception with no exit code anyone documented. A separate change
+// an unhandled exception with no exit code anyone documented.
 IReadOnlyList<GoldenCase> cases;
 try
 {
@@ -39,7 +39,7 @@ if (cases.Count == 0)
 }
 
 // Through EvalGatePolicy so the xUnit tier reads the same file the same way - the policy is asserted there
-// against the committed case counts, and a second parse here would be a second policy. A separate change
+// against the committed case counts, and a second parse here would be a second policy.
 EvalBaseline baseline;
 try
 {
@@ -50,7 +50,7 @@ catch (InvalidOperationException ex)
     // Same shape as the golden-case loader above, and for the same reason: a hand-edited baseline.json is
     // a policy error, so it reports in the gate's own voice. Without this an absent `tier` key - one of the
     // three ways to get a category's tier wrong - blocked as a deserializer stack trace while the other two
-    // printed a named gate line. A separate change
+    // printed a named gate line.
     await Console.Error.WriteLineAsync(ex.Message);
     return 2;
 }
@@ -60,7 +60,7 @@ var perRubricTotal = new Dictionary<string, int>(StringComparer.Ordinal);
 var caseReports = new List<object>();
 
 // A rubric rate names what fell over, never why it mattered. Collected per case so the red build can print
-// the failing case's own `guards` line next to the rubrics it failed. A separate change
+// the failing case's own `guards` line next to the rubrics it failed.
 var failedCases = new List<(string Id, string[] Rubrics, string Guards, string? Fault)>();
 
 // Collected from the outcome, not from failedCases, so a fault blocks even where no rubric recorded it.
@@ -68,7 +68,7 @@ var faultedCases = new List<string>();
 
 // M3 ("0 unauthorized disclosures across role/injection eval cases") is counted here rather than inferred
 // from a rubric rate, because a rate cannot distinguish zero failures from zero cases - which is precisely
-// how the metric read green while the population was empty. A separate change
+// how the metric read green while the population was empty.
 var authorizationCases = 0;
 var permitCases = 0;
 var denyCases = 0;
@@ -77,14 +77,14 @@ var loggedAttempts = 0;
 
 // M1, M2 and M5 are counted the same way and for the same reason: all three were "not measured" against the
 // Week 1 answer path, and a rate over an absent population reads exactly like a clean result
-// (METRICS.md §2). Separate changes
+// (METRICS.md §2).
 var m1Cases = 0;
 var m1SuppressionCases = 0;
 var m1ShippedIntactCases = 0;
 var m1KnownEscapes = 0;
 
 // NG1's "does not recommend treatment" has no mechanism below the model, so its pinned escape is counted beside
-// M1 rather than inside it - a green gate must not read as "no recommendation can ship". A separate change
+// M1 rather than inside it - a green gate must not read as "no recommendation can ship".
 var m1ScopeEscapes = 0;
 var ungroundedClaimsShipped = 0;
 
@@ -101,7 +101,7 @@ var silentOrFabricatedAnswers = 0;
 
 // The evidence slice, counted for the same reason as the four above and no other: hybrid RAG shipped scored
 // by nothing, so "retrieval_hit 100%" over zero cases read exactly like a working retriever, and the brief
-// grades the gate by injecting a regression. Separate changes
+// grades the gate by injecting a regression.
 var evidenceCases = 0;
 var evidenceHitCases = 0;
 var outOfCorpusControls = 0;
@@ -168,7 +168,7 @@ foreach (var testCase in cases.OrderBy(c => c.Id, StringComparer.Ordinal))
         // Indexed, not defaulted: this denominator is every authorization case, so every authorization case
         // must have been scored by both M3 rubrics. RubricEvaluator.RequireMetricCoverage already refuses a
         // case that declares neither - reading the key rather than defaulting it keeps that invariant
-        // load-bearing at this end too, instead of counting a case nothing checked. A separate change
+        // load-bearing at this end too, instead of counting a case nothing checked.
         if (!scores[RubricEvaluator.NoUnauthorizedDisclosure])
         {
             unauthorizedDisclosures++;
@@ -336,7 +336,7 @@ foreach (var rubric in perRubricTotal.Keys.OrderBy(k => k, StringComparer.Ordina
     // Both arms live in EvalGatePolicy.Evaluate: the category's TIER floor and the >5%-per-category
     // regression the Week 2 brief names. The second was dead code everywhere; it is live in
     // the quality tier and DELIBERATELY unreachable in the safety tier, where a 100% floor already refuses
-    // any drop at all. That file carries the tiers and why 0.80 is not a rounder number. A separate change
+    // any drop at all. That file carries the tiers and why 0.80 is not a rounder number.
     if (EvalGatePolicy.Evaluate(rubric, rate, baseline) is { } failure)
     {
         failures.Add(failure);
@@ -345,7 +345,7 @@ foreach (var rubric in perRubricTotal.Keys.OrderBy(k => k, StringComparer.Ordina
 
 // A baseline entry no case scores is the same defect one direction over: the loop above walks the rubrics
 // the RUN reported, so deleting every case declaring a rubric drops it out of the loop silently while
-// baseline.json goes on claiming it at 100%. A separate change
+// baseline.json goes on claiming it at 100%.
 foreach (var orphan in EvalGatePolicy.OrphanedBaselineCategories(baseline, categoryRates.Keys))
 {
     failures.Add(
@@ -355,7 +355,7 @@ foreach (var orphan in EvalGatePolicy.OrphanedBaselineCategories(baseline, categ
 
 // A case that threw fails every rubric it declares, which drags down rates it never measured - a thrown
 // case reads as a PHI leak in no_phi_in_logs. This line blocks on its own, whatever the rates say, and says
-// which it was. A separate change
+// which it was.
 if (faultedCases.Count > 0)
 {
     failures.Add(
@@ -600,7 +600,7 @@ Console.WriteLine(
 
 // The rubric rates above say which rubric slipped; they never say what the case that slipped was defending.
 // Whoever reads this is a stranger to the change that broke it, so print the case's own `guards` line here -
-// that is the whole point of the field. A separate change
+// that is the whole point of the field.
 if (failedCases.Count > 0)
 {
     var to = gatePassed ? Console.Out : Console.Error;
@@ -610,7 +610,7 @@ if (failedCases.Count > 0)
         await to.WriteLineAsync($"  - {id}  failed: {string.Join(", ", rubrics)}");
         if (fault is not null)
         {
-            // Every rubric failed because the run threw, not because each was checked. A separate change
+            // Every rubric failed because the run threw, not because each was checked.
             await to.WriteLineAsync($"    threw: {fault}");
         }
 

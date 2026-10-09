@@ -11,7 +11,7 @@ namespace AgentForge.Integration.OpenEmr.Http;
 /// clinician. OpenEMR issues one-hour access tokens while the BFF session holding one slides on
 /// every request, so an active session outlives its own token - and until this type existed the
 /// result was an anonymous 401 on every FHIR read, which graceful degradation (NFR-REL-1) turned
-/// into a brief written from almost no chart. A separate change
+/// into a brief written from almost no chart.
 /// </remarks>
 public sealed class AccessTokenExpiredException : Exception
 {

@@ -390,7 +390,7 @@ public sealed class AgentOrchestrator(
             content.Add(new LlmTextContent(response.Content));
         }
 
-        content.AddRange(response.ToolCalls.Select(c => new LlmToolUseContent(c.Id, c.ToolName, c.ArgumentsJson)));
+        content.AddRange(response.ToolCalls.Select(c => new LlmToolUseContent(c.Id, c.ToolName, c.ArgumentsJson, c.ReplayToken)));
 
         return content;
     }

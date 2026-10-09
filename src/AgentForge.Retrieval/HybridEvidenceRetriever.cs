@@ -83,7 +83,7 @@ public sealed class HybridEvidenceRetriever : IEvidenceRetriever
     }
 
     // One child span per stage, under the caller's span (the evidence-retriever worker span in the graph).
-    // Stage literals only, never the query or a snippet (ARCHITECTURE-DOCUMENTS.md §12). A separate change
+    // Stage literals only, never the query or a snippet (ARCHITECTURE-DOCUMENTS.md §12).
     private static Activity? StartStage(string stage)
     {
         var span = AgentForgeActivitySource.Instance.StartActivity(EvidenceTracing.RetrievalStageSpanPrefix + stage);

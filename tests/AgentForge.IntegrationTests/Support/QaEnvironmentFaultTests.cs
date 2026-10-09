@@ -11,7 +11,7 @@ namespace AgentForge.IntegrationTests.Support;
 /// timeout failure is reported as <see cref="QaEnvironmentUnavailableException"/>; an answer the server gave, a
 /// caller's cancellation and a fixture's own configuration fault are not. Browser-free.
 /// </summary>
-// Selects this class into the merge-request job integration-tests-no-deployment. A separate change
+// Selects this class into the merge-request job integration-tests-no-deployment.
 [Trait("Deployment", "None")]
 public sealed class QaEnvironmentFaultTests
 {

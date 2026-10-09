@@ -18,7 +18,7 @@ namespace AgentForge.UnitTests.Observability;
 /// on the <em>instrument</em> side only. This reads the rule as shipped, so editing a threshold off a boundary
 /// is red too - a threshold sitting mid-bucket puts <c>histogram_quantile</c> back to interpolating across
 /// the band at exactly the point being tested. <c>Week2HistogramExportTests</c> is the third side: that the
-/// boundaries actually reach the exported series. Separate changes
+/// boundaries actually reach the exported series.
 /// </para>
 /// <para>
 /// <c>AgentTurnBriefHistogramExportTests</c> (<c>a separate change</c>) pins that a <c>Brief</c> turn is exported
@@ -46,7 +46,7 @@ public sealed class AlertRuleThresholdTests
         {
             // Joined with no gap, exactly as PromQL requires a label selector to sit immediately after the
             // metric name - checking for the two together, not expectedSeries alone, is what makes the
-            // filter itself a pin. A separate change
+            // filter itself a pin.
             expr.Should().Contain(expectedSeries + expectedFilter,
                 "{0} must filter to {1} - without it the rule evaluates the unfiltered series, dominated by " +
                 "short Daily Agenda and follow-up turns, and NFR-PERF-1's budgeted population is no longer " +
@@ -107,7 +107,7 @@ public sealed class AlertRuleThresholdTests
     /// Index of the <c>- alert: </c> line declaring <paramref name="alertName"/>, or <c>-1</c>. The name has
     /// to end the line: a bare <c>IndexOf</c> also matched a rule whose name merely <em>starts</em> with this
     /// one, so renaming the alert to <c>AgentForgeHighTurnLatencyP95Brief</c> left this guard green over a
-    /// rule that no longer existed. A separate change
+    /// rule that no longer existed.
     /// </summary>
     private static int IndexOfAlertDeclaration(string rules, string alertName)
     {

@@ -9,7 +9,7 @@ namespace AgentForge.Api.Session;
 /// </summary>
 /// <remarks>
 /// Backed by a <c>static</c> <see cref="AsyncLocal{T}"/>, not a per-instance field, even though
-/// this type is registered Scoped (GitLab issue #39): <see cref="AuthHandler"/> is constructed by
+/// this type is registered Scoped: <see cref="AuthHandler"/> is constructed by
 /// <c>IHttpClientFactory</c> using its own internal handler-building scope, never the calling hub
 /// invocation's DI scope - confirmed live 2026-07-10, a plain per-instance field left
 /// <see cref="AuthHandler"/> reading a <em>different, never-set</em> instance no matter how often

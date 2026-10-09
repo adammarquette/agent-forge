@@ -14,7 +14,7 @@ namespace AgentForge.IntegrationTests.Api;
 /// fixtures that boot <c>Program.cs</c> stay green with that validation removed. This asserts the
 /// guarantee, not the two lines that produce it.
 /// </summary>
-// Selects this class into the merge-request job integration-tests-no-deployment. A separate change
+// Selects this class into the merge-request job integration-tests-no-deployment.
 [Trait("Deployment", "None")]
 [Trait("Metric", "M3-AuthorizationIntegrity")]
 public sealed class ProductionCompositionTests : IClassFixture<ProductionHostFixture>

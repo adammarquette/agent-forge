@@ -89,7 +89,7 @@ public sealed class ChatSessionCoordinator(
             : ConversationState.Start(session.Site, session.PatientId);
     }
 
-    // Before the token is adopted or the orchestrator called, so a refused turn bills no LLM round. A separate change
+    // Before the token is adopted or the orchestrator called, so a refused turn bills no LLM round.
     private void ChargeTurn(string sessionId)
     {
         if (!turnBudget.TryConsume(sessionId))

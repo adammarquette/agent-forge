@@ -52,7 +52,7 @@ public sealed class ChatHubSessionMiddlewareTests
     public async Task InvokeAsync_HubRequestWhoseTokenHasAlreadyExpired_ResolvesNoPatientContext()
     {
         // Expiry is decided by the same TryGetPatientSession every HTTP surface uses, so an aged-out
-        // session reaches the hub exactly as it did when the hub read the session itself. A separate change
+        // session reaches the hub exactly as it did when the hub read the session itself.
         var expired = LiveSession with { ExpiresAt = Now.AddMinutes(-1) };
         var httpContext = BuildHttpContext("/hubs/chat", SessionHolding(expired, "session-xyz"));
 

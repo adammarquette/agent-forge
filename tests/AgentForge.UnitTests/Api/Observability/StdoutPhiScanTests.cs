@@ -5,7 +5,7 @@ namespace AgentForge.UnitTests.Api.Observability;
 /// <summary>
 /// The stdout scanner's exemption rules, over console text written by hand, so each rule is pinned without a host.
 /// Failure mode guarded (invariant): the audit trail's exemption widening past its own two fields - a name, or an
-/// identifier in the wrong field, riding an audit line unscanned. Separate changes
+/// identifier in the wrong field, riding an audit line unscanned.
 /// </summary>
 public sealed class StdoutPhiScanTests
 {
@@ -72,7 +72,7 @@ public sealed class StdoutPhiScanTests
     [InlineData("      ACCESS AUDIT: clinician=scan-clinician-8a2c accessed patient=scan-patient-5e1f via tool=evidence_document document=scan-document-3b7d")]
     public void LinesLeaking_WhenAnyLineNamesADocumentId_ReportsIt(string line)
     {
-        // A document id has no exempt field, so it is reported on an audit line and in a scope alike. A separate change
+        // A document id has no exempt field, so it is reported on an audit line and in a scope alike.
         var stdout = line.StartsWith("      ", StringComparison.Ordinal) ? $"info: {StdoutPhiScan.AccessAuditCategory}[1]\n{line}" : line;
 
         StdoutPhiScan.LinesLeaking(stdout, Ids).Should().ContainSingle().Which.Should().Contain("scan-document-3b7d");

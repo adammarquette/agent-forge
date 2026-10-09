@@ -4,7 +4,7 @@ namespace AgentForge.Api.Observability;
 
 /// <summary>
 /// Source-generated log message for a rejected <see cref="TraceExportPlan"/> endpoint (CA1848). Names the
-/// setting, never its value. A separate change
+/// setting, never its value.
 /// </summary>
 internal static partial class TraceExportPlanLog
 {

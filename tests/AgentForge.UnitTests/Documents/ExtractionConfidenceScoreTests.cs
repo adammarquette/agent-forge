@@ -8,7 +8,7 @@ namespace AgentForge.UnitTests.Documents;
 /// <c>DerivedFact.ExtractionConfidence</c> means. Two consumers read it in opposite directions
 /// (<c>DerivedFactMapper</c> writes the score, <c>DocumentIngestionService</c> reads the outcome back off
 /// it for the field-level metric), so the round trip is the contract: if the two ever disagree, a document
-/// whose quote was absent would be metered as one that was never checked. A separate change
+/// whose quote was absent would be metered as one that was never checked.
 /// </summary>
 public sealed class ExtractionConfidenceScoreTests
 {

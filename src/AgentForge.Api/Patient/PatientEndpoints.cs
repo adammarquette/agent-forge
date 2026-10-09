@@ -22,7 +22,7 @@ public static class PatientEndpoints
         return endpoints;
     }
 
-    // Internal for its unit tests. The payload carries the key the page's hub connection presents. A separate change
+    // Internal for its unit tests. The payload carries the key the page's hub connection presents.
     internal static async Task<IResult> HandleGetPatientAsync(
         HttpContext httpContext, PatientContextService service, TimeProvider timeProvider)
     {

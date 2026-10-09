@@ -19,7 +19,7 @@ namespace AgentForge.Mcp;
 /// <c>validateAllProperties</c>, so the server enforces <i>every</i> <see cref="ValidationAttribute"/>
 /// on the record - which means a constraint this builder cannot express must stop the build rather
 /// than be dropped. A generated schema that quietly omits a constraint is worse than a hand-written
-/// one, because it looks authoritative. A separate change
+/// one, because it looks authoritative.
 /// </para>
 /// <para>
 /// The record carries everything the model needs: the property, its type, whether it is required, the
@@ -37,7 +37,7 @@ public static class McpToolInputSchema
     /// <summary>
     /// The exact attribute types this builder can express. Membership is by exact type, not assignability:
     /// a subclass can refuse more than its base while carrying the base's own data, so advertising the base
-    /// constraint for it would tell the model a value is acceptable that the server rejects. A separate change
+    /// constraint for it would tell the model a value is acceptable that the server rejects.
     /// </summary>
     private static readonly HashSet<Type> MappedConstraints =
     [
@@ -95,7 +95,7 @@ public static class McpToolInputSchema
     /// per-property ones, and neither has a JSON Schema keyword to live on - a cross-field rule mostly has
     /// no JSON Schema expression at all. So the answer is to refuse rather than to map: a schema silent
     /// about a rule the server refuses the call for is the asymmetry this builder exists to prevent, one
-    /// level above where it was first found. A separate change
+    /// level above where it was first found.
     /// </summary>
     private static void RejectConstraintsAboveTheProperty(Type requestType)
     {
@@ -167,7 +167,7 @@ public static class McpToolInputSchema
 
             case RegularExpressionAttribute expression:
                 // Verbatim, not a translation: McpDateFilter.Pattern is written to mean the same thing
-                // in ECMA-262 (which JSON Schema `pattern` is) as in .NET. A separate change
+                // in ECMA-262 (which JSON Schema `pattern` is) as in .NET.
                 described["pattern"] = expression.Pattern;
                 break;
 
@@ -232,7 +232,7 @@ public static class McpToolInputSchema
         }
 
         // An exclusive bound advertised as an inclusive one is permissive in exactly the direction that
-        // costs a refused tool call mid-brief. A separate change
+        // costs a refused tool call mid-brief.
         described[range.MinimumIsExclusive ? "exclusiveMinimum" : "minimum"] = AsJsonNumber(range.Minimum, property);
         described[range.MaximumIsExclusive ? "exclusiveMaximum" : "maximum"] = AsJsonNumber(range.Maximum, property);
     }

@@ -42,7 +42,7 @@ public sealed class AgentOrchestratorEndToEndTests : IClassFixture<AgentOrchestr
 
     [Fact(Skip =
         "Live: followUp.Answer comes back as an empty string against the real QA patient (Ada Testpatient, who " +
-        "has no allergy data on file - issue #26's data-gap theme). Root cause not fully isolated - plausibly " +
+        "has no allergy data on file - a known gap in the demo data). Root cause not fully isolated - plausibly " +
         "the model's answer gets entirely stripped by ClinicalResponseVerifier the same way " +
         "AgentOrchestratorBoundaryTests's skip below is (a claim citing accumulated context rather than this " +
         "turn's tool results), but that's a guess, not confirmed. Needs a live trace of the actual LLM response " +

@@ -284,7 +284,7 @@ public sealed class ChatHubTests : IDisposable
         // defers to ChatSessionCoordinator's per-turn scope, and this refusal is raised outside that
         // scope - before it on the pre-check, after it has been disposed on this path. Reading the
         // ambient accessor at the moment of refusal mints a *fresh* id unless the hub established one
-        // first, and a refusal under an id no other line carries joins nothing. A separate change
+        // first, and a refusal under an id no other line carries joins nothing.
         await ConnectWithSession(new PatientSessionContext("token-abc", "default", "123", "dr-jones", Now.AddHours(1)));
         string? idDuringTurn = null;
         A.CallTo(() => _orchestrator.AskFollowUpAsync(
@@ -337,7 +337,7 @@ public sealed class ChatHubTests : IDisposable
     public async Task AskFollowUp_ConversationTurnLimitReached_TellsTheClinicianWhyInsteadOfAGenericTransportError()
     {
         // SignalR replaces a non-HubException's message with a generic one, so the cap has to be translated here
-        // or the clinician sees "That didn't go through" and retries into the same refusal. A separate change
+        // or the clinician sees "That didn't go through" and retries into the same refusal.
         await ConnectWithSession(new PatientSessionContext("token-abc", "default", "123", "dr-jones", Now.AddHours(1)));
         A.CallTo(() => _turnBudget.TryConsume("session-xyz")).Returns(false);
 

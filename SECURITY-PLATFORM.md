@@ -84,9 +84,9 @@ flowchart TB
 
 Production has the same application shape, pins its images, runs no Tempo, and is **not** a target.
 
-Beside the platform, the build runs deterministic security scans (SAST, secret detection, dependency and
-licence audit, a CycloneDX SBOM and image scan per image, ZAP baseline and Nuclei against staging), and a
-98-case quality eval gate ([`evals/`](evals/)) that is a quality gate, not an adversarial one. Status of
+Beside the platform, the build runs deterministic checks: secret detection (gitleaks) and a dependency and
+licence audit. Static analysis (SAST), a per-image SBOM and image scan, and dynamic scans against staging are
+**not currently run**. There is also a 98-case quality eval gate ([`evals/`](evals/)) that is a quality gate, not an adversarial one. Status of
 every part is in §11.
 
 ---
@@ -452,7 +452,7 @@ human read the same records**, so they never see different truths. Metric defini
 
 | Status | Parts |
 |---|---|
-| **Built** | The Copilot stack (sidecar, OpenEMR, proxy, MySQL, Postgres + pgvector); Prometheus and Grafana (both environments) and Tempo (staging); inbound `X-Correlation-Id` recorded on the `evidence.ask` span; the security scans; the case-insensitive proxy blocks; edge rate limits and the per-session LLM turn budget; the inert document viewer; the `security-platform` image, idle staging service, allowlist, spend ceiling and deterministic replayer |
+| **Built** | The Copilot stack (sidecar, OpenEMR, proxy, MySQL, Postgres + pgvector); Prometheus and Grafana (both environments) and Tempo (staging); inbound `X-Correlation-Id` recorded on the `evidence.ask` span; secret detection and the dependency and licence audit; the case-insensitive proxy blocks; edge rate limits and the per-session LLM turn budget; the inert document viewer; the `security-platform` image, idle staging service, allowlist, spend ceiling and deterministic replayer |
 | **Built as files, not run** | The agent definitions, sha256-pinned prompts, both schemas, and the self-test that checks them |
 | **Planned** | The correlation join for chat and other routes; the seed suite `evals/adversarial/`; a live agent run from a named trigger; the Orchestrator, Judge and Documentation agents; the exploit store, run records and regression runs; the Judge's calibration set; a threat-intelligence feed (STIX 2.1/TAXII, MITRE ATLAS, CISA KEV) into the Orchestrator |
 
@@ -466,7 +466,8 @@ human read the same records**, so they never see different truths. Metric defini
   refused.
 - **Replace the origins for your deployment.** `allowlist.json`, and the `STAGING_ORIGIN` and
   `PRODUCTION_ORIGIN` constants in `allowlist.py` (which the self-test and the pre-publish check use), carry
-  the original hosted environments' front doors. Set them to *your* staging and production front-door URLs
+  the earlier Railway project's front doors (staging now answers at
+  `https://staging-agent-forge.marqspec.com`). Set them to *your* staging and production front-door URLs
   before you run anything, then re-run the self-test. The commented `SECURITY_PLATFORM_*` lines in
   [`.env.example`](.env.example) need the same change.
 - **Human approval before a critical is published** (§6 Q5).

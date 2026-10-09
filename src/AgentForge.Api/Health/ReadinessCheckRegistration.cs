@@ -27,7 +27,7 @@ public static class ReadinessCheckRegistration
         services.AddLlmProviderHealthCheckClient();
         services.AddHttpClient<ObservabilityHealthCheck>();
         // Registered even where Week 2 is not wired: the check reports Cohere:ApiKey unconfigured rather
-        // than say nothing. A raw GET of /v1/models, never a rerank call. A separate change
+        // than say nothing. A raw GET of /v1/models, never a rerank call.
         services.AddRerankerHealthCheckClient();
 
         services.AddHealthChecks()

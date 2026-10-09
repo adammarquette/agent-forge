@@ -104,7 +104,7 @@ assert_eq "$leaked" "no" "the 404 body carries no Prometheus exposition-format t
 # The sidecar matches paths case-insensitively (UsePathBase + endpoint routing), so a case-sensitive
 # nginx prefix location would let these spellings fall through to /agentforge/ and reach the sidecar.
 # --path-as-is keeps curl from normalising the path, so the percent-encoded byte reaches nginx literally.
-# These are the exact spellings the reviewer proxied to the sidecar at the pre-fix head. A separate change
+# These are the exact spellings the reviewer proxied to the sidecar at the pre-fix head.
 status_mixed=$(curl -s --path-as-is -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/agentforge/Metrics")
 assert_eq "$status_mixed" "404" "the mixed-case spelling /agentforge/Metrics is blocked (case-insensitive block)"
 

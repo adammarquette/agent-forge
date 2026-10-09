@@ -67,7 +67,7 @@ public sealed class HostStdoutPhiScanTests : IDisposable
     private const string DocumentReferenceId = "phi-scan-docref-9d3a";
 
     // The request path carried the fetched document's id onto every record of a fetch until it was scrubbed.
-    // The fetch names an ingested DocumentReference id, since the endpoint refuses any other. Separate changes
+    // The fetch names an ingested DocumentReference id, since the endpoint refuses any other.
     private static readonly ScanIdentifiers Ids = new(PatientId, ClinicianId, FamilyName, [DocumentReferenceId]);
 
     private readonly TextWriter _originalOut = Console.Out;

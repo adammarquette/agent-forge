@@ -17,7 +17,7 @@ public static class McpDateFilter
     /// model as a JSON Schema <c>pattern</c>, which is ECMA-262, where <c>\d</c> is ASCII-only - while
     /// .NET's <c>\d</c> is every Unicode decimal digit. The two dialects therefore disagreed on e.g.
     /// <c>ge٢٠٢٦</c>: accepted by the server, then unparseable by <see cref="ExtractDate"/>. Spelling
-    /// the class out makes one literal correct in both. A separate change
+    /// the class out makes one literal correct in both.
     /// </remarks>
     public const string Pattern = "^(eq|ne|gt|lt|ge|le|sa|eb|ap)[0-9]{4}(-[0-9]{2}(-[0-9]{2})?)?$";
 

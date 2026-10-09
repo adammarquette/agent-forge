@@ -6,7 +6,7 @@ namespace AgentForge.UnitTests.Api.Contracts;
 /// <summary>
 /// The command line that selects graph-schema export (<c>--export-graph-schema</c>). Guarded: a
 /// normal start is never mistaken for an export, and an export with no path refuses rather than starting the
-/// app - which would otherwise boot the whole host and serve traffic from a script. A separate change
+/// app - which would otherwise boot the whole host and serve traffic from a script.
 /// </summary>
 public sealed class EvidenceGraphSchemaExportTests
 {

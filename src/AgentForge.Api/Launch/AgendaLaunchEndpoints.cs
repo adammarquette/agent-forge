@@ -38,7 +38,7 @@ public static class AgendaLaunchEndpoints
         _ = iss; // Present per SMART launch (INTERFACES.md A.3); not needed beyond the configured connection (v1: single fixed OpenEMR deployment).
         var (authorizeUrl, pending) = launchService.BeginLaunch(launch);
 
-        // A cookie, not the session: this route is unauthenticated. A separate change
+        // A cookie, not the session: this route is unauthenticated.
         PendingLaunchCookie.Add(httpContext, PendingLaunchFlow, pending, dataProtection, timeProvider, bffOptions.Value);
 
         return Results.Redirect(authorizeUrl.ToString());

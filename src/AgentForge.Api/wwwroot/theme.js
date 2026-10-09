@@ -1,6 +1,6 @@
 // Picks the theme before first paint by setting html[data-theme]; theme.css falls back to prefers-color-scheme
 // when nothing is set. Order: an explicit ?theme=light|dark, then the embedding OpenEMR window's own theme
-// stylesheet when it is same-origin (the reverse-proxy front door). A separate change
+// stylesheet when it is same-origin (the reverse-proxy front door).
 (function () {
   var root = document.documentElement;
   function valid(t) { return t === 'light' || t === 'dark' ? t : null; }

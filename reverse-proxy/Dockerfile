@@ -18,7 +18,7 @@ RUN chmod +x /docker-entrypoint.d/10-resolver.envsh
 # detect - `docker compose config` validates it happily - and its only symptom is the 502 that a
 # forgotten `--profile copilot` also produces. The script refuses to start rather than serve it.
 # Executable for the same reason as above: the stock entrypoint skips a non-executable hook
-# silently, which would make this guard a comment. A separate change
+# silently, which would make this guard a comment.
 COPY 15-assert-sidecar-port.sh /docker-entrypoint.d/15-assert-sidecar-port.sh
 RUN chmod +x /docker-entrypoint.d/15-assert-sidecar-port.sh
 
@@ -42,7 +42,7 @@ ENV OPENEMR_UPSTREAM=openemr:80 \
 # nginx.conf.template for how the empty rendering stays valid nginx. DEFINED here rather than
 # left unset because the stock entrypoint's envsubst only substitutes variables that exist in
 # the environment: unset, `${GRAFANA_UPSTREAM}` would survive into the rendered config as
-# literal text and nginx would refuse to start on an unknown variable. A separate change
+# literal text and nginx would refuse to start on an unknown variable.
 ENV GRAFANA_UPSTREAM=
 
 # EMPTY BY DEFAULT, not 127.0.0.11: 10-resolver.envsh reads the real resolver out

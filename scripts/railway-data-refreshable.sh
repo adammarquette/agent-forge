@@ -21,7 +21,7 @@
 # carry no schedules, because the maintainer's ruling said neither environment does. One boolean made the
 # second answer YES by implication, so `check` demanded a DAILY schedule on every production volume and
 # told the operator to run the `apply` that re-creates what the ruling retired. Nobody wrote that answer;
-# it rode in on the other question's. Keep them apart. Separate changes
+# it rode in on the other question's. Keep them apart.
 #
 # WHY A DECLARATION EXISTS AT ALL. The maintainer ruled on 2026-09-22 that neither environment gets
 # scheduled volume backups, because the data is not critical and can be refreshed. That settles data
@@ -81,7 +81,7 @@ data_refreshable_file() {
 # matches when BOTH sides are empty, so without it an empty argument against an entry that has no
 # `environmentId` key would match, and the answer would come from an entry written for nothing. It is
 # unreachable from either caller today — both die on an empty scope — and closed here anyway, because
-# the promise above is unconditional. A separate change
+# the promise above is unconditional.
 data_decl_match() {
   local env="$1" f out
   if [ -z "$env" ]; then

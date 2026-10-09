@@ -17,7 +17,7 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 USER nobody
 
 # The compose value (see the entrypoint): under compose the sidecar shares the proxy's network
-# namespace, so `reverse-proxy:8081` IS the sidecar's Kestrel. A separate change
+# namespace, so `reverse-proxy:8081` IS the sidecar's Kestrel.
 ENV SIDECAR_TARGET=reverse-proxy:8081
 
 # Bind [::] rather than the default 0.0.0.0:9090 (IPv4 only): some container networks resolve service

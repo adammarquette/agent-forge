@@ -8,7 +8,7 @@
 // Everything that can live in source lives here, and CI fails on drift between
 // this file and the live environment.
 //
-// reference: labs.gauntletai.com#140, DEPLOYMENT.md
+// reference: DEPLOYMENT.md
 //
 // NOT config-as-code: railway.json / railway.toml are deprecated, new services
 // cannot opt into them, and they stop being read on 2026-12-01.
@@ -26,17 +26,31 @@ import { defineRailway, image, preserve, project, service, volume } from "railwa
 // Volumes are provisioned into a specific region; keep every volume in one
 // region so private networking stays intra-region. Change in one place.
 //
-// "sfo", NOT "us-west2", AND THAT IS THE RECONCILIATION, NOT A PREFERENCE. Every live
-// volume in this project is in `sfo`; this file declared `us-west2`, so every plan
-// proposed `~ Update <volume> config.region` on all three declared volumes - and Railway
-// marks those DESTRUCTIVE, because a volume cannot change region in place: honouring the
-// rewrite means recreating it empty. The rows were empirically inert (applied twice with
-// the volumes intact) but "inert" is not "correct", and they kept the drift job
-// red every morning, which is how a guardrail stops being read. The file was wrong, so
-// the file changed. Moving the data to us-west2 was the alternative and was rejected:
-// nothing needs it there, and it would mean recreating the OpenEMR sites volume and both
-// databases. Separate changes
-const REGION = "sfo";
+// "us-east4-eqdc4a" BECAUSE THAT IS WHERE RAILWAY PLACES THIS PROJECT, measured, not chosen.
+// a separate change had "sfo" to match the RETIRED project's volumes; a separate change first moved it to "us-west2", a
+// documented region id (docs.railway.com/deployments/regions). The first successful staging apply
+// (a CI run, 88 changes applied) then put ALL NINE services in `us-east4-eqdc4a` -
+// no service here declares a region, so each takes the workspace's default - and created every volume
+// there too, because a volume follows the region of the service it is attached to (same docs page).
+// The declared "us-west2" was not honoured on create, and every later plan proposed
+// `~ Update <volume> config.region ("us-east4-eqdc4a" -> "us-west2")` on all six volumes: a migration
+// the destructive guard rightly refuses. Read-only describe-environment on staging (2026-10-08): nine
+// services `regions: ["us-east4-eqdc4a"]`, six volumes `region: "us-east4-eqdc4a"`. The file now says
+// what is true. Moving the project to us-west2 is possible (the docs list every Metal region for every
+// plan) but is a maintainer's latency/region decision: it would need a region declared on every
+// service AND a volume migration (downtime), and this constant alone cannot do it.
+// Once volumes hold data, changing this is destructive: sites-volume-selftest.mjs pins the value.
+export const REGION = "us-east4-eqdc4a";
+
+// THE LARGEST VOLUME THE WORKSPACE'S RAILWAY PLAN ALLOWS. A CI run
+// applied this file to calm-laughter's staging and Railway refused the whole change set - status
+// `failed`, 90 of 90 changes failed - with one diagnostic: "Max size of 5000 MB on current plan. Please
+// select a valid size or upgrade". mysql-data and postgres-data were declared at 5120 MB. Every volume
+// below is at or under this, and sites-volume-selftest.mjs asserts that for both environments.
+// RAISE IT ONLY WITH THE PLAN: after an upgrade, this and the two database volumes can grow (a resize
+// up is non-destructive); a volume can never shrink in place, so do not raise a size the plan might
+// later lose.
+export const MAX_VOLUME_MB = 5000;
 
 // EXPLICIT PINS, BY DECISION - these name a build, they do not follow a moving tag.
 // This reverts the `<component>-latest` experiment, because it cost the two properties
@@ -47,12 +61,10 @@ const REGION = "sfo";
 const OPENEMR_IMAGE = "docker.io/amarquette/gauntletai:openemr-sha-1b5c2d659fb9";
 // What Railway still stores in openemr's build config, per environment - a leftover of source
 // builds, inert for an image service. Declared so a plan stops proposing to null it (see the
-// openemr service below). STAGING ONLY: production holds none (read-only plans, CLI 5.59.0,
-// 2026-09-29), and declaring it there would plan the opposite row and redeploy production's openemr.
+// openemr service below). EMPTY SINCE a separate change: only the retired project's staging held one; a fresh
+// openemr has none, and declaring a DOCKERFILE build on an image service is contradictory on a create.
 // An environment not in this map declares no build. Exported for sites-volume-selftest.mjs.
-export const OPENEMR_STORED_BUILD_BY_ENV: Record<string, { builder: "DOCKERFILE"; dockerfilePath: string }> = {
-  staging: { builder: "DOCKERFILE", dockerfilePath: "docker/railway/Dockerfile" },
-};
+export const OPENEMR_STORED_BUILD_BY_ENV: Record<string, { builder: "DOCKERFILE"; dockerfilePath: string }> = {};
 // ---------------------------------------------------------------------------
 // ONLY PRODUCTION IS PINNED; STAGING TRACKS `develop` (maintainer ruling 2026-09-23:
 // "Only prod should be pinned. Staging needs the latest deployments/merges.").
@@ -85,7 +97,16 @@ export const OPENEMR_STORED_BUILD_BY_ENV: Record<string, { builder: "DOCKERFILE"
 export const TRACKS_DEVELOP = "tracks-develop";
 export const STAGING_ENVIRONMENT = "staging";
 export const STAGING_BUILD_SHA_VAR = "STAGING_BUILD_SHA";
-const REGISTRY = "docker.io/amarquette/gauntletai";
+// WHERE STAGING'S BUILDS LIVE: GHCR, where GitHub Actions publishes every develop build. This is
+// ONLY what TRACKS_DEVELOP resolves to. Production's literals below still name docker.io - the
+// earlier Docker Hub builds - and they move to GHCR only by a deliberate promotion that copies the
+// exact GHCR string staging ran; the production pin check compares full image strings, so an image
+// string staging never ran is refused. OPENEMR_IMAGE is built in the fork and stays on docker.io.
+// The package belongs to the MarqSpec organisation: the repository's GITHUB_TOKEN can write to an
+// organisation package, not to a user-owned one. Lower case: GHCR owner names are.
+// It is named after the product, agent-forge, and is public, so a deploy pulls it without
+// registry credentials.
+const REGISTRY = "ghcr.io/marqspec/agent-forge";
 
 // `globalThis.process`, not the `process` global: the tsconfig loads no Node types. The CLI
 // evaluates this file under Node and passes the job's environment through (measured).
@@ -99,7 +120,7 @@ export const stagingBuildSha = (): string => {
       `Cannot resolve staging's images: ${STAGING_BUILD_SHA_VAR} is ` +
         `${raw === undefined ? "unset" : `"${raw}"`}. It must be the 12- or 40-character ` +
         `lower-case sha of a develop commit whose push pipeline published its images. ` +
-        `railway-apply-staging sets it from CI_COMMIT_SHA; a hand plan must set it explicitly ` +
+        `railway-apply-staging sets it to the develop commit it deploys; a hand plan must set it explicitly ` +
         `(DEPLOYMENT.md section 9). Refusing rather than guessing which build staging runs.`,
     );
   }
@@ -184,7 +205,7 @@ export const OBSERVABILITY_IMAGES: Record<string, { prometheus: string; grafana:
   // production ever going back to empty by accident. Production names a build staging has run, or
   // one of its own recent pins; the two images may differ.
   // THE PIN PLAN FOR THE *NEXT* PROMOTION,: pick a develop commit D whose
-  // railway-apply-staging succeeded (GitLab's `staging` environment lists each one), and put
+  // railway-apply-staging succeeded, and put
   // prometheus-sha-<D12> and grafana-sha-<D12> here - the tags that push published and staging
   // ran. staging -> main carries them to a hand apply. Nothing is rebuilt for production.
   // Check that staging's apply of D went green before promoting it (DEPLOYMENT.md section 9).
@@ -365,46 +386,73 @@ const SIDECAR_IMAGE_FOR = (env: string | undefined) => {
 };
 
 // ---------------------------------------------------------------------------
-// OPENEMR SITES VOLUME. `openemr-sites` is the declared name and the only one a
-// NEW environment ever gets. `production` and `staging` predate this file and run
-// OpenEMR on a hand-created 50000 MB volume instead, so this map is that debt -
-// named to read as debt rather than as the pattern to copy. A separate change migrates both
-// onto the declared name and deletes this block with it.
+// THE MODEL, PER ENVIRONMENT. Llm__Provider picks the ILlmProvider the sidecar boots
+// with (Anthropic or Gemini), and the model and its prices travel with it: nothing validates a
+// price against a model, so a model change that leaves its prices behind mis-reports
+// agentforge_llm_cost_usd_total in silence. Change a row's four values together, here
+// and in docker-compose.yml and .env.example. The key is NOT here: Llm__ApiKey stays preserve()
+// below, and it must be a key for the row's provider, set in Railway BEFORE an apply that
+// switches the row (staging applies unattended on every develop push).
 //
-// THIS RESOLVER ANSWERS WHERE SIDECAR_IMAGE_FOR REFUSES, and the asymmetry is the
-// point. SIDECAR_IMAGE_FOR THROWS on an unknown environment - it has had no fallback
-// at all since a separate change - because every answer it could invent is wrong: production's
-// pin would downgrade staging, which runs ahead by design. This one can answer safely,
-// because the DECLARED volume is the correct answer for an environment nobody has
-// listed: applying the file creates it empty, which is what a new environment wants.
-// What it must never do is inherit a LEGACY name - volumes are project-scoped, so
-// another environment's volume name resolves perfectly well and attaches the wrong
-// disk, the cross-environment binding that detached production's volume on
-// 2026-09-18. Throwing would be wrong here too: it would make the file unusable for
-// the new environment it is meant to describe.
+// BOTH ROWS ARE ANTHROPIC, with the values every environment ran (claude-sonnet-5's
+// list rate). Staging moves to Gemini in a follow-up once its key exists - DEPLOYMENT.md section 3
+// has the steps. A Gemini row is for synthetic data only: the free tier may use prompts and
+// responses to improve Google's products, so it is never production's and never sees PHI; a
+// free-tier row prices both directions at "0", which reports a true zero cost.
 //
-// `region` is stated literally rather than as REGION, and stays that way now that
-// REGION is also "sfo". These two volumes predate this file and CANNOT be
-// recreated - they hold the live OpenEMR sites tree - so they must keep declaring the
-// region they are actually in, whatever REGION later says. Writing REGION here would
-// make a future edit to that constant silently propose recreating 50 GB of patient
-// documents. The duplication is the safety.
-export const DECLARED_SITES_VOLUME = { name: "openemr-sites", region: REGION, sizeMB: 2048 };
-export const LEGACY_SITES_VOLUME: Record<string, typeof DECLARED_SITES_VOLUME> = {
-  production: { name: "openemr-volume-ceSx", region: "sfo", sizeMB: 50000 },
-  staging: { name: "openemr-volume-o8g8", region: "sfo", sizeMB: 50000 },
+// EXPORTED for sites-volume-selftest.mjs, which asserts every environment declares a provider.
+// An unknown environment THROWS (LLM_FOR), for SIDECAR_IMAGE_FOR's reason: a guessed model is
+// a silent change to every clinical answer.
+// ---------------------------------------------------------------------------
+export const LLM_PROVIDERS = ["Anthropic", "Gemini"] as const;
+export type LlmProvider = (typeof LLM_PROVIDERS)[number];
+
+export const LLM_BY_ENV: Record<
+  string,
+  { provider: LlmProvider; model: string; inputPricePerMillionUsd: string; outputPricePerMillionUsd: string }
+> = {
+  production: {
+    provider: "Anthropic",
+    model: "claude-sonnet-5",
+    inputPricePerMillionUsd: "2.00",
+    outputPricePerMillionUsd: "10.00",
+  },
+  staging: {
+    provider: "Anthropic",
+    model: "claude-sonnet-5",
+    inputPricePerMillionUsd: "2.00",
+    outputPricePerMillionUsd: "10.00",
+  },
 };
-// `Object.hasOwn`, not bare bracket access - same reasoning as SIDECAR_IMAGE_FOR: an
-// environment named `constructor`/`toString` yields a truthy inherited member, which
-// a naive presence check would treat as a legacy environment.
-export const SITES_VOLUME_FOR = (env: string | undefined) =>
-  env !== undefined && Object.hasOwn(LEGACY_SITES_VOLUME, env)
-    ? LEGACY_SITES_VOLUME[env]
-    : DECLARED_SITES_VOLUME;
+
+const LLM_FOR = (env: string | undefined) => {
+  if (env !== undefined && Object.hasOwn(LLM_BY_ENV, env)) {
+    return LLM_BY_ENV[env];
+  }
+  throw new Error(
+    `Cannot resolve the model: environment ${env === undefined ? "unset" : `"${env}"`} has no ` +
+      `LLM_BY_ENV entry, and the known environments are ${Object.keys(LLM_BY_ENV).join(", ")}. ` +
+      `Refusing rather than guessing which provider and model serve clinical answers.`,
+  );
+};
+
+// ---------------------------------------------------------------------------
+// OPENEMR SITES VOLUME. `openemr-sites`, in every environment,.
+//
+// The retired project ran OpenEMR on two hand-created 50000 MB volumes
+// (`openemr-volume-ceSx` in production, `openemr-volume-o8g8` in staging), pinned here by a
+// LEGACY_SITES_VOLUME map with literal regions so an edit to REGION could not propose
+// recreating them. `calm-laughter` has neither, so the map would only have
+// created two empty 50 GB volumes under legacy names. The migration happens by
+// construction: both environments get the declared name, as every other volume here is
+// declared by one name across environments (a volume is project-level, with one instance per
+// environment). Changing the name or region once data exists is destructive - the guard
+// refuses the plan.
+export const DECLARED_SITES_VOLUME = { name: "openemr-sites", region: REGION, sizeMB: 2048 };
 
 // THE PROXY PINS AN IMAGE, like every other service. It used to build
 // from a BRANCH - and from GitHub's `agent-forge-copilot`, which nothing mirrors this project
-// to, so a reverse-proxy change merged on GitLab rebuilt neither front door and nothing
+// to, so a reverse-proxy change merged on the earlier CI host rebuilt neither front door and nothing
 // reported it. `publish-proxy-image` closed that on 2026-09-21; this map consumes it.
 //
 // THE TWO ENVIRONMENTS NO LONGER SHARE A PIN. Staging tracks develop like every other
@@ -475,15 +523,14 @@ export default defineRailway((ctx) => {
   // -------------------------------------------------------------------------
   // Volumes. Managed volumes mount EMPTY - see SWARM_MODE on openemr below.
   // -------------------------------------------------------------------------
-  const mysqlData = volume("mysql-data", { region: REGION, sizeMB: 5120 });
-  // Per environment - see SITES_VOLUME_FOR. The two pre-IaC environments keep the
-  // volume OpenEMR actually serves from; anything else gets the declared name.
-  const sitesSpec = SITES_VOLUME_FOR(ctx.environment);
-  const sitesVolume = volume(sitesSpec.name, {
-    region: sitesSpec.region,
-    sizeMB: sitesSpec.sizeMB,
+  // At the plan's cap (MAX_VOLUME_MB): 5120 was refused on calm-laughter.
+  const mysqlData = volume("mysql-data", { region: REGION, sizeMB: MAX_VOLUME_MB });
+  // The same declared volume in every environment - see DECLARED_SITES_VOLUME.
+  const sitesVolume = volume(DECLARED_SITES_VOLUME.name, {
+    region: DECLARED_SITES_VOLUME.region,
+    sizeMB: DECLARED_SITES_VOLUME.sizeMB,
   });
-  const postgresData = volume("postgres-data", { region: REGION, sizeMB: 5120 });
+  const postgresData = volume("postgres-data", { region: REGION, sizeMB: MAX_VOLUME_MB });
   // Small, but NOT optional: the pending-SMART-launch cookie is DataProtection-
   // encrypted, and an in-memory key ring cannot decrypt it after a restart -
   // which surfaces as "No pending SMART launch" on the callback.
@@ -536,7 +583,7 @@ export default defineRailway((ctx) => {
       MYSQL_USER: "openemr",
       MYSQL_PASSWORD: ctx.shared.MYSQL_PASSWORD,
       // Production only, set by hand; nothing reads it. preserve(), not a reference: the live value
-      // is a literal no reference reproduces, so a reference would rewrite it. A separate change
+      // is a literal no reference reproduces, so a reference would rewrite it.
       MYSQL_URL: preserve(),
     },
     volumeMounts: { "/var/lib/mysql": mysqlData },
@@ -567,12 +614,10 @@ export default defineRailway((ctx) => {
   // -------------------------------------------------------------------------
   const openemr = service("openemr", {
     source: image(OPENEMR_IMAGE),
-    // INERT, AND DECLARED ONLY SO THE PLAN CONVERGES. Staging still holds the Dockerfile builder
-    // from when openemr built from source; Railway ignores it for an image source (no build log, same
-    // digest), and an apply that writes null does not persist - so leaving it undeclared re-planned
-    // `~ Update openemr build.builder, build.dockerfilePath` on every apply and redeployed openemr
-    // each time, re-rolling its host. Matching the stored value plans no row.
-    // sites-volume-selftest.mjs pins that no other image service declares a build.
+    // A build is declared only where OPENEMR_STORED_BUILD_BY_ENV lists the environment, which since
+    // The retired project's staging held a stale Dockerfile builder that an apply
+    // could not null, so declaring it was how the plan converged. A fresh openemr
+    // has none. sites-volume-selftest.mjs pins that no image service declares a build.
     // DEPLOYMENT.md §9
     ...(Object.hasOwn(OPENEMR_STORED_BUILD_BY_ENV, ctx.environment ?? "")
       ? { build: OPENEMR_STORED_BUILD_BY_ENV[ctx.environment as string] }
@@ -621,7 +666,7 @@ export default defineRailway((ctx) => {
       // (DocumentIngestService::run in the fork's oe-module-agentforge). Neither was declared,
       // so staging never ingested a document. A non-empty `agentforge_ingest_uri` /
       // `agentforge_ingest_category_map` global saved on the module's config page WINS over
-      // these; a blank one falls back to them. A separate change
+      // these; a blank one falls back to them.
       //
       // The sidecar's PRIVATE address, never the front door: /documents/ingest carries no token,
       // trusts its private-network origin, and the proxy 404s it (W2-D17). 8080 is the sidecar's
@@ -659,6 +704,7 @@ export default defineRailway((ctx) => {
   // value, so they can never disagree - and where the inputs do, `environment` is
   // the one that won. Reading the other first implied the opposite precedence.
   // -------------------------------------------------------------------------
+  const llm = LLM_FOR(ctx.environment);
   const sidecar = service("agent-forge-api", {
     source: image(SIDECAR_IMAGE_FOR(ctx.environment)),
     env: {
@@ -699,7 +745,7 @@ export default defineRailway((ctx) => {
       // document fetch 401s, surfacing as a misleading 404. patient/Appointment.read
       // (index 15) is the same trap one layer up: FR-AUTH-2's relationship gate
       // reads the clinic day's appointments on EVERY launch, and without it that
-      // search 401s and the launch is refused 403. A separate change
+      // search 401s and the launch is refused 403.
       OpenEmr__Scopes__0: "openid",
       OpenEmr__Scopes__1: "fhirUser",
       OpenEmr__Scopes__2: "launch",
@@ -718,9 +764,11 @@ export default defineRailway((ctx) => {
       OpenEmr__Scopes__15: "patient/Appointment.read",
 
       // [Required] + ValidateOnStart: the sidecar CANNOT boot without a real key.
-      // Unset here is a crash-loop, not a degraded mode.
+      // Unset here is a crash-loop, not a degraded mode. It must be a key for
+      // Llm__Provider's provider, which LLM_BY_ENV sets per environment.
       Llm__ApiKey: preserve(),
-      Llm__Model: "claude-sonnet-5",
+      Llm__Provider: llm.provider,
+      Llm__Model: llm.model,
 
       // SHARED VARIABLE, NOT preserve(): the maintainer's own ruling on the hand-set
       // key found missing - "I would rather it be a shared variable referenced from
@@ -730,12 +778,9 @@ export default defineRailway((ctx) => {
       // BEFORE an apply that carries this, or the reference resolves empty and retrieval goes
       // quietly keyless again (staging applies unattended on every develop push).
       Cohere__ApiKey: ctx.shared.COHERE_API_KEY,
-      // claude-sonnet-5's list rate. Nothing validates these against Llm__Model, so a model
-      // change that leaves them behind mis-reports agentforge_llm_cost_usd_total in silence -
-      // which is what shipped. Change all three together, here and in
-      // docker-compose.yml and .env.example. A separate change
-      Llm__InputPricePerMillionTokensUsd: "2.00",
-      Llm__OutputPricePerMillionTokensUsd: "10.00",
+      // The row's prices, which travel with its model: see LLM_BY_ENV.
+      Llm__InputPricePerMillionTokensUsd: llm.inputPricePerMillionUsd,
+      Llm__OutputPricePerMillionTokensUsd: llm.outputPricePerMillionUsd,
 
       // POSTGRES_PASSWORD is a shared variable on the environment, referenced so
       // the password lives in exactly one place for both postgres and the sidecar.
@@ -757,7 +802,7 @@ export default defineRailway((ctx) => {
       // (Readiness__ProbeTimeout), which makes it cheaper to hit and no less wrong - it is how
       // staging, the environment that HAS the tier, is the only one whose /ready fails. The
       // private hostname, never the front door - Prometheus has no auth and no domain (see the
-      // service below). Separate changes
+      // service below).
       ...(observability
         ? { Observability__PrometheusHealthUrl: "http://" + PROMETHEUS_HOST + ":9090/-/healthy" }
         : {}),
@@ -791,7 +836,7 @@ export default defineRailway((ctx) => {
   // this file. Until a separate change it was the exception: it built from a BRANCH, and from
   // GitHub's `agent-forge-copilot`, which nothing mirrors this project to. So its branch
   // WAS its version pin, it moved without a diff in this file, and a reverse-proxy change
-  // merged on GitLab rebuilt neither front door while nothing reported it. Both front
+  // merged on the earlier CI host rebuilt neither front door while nothing reported it. Both front
   // doors were frozen at GitHub's 2026-09-17 tree for four days on exactly that.
   //
   // WHAT THAT MEANS NOW: staging's front door moves with every develop push, from the
@@ -886,7 +931,7 @@ export default defineRailway((ctx) => {
           // by root, so without this Prometheus panics at start: `open /prometheus/queries.active:
           // permission denied` -> `Unable to create mmap-ed active query log`. Staging crash-looped
           // on every deployment from 2026-09-20 (a0d0f807, 8eead98c). Railway's documented fix is
-          // this variable (docs.railway.com/volumes/reference#caveats). A separate change
+          // this variable (docs.railway.com/volumes/reference#caveats).
           RAILWAY_RUN_UID: "0",
         },
         // NO `domains:` ENTRY, AND THAT IS THE POINT. Prometheus has no auth of its

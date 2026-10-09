@@ -39,7 +39,7 @@ public static class SessionExtensions
     /// rather than in each of them: there is exactly one way to obtain a session and it cannot
     /// return a dead one, so a surface added later inherits the refusal instead of having to
     /// remember it. What it cannot cover is a token that dies *after* the read - see
-    /// <see cref="AccessTokenExpiredException"/>'s callers. A separate change
+    /// <see cref="AccessTokenExpiredException"/>'s callers.
     /// </remarks>
     public static PatientSessionContext? TryGetPatientSession(this ISession session, TimeProvider timeProvider)
     {

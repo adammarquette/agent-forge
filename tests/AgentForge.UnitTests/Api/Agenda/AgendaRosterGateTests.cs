@@ -33,7 +33,7 @@ public sealed class AgendaRosterGateTests
     {
         // REQUIREMENTS.md §13.1 lists "Denied access attempt (FR-AUTH-4)" as an audit event. The diagnostic line no longer
         // names the patient (CONVENTIONS.md §7), so the audit trail is the only record of which one was
-        // attempted - under the request's correlation id, like the other refusal paths. A separate change
+        // attempted - under the request's correlation id, like the other refusal paths.
         var roster = new HashSet<string> { "patient-1", "patient-2" };
         var logger = new CapturingLogger<AccessAudit>();
 

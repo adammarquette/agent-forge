@@ -10,7 +10,7 @@ namespace AgentForge.UnitTests.Api.Observability;
 /// The ASP.NET Core hosting scope carries the request path onto every record logged inside a request, and
 /// <c>/evidence/document/{documentId}</c> puts a document id there. Failure mode guarded (regression): an
 /// identifier in the request path reaching an exporter through the scope. <see cref="HostStdoutPhiScanTests"/> pins
-/// it through the real host. A separate change
+/// it through the real host.
 /// </summary>
 public sealed class RequestPathScopeScrubbingTests
 {

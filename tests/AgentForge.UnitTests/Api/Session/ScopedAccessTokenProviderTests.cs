@@ -30,7 +30,7 @@ public sealed class ScopedAccessTokenProviderTests
     [Fact]
     public async Task AccessToken_SetOnOneInstance_IsVisibleFromADifferentInstanceOnTheSameLogicalFlow()
     {
-        // Regression test (GitLab issue #39, follow-up): AuthHandler is constructed by
+        // Regression test: AuthHandler is constructed by
         // IHttpClientFactory using ITS OWN internal scope, not the caller's DI scope - a plain
         // per-instance field means AuthHandler's ScopedAccessTokenProvider is *never* the same
         // object ChatSessionCoordinator set the token on, no matter the handler's lifetime.

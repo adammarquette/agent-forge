@@ -147,7 +147,7 @@ public sealed class AgendaRosterServiceTests
     public async Task BuildAgendaAsync_OnePatientsSummaryThrows_DiagnosticLineNamesTheRowAndExceptionTypeButNotThePatient()
     {
         // NFR-SEC-1 / CONVENTIONS.md §7: diagnostic lines carry no patient id - and an exception message
-        // is a way for one to arrive, since a failed FHIR call can name the resource it failed on. A separate change
+        // is a way for one to arrive, since a failed FHIR call can name the resource it failed on.
         A.CallTo(() => _fhirClient.GetAppointmentsAsync("default", "eq2026-07-11", A<CancellationToken>._))
             .Returns(Task.FromResult<IReadOnlyList<AppointmentRecord>>(
             [
@@ -273,7 +273,7 @@ public sealed class AgendaRosterServiceTests
     public async Task BuildAgendaAsync_EachPatientsSummary_ChargesTheSessionsBudgetOnce()
     {
         // The agenda is the widest LLM fan-out in the product - one summary turn per rostered patient on every
-        // load - so each summary is charged to the session like a chat turn. A separate change
+        // load - so each summary is charged to the session like a chat turn.
         A.CallTo(() => _fhirClient.GetAppointmentsAsync("default", "eq2026-07-11", A<CancellationToken>._))
             .Returns(Task.FromResult<IReadOnlyList<AppointmentRecord>>(
             [
@@ -312,7 +312,7 @@ public sealed class AgendaRosterServiceTests
     public async Task BuildAgendaAsync_SecondLoadWithinTheTtl_MakesNoLlmCallAndNoCharge()
     {
         // A reload (Back, refresh, return after a visit) re-serves the first load's summaries instead of
-        // re-running and re-charging every remaining patient. A separate change
+        // re-running and re-charging every remaining patient.
         StubRoster(Appointment("1", "patient-1", Now.AddMinutes(40)), Appointment("2", "patient-2", Now.AddMinutes(50)));
         var first = await BuildSut().BuildAgendaAsync("session-1", _session, CancellationToken.None);
         Fake.ClearRecordedCalls(_summaryRunner);

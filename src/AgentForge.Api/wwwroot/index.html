@@ -61,7 +61,7 @@
     .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent);
       border-radius: 50%; margin: 0 auto; animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    /* Tagged sources list + click-to-source (#120) */
+    /* Tagged sources list + click-to-source */
     .src-item { display: flex; align-items: baseline; gap: 8px; padding: 4px 0; line-height: 1.5; }
     .src-item .n { color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
     .src-badge { flex: none; font-size: 10.5px; font-weight: 600; padding: 1px 6px; border-radius: var(--radius);
@@ -196,7 +196,7 @@
     }
 
     window.AgentForgeOverlay = {
-      // contextKey: the chat script's GET /patient key, which binds the fetch to this page's patient. A separate change
+      // contextKey: the chat script's GET /patient key, which binds the fetch to this page's patient.
       open: async function (c, contextKey) {
         if (!c || !c.sourceDocumentId) return;
         titleEl.textContent = (c.field ? humanizeField(c.field) + ' — ' : '') + 'source document';
@@ -268,7 +268,7 @@
           })
           .then(function (d) {
             if (!d) return null;
-            // Binds the hub connection to the patient this banner shows (ChatHub.PatientChangedMessage). A separate change
+            // Binds the hub connection to the patient this banner shows (ChatHub.PatientChangedMessage).
             contextKey = d.contextKey || '';
             el('p-name').textContent = d.displayName || ('Patient ' + d.patientId);
             var parts = [];

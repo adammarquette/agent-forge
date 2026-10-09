@@ -5,7 +5,7 @@ namespace AgentForge.MintQaIdentityToken;
 /// <summary>
 /// Confirms whether a bearer token can read a given patient's FHIR record - the exact entitlement
 /// property <c>CrossIdentityAuthorizationTests</c> exercises, checked here before the token ever
-/// reaches GitLab CI/CD variables.
+/// reaches the CI secret store.
 /// </summary>
 public static class FhirPatientProbe
 {

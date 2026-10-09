@@ -64,7 +64,7 @@
     persists facts), and the clinician turn reads those persisted facts — no in-turn upload. Here the browser
     renders the PDF you upload so the overlay works without fetching the source from OpenEMR. Wiring the overlay to
     the real flow (read persisted facts → fetch the OpenEMR <code>DocumentReference</code> Binary) is tracked as
-    follow-up work (legacy tracker issue #109, blocked on #81 / #40 — pre-migration numbers, not GitHub issues).
+    follow-up work.
   </div>
   <div class="wrap">
     <div class="left">
@@ -106,7 +106,7 @@
     const $ = (id) => document.getElementById(id);
     const statusEl = $('status');
     // The viewer holds one source document at a time — the uploaded file (demo) or a fetched OpenEMR
-    // document (production, #109) — and citations light up on demand.
+    // document (production) — and citations light up on demand.
     let uploadedBuffer = null;   // in-turn uploaded PDF bytes (demo path)
     let currentDocKey = null;    // which document is rendered ('__uploaded__' or a DocumentReference id)
     let currentWrappers = [];    // per-page wrappers for the currently rendered document
@@ -223,7 +223,7 @@
     }
 
     // Put the citation's source document in the viewer: the uploaded file (demo) or a fetched OpenEMR
-    // document (production, #109). Re-renders only when switching documents.
+    // document (production). Re-renders only when switching documents.
     async function ensureDocRendered(c) {
       const key = c.sourceDocumentId || '__uploaded__';
       if (key === currentDocKey && currentWrappers.length) return currentWrappers;

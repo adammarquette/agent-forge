@@ -4,7 +4,7 @@ namespace AgentForge.GenerateFixtureDocuments;
 /// The cardiology lab reports of the set beyond <see cref="SyntheticLabPanel"/>: a lipid panel, a BMP, serial
 /// cardiac markers, warfarin INR monitoring and HbA1c with renal markers, each in a layout the citation path
 /// is brittle to, plus a scanned copy. Values sit in and around real reference ranges so the flags mean
-/// something; none of it is advice. A separate change
+/// something; none of it is advice.
 /// </summary>
 public static class LabReports
 {

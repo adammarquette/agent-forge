@@ -11,9 +11,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRailwayContext } from "railway/iac";
 import program, {
-  SITES_VOLUME_FOR,
   DECLARED_SITES_VOLUME,
-  LEGACY_SITES_VOLUME,
+  MAX_VOLUME_MB,
+  REGION,
   OBSERVABILITY_IMAGES,
   PROMETHEUS_TSDB_BY_ENV,
   LOKI_IMAGE_BY_ENV,
@@ -24,6 +24,8 @@ import program, {
   TRACKS_DEVELOP,
   STAGING_BUILD_SHA_VAR,
   OPENEMR_STORED_BUILD_BY_ENV,
+  LLM_BY_ENV,
+  LLM_PROVIDERS,
   resolvePin,
 } from "./railway.ts";
 
@@ -31,6 +33,11 @@ import program, {
 // renders against this one; the block at the end varies it. An obviously-fixture value,
 // so it can never be mistaken for a real develop commit in failure output.
 const FIXTURE_SHA = "feedc0ffee12";
+// staging's builds are on GHCR. Production's literals may still name the Docker Hub builds
+// the earlier pipeline published until each is promoted to a GHCR build staging ran, so a production SHAPE accepts
+// either registry - and nothing else. Dots are literal.
+const STAGING_REGISTRY = "ghcr.io/marqspec/agent-forge";
+const PUBLISHED_REGISTRY = String.raw`(?:docker\.io/amarquette/gauntletai|ghcr\.io/marqspec/agent-forge)`;
 process.env[STAGING_BUILD_SHA_VAR] = FIXTURE_SHA;
 
 const MOUNT = "/var/www/localhost/htdocs/openemr/sites";
@@ -63,88 +70,89 @@ const attachmentFor = (environment) => {
   return attached[0];
 };
 
-console.log("== the two pre-IaC environments keep the volume OpenEMR serves from ==");
+console.log("== every environment attaches the declared openemr-sites volume ==");
 
-check("production attaches openemr-volume-ceSx at the sites path", () => {
-  const a = attachmentFor("production");
-  assert.equal(a.volume, "volume.openemr-volume-ceSx");
-});
+// calm-laughter is a fresh project, so neither environment has the retired project's
+// hand-created 50 GB sites volume. Both get the declared one.
+for (const env of ["production", "staging"]) {
+  check(`${env} attaches openemr-sites at the sites path`, () => {
+    assert.equal(attachmentFor(env).volume, "volume.openemr-sites");
+  });
+}
 
-check("staging attaches openemr-volume-o8g8 at the sites path", () => {
-  const a = attachmentFor("staging");
-  assert.equal(a.volume, "volume.openemr-volume-o8g8");
-});
-
-// The region and size are asserted because both are silent in the graph and only surface
-// as destructive rows in a plan: a wrong region proposes RECREATING a 50 GB volume, a
-// wrong sizeMB proposes resizing it. Neither is caught before merge by anything else -
-// GitLab runs no plan on a merge request, and GitHub's runs with the production token, so
-// a wrong `staging` entry reaches neither.
-check("the legacy attachments carry the live region and size", () => {
+// The region and size are asserted because both are silent in the graph and only surface as
+// destructive rows in a plan once the volume holds data: a wrong region proposes RECREATING it,
+// a wrong sizeMB proposes resizing it.
+check("the sites attachment carries the declared region and size in both environments", () => {
   for (const env of ["production", "staging"]) {
-    const cfg = attachmentFor(env).volumeConfig;
-    assert.equal(cfg.region, "sfo", `${env} region`);
-    assert.equal(cfg.sizeMB, 50000, `${env} sizeMB`);
+    assert.deepEqual(attachmentFor(env).volumeConfig, { region: "us-east4-eqdc4a", sizeMB: 2048 }, `${env}`);
   }
 });
 
-// THIS ONE READS THE SOURCE, DELIBERATELY. The check above compares values, and it went
-// DEGENERATE when set REGION to "sfo": "sfo" === REGION now, so it passes whether
-// the entries say `region: "sfo"` or `region: REGION` - the mutation that used to redden
-// it no longer does. The property that matters is not the value today but where it comes
-// from: these two volumes hold the live OpenEMR sites tree and cannot be recreated, so a
-// later edit to REGION must not move them. Only the source can express that.
-check("the legacy entries pin their region literally, not through REGION", () => {
+// PINNED LITERALLY: once calm-laughter's volumes exist, any edit to REGION proposes recreating
+// every one of them empty. "sfo" matched the retired project and is not a documented
+// Railway region identifier.
+check("REGION is us-east4-eqdc4a, where Railway places this project", () => {
+  assert.equal(REGION, "us-east4-eqdc4a");
+});
+
+check("every volume in both environments is in REGION", () => {
+  for (const env of ["production", "staging"]) {
+    const graph = program(createRailwayContext({ environment: env }));
+    const volumes = graph.resources.filter((r) => r.type === "volume");
+    assert.ok(volumes.length > 0, `${env}: no volumes rendered`);
+    for (const v of volumes) assert.equal(v.config?.region, REGION, `${env}: ${v.address} region`);
+  }
+});
+
+// Railway refused calm-laughter's whole first change set (a staging apply) because two
+// volumes were declared at 5120 MB on a plan that caps a volume at 5000 MB. The cap is the plan's, so it
+// is pinned literally here, and every volume either environment declares must fit under it.
+check("MAX_VOLUME_MB is the plan's 5000 MB cap", () => {
+  assert.equal(MAX_VOLUME_MB, 5000);
+});
+
+check("every volume in both environments is at or under MAX_VOLUME_MB", () => {
+  for (const env of ["production", "staging"]) {
+    const graph = program(createRailwayContext({ environment: env }));
+    const volumes = graph.resources.filter((r) => r.type === "volume");
+    assert.ok(volumes.length > 0, `${env}: no volumes rendered`);
+    for (const v of volumes) {
+      assert.ok(
+        typeof v.config?.sizeMB === "number" && v.config.sizeMB <= MAX_VOLUME_MB,
+        `${env}: ${v.address} declares ${v.config?.sizeMB} MB, over the plan's ${MAX_VOLUME_MB} MB cap`,
+      );
+    }
+  }
+});
+
+// The pins-filled render too: Loki is declared nowhere today, so its volume only renders with a pin.
+check("loki-data, rendered with a staging pin, is under MAX_VOLUME_MB as well", () => {
+  const saved = LOKI_IMAGE_BY_ENV.staging;
+  LOKI_IMAGE_BY_ENV.staging = TRACKS_DEVELOP;
+  try {
+    const graph = program(createRailwayContext({ environment: "staging" }));
+    const loki = graph.resources.find((r) => r.type === "volume" && r.address === "volume.loki-data");
+    assert.ok(loki, "no loki-data volume rendered with the pin filled");
+    assert.ok(loki.config.sizeMB <= MAX_VOLUME_MB, `loki-data declares ${loki.config.sizeMB} MB`);
+  } finally {
+    LOKI_IMAGE_BY_ENV.staging = saved;
+  }
+});
+
+// THIS ONE READS THE SOURCE. The retired project's legacy names would create two empty 50 GB
+// volumes in calm-laughter; the graph checks above catch a re-added map only for the
+// environments it names, the source check catches it outright.
+check("railway.ts declares no legacy sites volume", () => {
   const src = readFileSync(new URL("./railway.ts", import.meta.url), "utf8");
-  const block = src.slice(
-    src.indexOf("LEGACY_SITES_VOLUME"),
-    src.indexOf("SITES_VOLUME_FOR"),
-  );
-  assert.ok(block.length > 0, "could not locate the LEGACY_SITES_VOLUME block");
-  assert.ok(
-    !/region:\s*REGION/.test(block),
-    "a legacy entry takes its region from REGION; an edit to that constant would then " +
-      "propose recreating 50 GB of patient documents",
-  );
-  assert.equal((block.match(/region:\s*"sfo"/g) || []).length, 2, "two literal regions");
-});
-
-console.log("== an environment outside the legacy list gets the DECLARED volume ==");
-
-check("an unlisted environment resolves to openemr-sites", () => {
-  assert.deepEqual(SITES_VOLUME_FOR("scratch-env"), DECLARED_SITES_VOLUME);
-  assert.equal(SITES_VOLUME_FOR("scratch-env").name, "openemr-sites");
-});
-
-check("an UNSET environment resolves to openemr-sites, never to a legacy one", () => {
-  assert.equal(SITES_VOLUME_FOR(undefined).name, "openemr-sites");
-});
-
-// The reason the resolver uses Object.hasOwn rather than a bare bracket read: these
-// names resolve to truthy INHERITED members on any object literal, so a naive presence
-// check hands back Object.prototype.constructor and calls it a legacy environment.
-check("a prototype member name is not a legacy environment", () => {
-  for (const name of ["constructor", "toString", "__proto__", "hasOwnProperty"]) {
-    assert.equal(SITES_VOLUME_FOR(name).name, "openemr-sites", `environment "${name}"`);
-  }
-});
-
-// Two environments naming the SAME volume is the cross-environment binding that detached
-// production's volume on 2026-09-18: a volume is project-scoped, so the alias resolves and
-// two environments mount one disk. The resolver cannot catch this - it returns whatever the
-// map says - so the map itself is what gets asserted.
-check("no two environments are mapped onto the same volume", () => {
-  const names = Object.values(LEGACY_SITES_VOLUME).map((v) => v.name);
-  assert.equal(new Set(names).size, names.length, `aliased volume name in ${names.join(", ")}`);
-  assert.ok(
-    !names.includes(DECLARED_SITES_VOLUME.name),
-    "a legacy entry names the declared volume, so a legacy environment and a fresh one collide",
-  );
+  const code = src.split(/\r?\n/).filter((l) => !l.trimStart().startsWith("//")).join("\n");
+  assert.ok(!/LEGACY_SITES_VOLUME/.test(code), "LEGACY_SITES_VOLUME is back in the code");
+  assert.ok(!/openemr-volume-/.test(code), "a legacy openemr-volume-* name is back in the code");
 });
 
 // Mounting a volume that is not in `resources` is silent in the graph and only shows up as a
 // plan that does not create it. Asserting the mount alone would pass.
-check("the resolved volume is declared in the resources list, not only mounted", () => {
+check("the sites volume is declared in the resources list, not only mounted", () => {
   for (const env of ["production", "staging"]) {
     const graph = program(createRailwayContext({ environment: env }));
     const mounted = attachmentFor(env).volume;
@@ -153,17 +161,16 @@ check("the resolved volume is declared in the resources list, not only mounted",
   }
 });
 
-check("the declared volume is the one a fresh environment would create", () => {
-  assert.equal(DECLARED_SITES_VOLUME.name, "openemr-sites");
-  assert.equal(DECLARED_SITES_VOLUME.sizeMB, 2048);
+check("the declared volume is openemr-sites, 2048 MB, in REGION", () => {
+  assert.deepEqual(DECLARED_SITES_VOLUME, { name: "openemr-sites", region: REGION, sizeMB: 2048 });
 });
 
 // ---------------------------------------------------------------------------
 // The readiness-probe invariant.
 //
 // WHY IT LIVES IN THIS FILE. The job that runs this script is the only pre-merge check
-// that evaluates the graph for BOTH environments - nothing plans on a merge request on
-// GitLab at all, and GitHub's PR plan holds the production token. A rule asserted anywhere else is
+// that evaluates the graph for BOTH environments - the production plan for a pull request holds the
+// production token, so it resolves production only. A rule asserted anywhere else is
 // asserted nowhere. The file name undersells its scope as a result; the job is the point.
 //
 // WHY A BICONDITIONAL rather than "the URL is set". Both directions are real failures and
@@ -337,7 +344,7 @@ check("the URL is present if and only if the prometheus service is, in every cas
 // likeliest future edit, exactly as it was for the readiness URL above) hands production a
 // `${{grafana.RAILWAY_PRIVATE_DOMAIN}}` reference naming a service its graph does not
 // contain. Typecheck stays 0, nginx-config-lint stays green - both read files, and neither
-// renders this graph. Separate changes
+// renders this graph.
 const GRAFANA_UPSTREAM_KEY = "GRAFANA_UPSTREAM";
 
 const variablesOf = (graph, address) => {
@@ -451,7 +458,7 @@ check("the upstream is present if and only if the grafana service is, in every c
 // stays here is the half of the old rule that is about STAGING: its entries track develop.
 // Production's shape is the rule below, and the graph it gets is rendered further down.
 const PIN_SHAPE = (component) =>
-  new RegExp(`^docker\\.io/amarquette/gauntletai:${component}-sha-[0-9a-f]{12}$`);
+  new RegExp(`^${PUBLISHED_REGISTRY}:${component}-sha-[0-9a-f]{12}$`);
 
 // Returns every violation rather than throwing on the first, so a negative control can assert
 // that the rule fires for the reason it exists.
@@ -573,6 +580,35 @@ check("the rule reddens when production is emptied, tracks develop, or names a m
     }).length > 0,
     "a tag on another registry (dockerXio) was accepted as docker.io",
   );
+  // a separate change widened the shape to GHCR - this owner and package only, not any ghcr.io path. A separate change moved
+  // the owner to the org, so the user package it left is another owner, refused like any other.
+  // a separate change renamed the package; the org's agent-forge-copilot it left is another package, refused too.
+  for (const registry of [
+    "ghcr.io/amarquette/gauntletai",
+    "ghcrXio/marqspec/agent-forge",
+    "ghcr.io/adammarquette/agent-forge-copilot",
+    "ghcr.io/marqspec/agent-forge-copilot",
+  ]) {
+    assert.ok(
+      productionObservabilityViolations({
+        production: {
+          prometheus: `${registry}:prometheus-sha-49a8a5b5c411`,
+          grafana: `${registry}:grafana-sha-49a8a5b5c411`,
+        },
+      }).length > 0,
+      `a tag on ${registry} was accepted as a published registry`,
+    );
+  }
+  assert.deepEqual(
+    productionObservabilityViolations({
+      production: {
+        prometheus: `${STAGING_REGISTRY}:prometheus-sha-49a8a5b5c411`,
+        grafana: `${STAGING_REGISTRY}:grafana-sha-49a8a5b5c411`,
+      },
+    }),
+    [],
+    "a GHCR -sha-<12> pin - what the first promotion after writes - was refused",
+  );
 });
 
 check("every environment with pins has a TSDB entry whose size cap is under half its volume", () => {
@@ -599,7 +635,7 @@ check("production, once pinned: unpublished Prometheus on a sized, retained TSDB
     const tsdb = PROMETHEUS_TSDB_BY_ENV.production;
     const att = prom.volumeAttachments?.["prometheus-data"];
     assert.equal(att?.mountPath, "/prometheus", "prometheus-data is not mounted at /prometheus");
-    assert.deepEqual(att?.volumeConfig, { region: "sfo", sizeMB: tsdb.sizeMB }, "TSDB region or size");
+    assert.deepEqual(att?.volumeConfig, { region: "us-east4-eqdc4a", sizeMB: tsdb.sizeMB }, "TSDB region or size");
     assert.ok(res("volume.prometheus-data"), "prometheus-data is mounted but not declared");
     assert.equal(prom.variables.PROMETHEUS_RETENTION_TIME?.value, tsdb.retentionTime);
     assert.equal(prom.variables.PROMETHEUS_RETENTION_SIZE?.value, tsdb.retentionSize);
@@ -726,7 +762,7 @@ check("staging, once Loki is pinned: private Loki on a mounted volume, pushed to
     assert.equal(w.loki.source?.image, LOKI_PIN);
     const att = w.loki.volumeAttachments?.["loki-data"];
     assert.equal(att?.mountPath, "/loki", "loki-data is not mounted at /loki");
-    assert.deepEqual(att?.volumeConfig, { region: "sfo", sizeMB: 1024 }, "loki-data region or size");
+    assert.deepEqual(att?.volumeConfig, { region: "us-east4-eqdc4a", sizeMB: 1024 }, "loki-data region or size");
     assert.deepEqual(w.sidecarLokiKeys, ["Observability__LokiOtlpEndpoint"], "the sidecar gained another Loki key");
     assert.equal(w.endpoint, "http://${{loki.RAILWAY_PRIVATE_DOMAIN}}:3100/otlp/v1/logs");
     assert.equal(w.lokiUrl, "http://${{loki.RAILWAY_PRIVATE_DOMAIN}}:3100");
@@ -738,7 +774,7 @@ check("staging, once Loki is pinned: private Loki on a mounted volume, pushed to
 // entrypoint. Every grafana-sha published still provisions the Loki datasource, with an
 // empty URL, and the Loki panel, which errors. That is exactly what forbids in production.
 // These are EXACTLY the grafana-sha tags built WITHOUT the fix - not all of Docker Hub's
-// grafana-sha tags, which also carries plenty of later builds (review of !689 note 104696).
+// grafana-sha tags, which also carries plenty of later builds.
 // The last one built without the fix is `fe5a81db92ef`. `0e80692860b7` and `fe5a81db92ef` were
 // missing here: staging-only commit 61439aea added them to staging's tree,
 // and this file's develop copy never picked them up, so a pin or rollback to either would have
@@ -883,7 +919,7 @@ check("staging, once Tempo is pinned: private Tempo on a mounted volume, pushed 
     assert.equal(w.tempo.source?.image, TEMPO_PIN);
     const att = w.tempo.volumeAttachments?.["tempo-data"];
     assert.equal(att?.mountPath, "/var/tempo", "tempo-data is not mounted at /var/tempo");
-    assert.deepEqual(att?.volumeConfig, { region: "sfo", sizeMB: 1024 }, "tempo-data region or size");
+    assert.deepEqual(att?.volumeConfig, { region: "us-east4-eqdc4a", sizeMB: 1024 }, "tempo-data region or size");
     assert.deepEqual(w.sidecarTraceKeys, ["Observability__TraceOtlpEndpoint"], "the sidecar gained another trace key");
     assert.equal(w.endpoint, "http://${{tempo.RAILWAY_PRIVATE_DOMAIN}}:4318/v1/traces");
     assert.equal(w.tempoUrl, "http://${{tempo.RAILWAY_PRIVATE_DOMAIN}}:3200");
@@ -896,7 +932,7 @@ check("as declared, staging has Tempo exactly when its own Tempo entry is not em
 });
 
 // The image runs as `nobody` and Railway mounts /prometheus owned by root; without
-// RAILWAY_RUN_UID=0 it panics at start. Staging crash-looped on it from 2026-09-20. A separate change
+// RAILWAY_RUN_UID=0 it panics at start. Staging crash-looped on it from 2026-09-20.
 check("a declared Prometheus runs as uid 0 (RAILWAY_RUN_UID), in every environment that declares it", () => {
   const promFor = (environment) =>
     program(createRailwayContext({ environment })).resources.find((r) => r.address === "service.prometheus");
@@ -924,7 +960,7 @@ console.log("\n== the reverse-proxy pins a published image, not a branch ==");
 // - so that is what these cases assert instead.
 //
 // Read off the RENDERED graph, not the map, so moving the literal or routing it through a
-// different resolver still reddens. Separate changes
+// different resolver still reddens.
 const proxySourceFor = (environment) => {
   const graph = program(createRailwayContext({ environment }));
   const proxy = graph.resources.find((r) => r.address === "service.reverse-proxy");
@@ -946,7 +982,7 @@ check("both environments pin the proxy to a published image, not a branch", () =
         "Going back to a branch source reintroduces a silent-by-construction failure.",
     );
     assert.ok(
-      /^docker\.io\/amarquette\/gauntletai:proxy-sha-[0-9a-f]{12}$/.test(src.image ?? ""),
+      new RegExp(`^${PUBLISHED_REGISTRY}:proxy-sha-[0-9a-f]{12}$`).test(src.image ?? ""),
       `${environment}'s reverse-proxy image is "${src.image}". It must be an explicit ` +
         "`proxy-sha-<12>` from publish-proxy-image: a MOVING tag (proxy-latest, proxy-develop) " +
         "would restore exactly the property this issue removed - a front door that changes " +
@@ -1001,7 +1037,7 @@ check("openemr declares the ingest URI (sidecar private address) and the Lab Rep
 // The two front doors DIVERGE, by design: staging's is the develop build, and
 // production's is its own literal. What stays true is that production's never follows staging's.
 check("staging's proxy is this develop build; production's is its literal, whatever staging builds", () => {
-  assert.equal(proxySourceFor("staging").image, `docker.io/amarquette/gauntletai:proxy-sha-${FIXTURE_SHA}`);
+  assert.equal(proxySourceFor("staging").image, `${STAGING_REGISTRY}:proxy-sha-${FIXTURE_SHA}`);
   assert.equal(proxySourceFor("production").image, PROXY_IMAGE_BY_ENV.production,
     "production's front door is not the literal its map entry names");
 });
@@ -1048,7 +1084,7 @@ check("staging names this develop build's tag for every component it runs, and n
   // Loki is declared off, so render with it switched on to prove its tag too.
   const images = withPins({ loki: { staging: TRACKS_DEVELOP } }, () => imagesOf(render("staging")));
   for (const [address, component] of Object.entries(TRACKED)) {
-    assert.equal(images[address], `docker.io/amarquette/gauntletai:${component}-sha-${FIXTURE_SHA}`,
+    assert.equal(images[address], `${STAGING_REGISTRY}:${component}-sha-${FIXTURE_SHA}`,
       `${address} does not track develop`);
   }
   // The two services this repo does not build keep their literals: the fork's OpenEMR and stock images.
@@ -1083,7 +1119,7 @@ check("production's graph is identical whatever STAGING_BUILD_SHA says - it neve
   for (const [address, component] of Object.entries(TRACKED)) {
     const image = imagesOf(JSON.parse(baseline))[address];
     if (image === undefined) continue; // production does not declare observability, Loki or Tempo yet
-    assert.match(image, new RegExp(`^docker\\.io/amarquette/gauntletai:${component}-sha-[0-9a-f]{12}$`),
+    assert.match(image, new RegExp(`^${PUBLISHED_REGISTRY}:${component}-sha-[0-9a-f]{12}$`),
       `production's ${address} is not a literal ${component}-sha-<12>`);
   }
 });
@@ -1133,7 +1169,7 @@ check("security-platform is staging-only, unpublished, and tracks this develop b
   const staging = render("staging").resources.find((r) => r.address === "service.security-platform");
   assert.ok(staging, "staging does not render security-platform");
   assert.equal(staging.source.image,
-    `docker.io/amarquette/gauntletai:security-platform-sha-${FIXTURE_SHA}`);
+    `${STAGING_REGISTRY}:security-platform-sha-${FIXTURE_SHA}`);
   assert.equal(staging.networking, undefined,
     `security-platform is published: ${JSON.stringify(staging.networking)}`);
   const keys = Object.keys(staging.variables ?? {});
@@ -1167,9 +1203,9 @@ check("resolvePin refuses TRACKS_DEVELOP outside staging, and passes literals th
 
 // a separate change. railway-destructive-guard.sh refuses any plan row that changes a service's build config,
 // on the premise that every service here is an image - so such a row builds nothing and only
-// redeploys. Pin the premise, and pin that the one declared build is the inert value each environment
-// stores (openemr, staging only: production holds none, so declaring it there plans a redeploy).
-console.log("== every service is an image, and only the stored openemr build is declared ==");
+// redeploys. Pin the premise, and pin that no build is declared at all: the stored
+// openemr build was the retired project's staging leftover, and a fresh openemr holds none.
+console.log("== every service is an image, and no service declares a build ==");
 
 for (const env of ["staging", "production"]) {
   check(`${env}: every declared service is image-sourced`, () => {
@@ -1177,20 +1213,59 @@ for (const env of ["staging", "production"]) {
     assert.ok(services.length > 0, "no services rendered");
     for (const s of services) assert.equal(s.source?.type, "image", `${s.address} is not an image`);
   });
-  check(`${env}: no service declares a build except openemr's stored one`, () => {
+  check(`${env}: no service declares a build`, () => {
     for (const s of render(env).resources.filter((r) => r.address.startsWith("service."))) {
-      const want = s.address === "service.openemr" && Object.hasOwn(OPENEMR_STORED_BUILD_BY_ENV, env)
-        ? OPENEMR_STORED_BUILD_BY_ENV[env]
-        : undefined;
-      assert.deepEqual(s.build, want, `${s.address} build`);
+      assert.equal(s.build, undefined, `${s.address} build`);
     }
   });
 }
 
-check("the stored openemr build is declared for staging only", () => {
-  assert.deepEqual(Object.keys(OPENEMR_STORED_BUILD_BY_ENV), ["staging"]);
-  assert.deepEqual(OPENEMR_STORED_BUILD_BY_ENV.staging,
-    { builder: "DOCKERFILE", dockerfilePath: "docker/railway/Dockerfile" });
+check("no environment declares a stored openemr build", () => {
+  assert.deepEqual(OPENEMR_STORED_BUILD_BY_ENV, {});
+});
+
+// Llm__Provider, Llm__Model and the prices are per environment, from one LLM_BY_ENV row each.
+// Pin that every environment the sidecar renders in declares a known provider, that the rendered
+// variables ARE its row (so a model can never travel without its provider and prices), and that the
+// key stays preserve() - a literal key is a secret in source, a shared one a different variable.
+console.log("== every environment declares its LLM provider, model and prices ==");
+
+check("LLM_BY_ENV has a row for exactly the environments the sidecar is declared in", () => {
+  assert.deepEqual(Object.keys(LLM_BY_ENV).sort(), Object.keys(SIDECAR_IMAGE_BY_ENV).sort());
+});
+
+for (const env of Object.keys(SIDECAR_IMAGE_BY_ENV)) {
+  check(`${env}: the sidecar declares a known Llm__Provider with its row's model and prices`, () => {
+    const row = LLM_BY_ENV[env];
+    assert.ok(LLM_PROVIDERS.includes(row.provider), `${env}: provider ${row.provider} is not one of ${LLM_PROVIDERS}`);
+    assert.ok(row.model.trim().length > 0, `${env}: empty model`);
+    for (const price of [row.inputPricePerMillionUsd, row.outputPricePerMillionUsd]) {
+      assert.match(price, /^\d+(\.\d+)?$/, `${env}: price ${price} is not a non-negative decimal`);
+    }
+    const sidecar = render(env).resources.find((r) => r.address === "service.agent-forge-api");
+    assert.ok(sidecar, `no service.agent-forge-api in the ${env} graph`);
+    const v = sidecar.variables ?? {};
+    assert.deepEqual(v.Llm__Provider, { type: "literal", value: row.provider }, `${env}: Llm__Provider`);
+    assert.deepEqual(v.Llm__Model, { type: "literal", value: row.model }, `${env}: Llm__Model`);
+    assert.deepEqual(v.Llm__InputPricePerMillionTokensUsd, { type: "literal", value: row.inputPricePerMillionUsd });
+    assert.deepEqual(v.Llm__OutputPricePerMillionTokensUsd, { type: "literal", value: row.outputPricePerMillionUsd });
+    assert.deepEqual(v.Llm__ApiKey, { type: "preserve" }, `${env}: Llm__ApiKey must stay preserve()`);
+  });
+}
+
+// Production never runs a provider whose free tier may train on prompts (DEPLOYMENT.md section 3).
+check("production's provider is Anthropic", () => {
+  assert.equal(LLM_BY_ENV.production.provider, "Anthropic");
+});
+
+check("an environment with no LLM_BY_ENV row refuses to render rather than guessing a model", () => {
+  const saved = LLM_BY_ENV.staging;
+  delete LLM_BY_ENV.staging;
+  try {
+    assert.throws(() => render("staging"), /Cannot resolve the model/);
+  } finally {
+    LLM_BY_ENV.staging = saved;
+  }
 });
 
 if (failures > 0) {
@@ -1201,11 +1276,11 @@ if (failures > 0) {
 // never reached its cases, and this line could not tell them apart before (platform.md,
 // "Read a gate's POSITIVE statement").
 console.log(
-  `\nSELF-TEST PASSED  ${cases} of ${cases} cases - the sites volume resolves per environment, ` +
+  `\nSELF-TEST PASSED  ${cases} of ${cases} cases - both environments mount openemr-sites in us-east4-eqdc4a, ` +
     "/ready probes Prometheus exactly where it is declared, the proxy routes /grafana " +
     "exactly where grafana is declared, production pins explicit -sha-<12> observability images " +
     "on a sized, retained, unpublished TSDB, Loki and Tempo are staging-only " +
     "and leave no trace where absent, the proxy pins an explicit proxy-sha build, and staging tracks " +
-    "develop while only production is pinned, and every service is an image declaring no build " +
-    "but the one each environment stores",
+    "develop while only production is pinned, every service is an image declaring no build, and every " +
+    "environment declares its LLM provider, model and prices with the key preserved",
 );

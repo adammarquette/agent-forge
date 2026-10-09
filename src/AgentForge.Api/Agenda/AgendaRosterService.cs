@@ -79,7 +79,7 @@ public sealed class AgendaRosterService(
                 var displayName = await ResolveDisplayNameOrNullAsync(session.Site, patientId, index, roster.Count, ct).ConfigureAwait(false);
                 var cacheKey = new AgendaSummaryCacheKey(
                     session.Site, session.ClinicianIdentity, patientId, appointment.Source.Id, clinicDay);
-                // A reload re-serves the summary, with its own generation instant, instead of re-charging it. A separate change
+                // A reload re-serves the summary, with its own generation instant, instead of re-charging it.
                 if (summaryCache.TryGet(cacheKey, out var cached))
                 {
                     rows[index] = new AgendaRow(
@@ -88,7 +88,7 @@ public sealed class AgendaRosterService(
                     return;
                 }
 
-                // One summary is one LLM turn, so each one generated is charged. A separate change
+                // One summary is one LLM turn, so each one generated is charged.
                 if (!turnBudget.TryConsume(sessionId))
                 {
                     rows[index] = new AgendaRow(

@@ -11,7 +11,7 @@ public sealed class ObservabilityOptionsTests
     {
         // The sidecar ships logs to a self-hosted Loki (Epic 107) only when an operator sets this
         // endpoint - so binding it from the "Observability" section is the config contract that turns
-        // the OTLP log exporter on. A separate change
+        // the OTLP log exporter on.
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {

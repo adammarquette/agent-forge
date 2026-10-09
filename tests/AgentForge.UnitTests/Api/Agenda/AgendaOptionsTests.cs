@@ -9,7 +9,7 @@ public sealed class AgendaOptionsTests
     [Fact]
     public void MaxConcurrentSummaries_Default_LimitsPeakOpenEmrContention()
     {
-        // Regression (issue #80): the roster fan-out at 4 concurrent summaries overwhelmed the slow
+        // Regression: the roster fan-out at 4 concurrent summaries overwhelmed the slow
         // staging OpenEMR, tripping FHIR timeouts. The lowered default eases peak contention while
         // still summarizing several patients at once.
         var options = new AgendaOptions();

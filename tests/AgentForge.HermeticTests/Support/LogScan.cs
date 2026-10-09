@@ -6,7 +6,7 @@ namespace AgentForge.HermeticTests.Support;
 /// One value no captured log entry may carry. A <see cref="Verbatim"/> value is matched as a substring; so is
 /// a <see cref="NamePart"/>, unless it is <see cref="ShortNamePartLength"/> letters or fewer, when it is
 /// matched as a whole word: "Ng" is found on its own but not inside "tracking", while "Whitfield" is still
-/// found in "HaroldWhitfield.pdf". Both ignore case. Separate changes
+/// found in "HaroldWhitfield.pdf". Both ignore case.
 /// </summary>
 internal sealed record LogSentinel
 {

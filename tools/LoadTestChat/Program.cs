@@ -2,7 +2,7 @@ using System.Globalization;
 using AgentForge.LoadTestChat;
 
 // The sidecar's own public domain was retired; it is reached only through the same-origin reverse-proxy
-// front door under the /agentforge PathBase (reverse-proxy/nginx.conf.template). A separate change
+// front door under the /agentforge PathBase (reverse-proxy/nginx.conf.template).
 var baseUrl = Environment.GetEnvironmentVariable("LoadTest__BaseUrl")
     ?? "http://localhost:8080/agentforge";
 var durationSeconds = int.Parse(
@@ -14,7 +14,7 @@ var concurrencyLevels = (Environment.GetEnvironmentVariable("LoadTest__Concurren
 
 // Null/unset => Week-1 RequestBrief baseline (unchanged). Set => Week-2 evidence graph via POST
 // /evidence/ask - a stateless HTTP request, NOT a chat turn, so it records no agent-turn duration
-// sample under any turn_type (README.md, Output). A separate change
+// sample under any turn_type (README.md, Output).
 var question = Environment.GetEnvironmentVariable("LoadTest__Question");
 
 string[] sessionCookies;

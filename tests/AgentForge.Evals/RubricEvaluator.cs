@@ -72,7 +72,7 @@ internal static class RubricEvaluator
     /// <summary>
     /// Which rubric reads each answer-path metric. An answer case lands in exactly one metric's
     /// denominator, so it must declare that metric's rubric - the same invariant
-    /// <see cref="M3Rubrics"/> carries, one category over. A separate change
+    /// <see cref="M3Rubrics"/> carries, one category over.
     /// </summary>
     public static readonly IReadOnlyDictionary<string, string> MetricRubrics =
         new Dictionary<string, string>(StringComparer.Ordinal)
@@ -87,7 +87,7 @@ internal static class RubricEvaluator
         RequireMetricCoverage(testCase);
 
         // A case that threw was inspected by nothing; scoring its empty outcome would pass whatever an
-        // empty outcome satisfies. A separate change
+        // empty outcome satisfies.
         if (outcome.Fault is not null)
         {
             return testCase.Rubrics.Distinct(StringComparer.Ordinal)
@@ -157,7 +157,7 @@ internal static class RubricEvaluator
     /// is every case carrying it, but its numerators only count the cases that declare the rubric, so an
     /// undeclared case is counted and checked by nothing - the gate would print "0 unauthorized disclosures
     /// across 14 cases" over a 14th it never inspected, and pass. Same shape as
-    /// <see cref="NoForbiddenValueDisclosed"/>, which refuses the opposite mismatch. A separate change
+    /// <see cref="NoForbiddenValueDisclosed"/>, which refuses the opposite mismatch.
     /// </summary>
     private static void RequireMetricCoverage(GoldenCase testCase)
     {

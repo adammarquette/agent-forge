@@ -14,7 +14,7 @@ using AgentForge.Integration.OpenEmr.Auth;
 using AgentForge.Integration.OpenEmr.Fhir;
 using AgentForge.Integration.OpenEmr.Http;
 using AgentForge.Llm;
-using AgentForge.Llm.Anthropic;
+using AgentForge.Api.LlmProviders;
 using AgentForge.Mcp;
 using AgentForge.Mcp.Authorization;
 using AgentForge.Observability;
@@ -39,14 +39,14 @@ using OpenTelemetry.Trace;
 using Refit;
 using AgentForge.Api.Contracts;
 
-// Rendered from the contract types alone, so it exits before any configuration is validated. A separate change
+// Rendered from the contract types alone, so it exits before any configuration is validated.
 if (EvidenceGraphSchemaExport.OutputPathFrom(args) is { } graphSchemaExportPath)
 {
     await EvidenceGraphSchemaExport.WriteAsync(graphSchemaExportPath);
     return;
 }
 
-// Same shape: the tool catalog is static, so no configuration is needed. A separate change
+// Same shape: the tool catalog is static, so no configuration is needed.
 if (McpToolSchemaExport.OutputPathFrom(args) is { } toolSchemaExportPath)
 {
     await McpToolSchemaExport.WriteAsync(toolSchemaExportPath);
@@ -66,7 +66,7 @@ var builder = WebApplication.CreateBuilder(args);
 // and the OpenAPI contract test) but none pins this authorizer's lifetime; the
 // integration-tier Production boot test proposed in a separate change covers it once
 // merged - until then this startup check is the only thing standing where the change would
-// actually ship. A separate change
+// actually ship.
 builder.Host.UseDefaultServiceProvider(options =>
 {
     options.ValidateScopes = true;
@@ -102,10 +102,6 @@ builder.Services.AddOptions<ClinicOptions>()
     .Bind(builder.Configuration.GetSection(ClinicOptions.SectionName))
     .ValidateDataAnnotations()
     .ValidateOnStart();
-builder.Services.AddOptions<LlmProviderOptions>()
-    .Bind(builder.Configuration.GetSection(LlmProviderOptions.SectionName))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
 builder.Services.AddOptions<DataProtectionKeyRingOptions>()
     .Bind(builder.Configuration.GetSection(DataProtectionKeyRingOptions.SectionName))
     .ValidateDataAnnotations()
@@ -117,7 +113,7 @@ builder.Services.AddOptions<AgentOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 // Optional self-hosted infra (observability/docker-compose.yml) - not required/ValidateOnStart,
-// unlike OpenEmr/Llm above, since the app must still boot and serve traffic without it running.
+// unlike OpenEmr above and Llm (AddLlmProvider), since the app must still boot and serve traffic without it.
 builder.Services.AddOptions<ObservabilityOptions>()
     .Bind(builder.Configuration.GetSection(ObservabilityOptions.SectionName));
 // The budget every /ready dependency probe is bounded by. Has a safe built-in default so the app
@@ -146,23 +142,22 @@ builder.Services.AddScoped<IClinicianIdentityAccessor>(sp => sp.GetRequiredServi
 builder.Services.AddSingleton<IConversationStateStore, InMemoryConversationStateStore>();
 builder.Services.AddSingleton<IChatMessageOutbox, InMemoryChatMessageOutbox>();
 // Per-session LLM turn budget - chat, evidence asks, agenda summaries. Built-in defaults, so
-// the section is optional. Shared with the hand-built ChatHubHost so the two cannot drift. A separate change
+// the section is optional. Shared with the hand-built ChatHubHost so the two cannot drift.
 builder.Services.AddConversationTurnBudget(builder.Configuration);
 
 // The framework's HttpClient loggers open an "HTTP {HttpMethod} {Uri}" scope around every outbound call at any
-// level, and OTel exports it on every line logged inside (Polly's attempts): /fhir/Patient/{id}. A separate change
+// level, and OTel exports it on every line logged inside (Polly's attempts): /fhir/Patient/{id}.
 builder.Services.ConfigureHttpClientDefaults(http => http.RemoveAllLoggers());
 
 builder.Services.AddTransient<AuthHandler>();
 builder.Services.AddTransient<CorrelationIdHandler>();
-builder.Services.AddTransient<AnthropicAuthHandler>();
 
 // AuthHandler is Transient and injects IAccessTokenProvider (Scoped by registration) - but
 // IHttpClientFactory constructs a named client's DelegatingHandler chain using its OWN internal
 // handler-building scope, never the calling hub invocation's DI scope, so no HandlerLifetime value
 // makes AuthHandler observe the token ChatSessionCoordinator set (confirmed live 2026-07-10: every
 // real FHIR tool call failed FR-AUTH-1's "no token" check even after forcing frequent handler
-// rebuilds - see #39). The actual fix lives in ScopedAccessTokenProvider itself: its storage is a
+// rebuilds). The actual fix lives in ScopedAccessTokenProvider itself: its storage is a
 // static AsyncLocal, not a per-instance field, so it flows correctly through the real async call
 // chain regardless of which DI scope constructed which object along the way. Nothing special is
 // needed here as a result - plain AddRefitClient, default handler pooling and its connection-reuse
@@ -203,37 +198,9 @@ builder.Services.AddRefitClient<IOpenEmrFhirApi>()
         options.Retry.MaxRetryAttempts = 2;
     });
 
-// LLM synthesis routinely runs longer than the framework's 10s/30s HTTP defaults, so the heaviest
-// agenda-summary prompt was tripping the attempt timeout and degrading to the deterministic fallback
-// . Give this client its own resilience budget, read from the same config the
-// validated LlmProviderOptions binds to (invalid values still fail fast via that options validation).
-var llmSection = builder.Configuration.GetSection(LlmProviderOptions.SectionName);
-var llmAttemptTimeout = TimeSpan.FromSeconds(
-    llmSection.GetValue<int?>(nameof(LlmProviderOptions.AttemptTimeoutSeconds))
-        ?? LlmProviderOptions.DefaultAttemptTimeoutSeconds);
-var llmTotalTimeout = TimeSpan.FromSeconds(
-    llmSection.GetValue<int?>(nameof(LlmProviderOptions.TotalRequestTimeoutSeconds))
-        ?? LlmProviderOptions.DefaultTotalRequestTimeoutSeconds);
-
-builder.Services.AddRefitClient<IAnthropicMessagesApi>()
-    .ConfigureHttpClient((sp, client) =>
-    {
-        client.BaseAddress = new Uri(sp.GetRequiredService<IOptions<LlmProviderOptions>>().Value.BaseUrl);
-        // HttpClient's outer timeout must exceed the pipeline's total, or it cancels first.
-        client.Timeout = llmTotalTimeout + TimeSpan.FromSeconds(30);
-    })
-    .AddHttpMessageHandler<AnthropicAuthHandler>()
-    // Same correlation-id propagation both OpenEMR clients carry: FR-OBS-1 covers the LLM hop too,
-    // and without it a model call is the one boundary the trace cannot cross.
-    .AddHttpMessageHandler<CorrelationIdHandler>()
-    .AddStandardResilienceHandler(options =>
-    {
-        options.AttemptTimeout.Timeout = llmAttemptTimeout;
-        options.TotalRequestTimeout.Timeout = llmTotalTimeout;
-        // Handler invariant: SamplingDuration must be >= 2x AttemptTimeout.
-        options.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(llmAttemptTimeout.TotalSeconds * 2);
-        options.Retry.MaxRetryAttempts = 2;
-    });
+// The model tier: validated LlmProviderOptions, the Anthropic and Gemini clients under one resilience budget,
+// and the ILlmProvider Llm__Provider selects.
+builder.Services.AddLlmProvider(builder.Configuration);
 
 builder.Services.AddScoped<IOpenEmrAuthClient, OpenEmrAuthClient>();
 builder.Services.AddScoped<IOpenEmrFhirClient, OpenEmrFhirClient>();
@@ -254,7 +221,6 @@ builder.Services.AddScoped<IMcpToolServer>(sp => new AuditingMcpToolServer(
 builder.Services.AddPatientRelationshipAuthorization();
 
 builder.Services.AddScoped<IMcpToolDispatcher, McpToolDispatcher>();
-builder.Services.AddScoped<ILlmProvider, AnthropicLlmProvider>();
 
 // Stateless (no per-request data of their own), so a single shared instance is fine. Missing since
 // Epic 7 first wired the verifier into AgentOrchestrator - the app never actually booted with that
@@ -349,7 +315,7 @@ builder.Services.AddSingleton<IAgentForgeMetrics>(sp => sp.GetRequiredService<Ag
 builder.Services.AddScoped<ExpiredSessionSignal>();
 // The eval run the image build made against this build's own source (Dockerfile stage `evals`),
 // published as the series AgentForgeEvalCategoryRegression evaluates. Optional: a missing run is
-// logged by the loader and the sidecar boots without the series. A separate change
+// logged by the loader and the sidecar boots without the series.
 builder.Services.AddOptions<EvalResultsOptions>()
     .Bind(builder.Configuration.GetSection(EvalResultsOptions.SectionName));
 builder.Services.AddSingleton<EvalResultsSnapshotLoader>();
@@ -366,7 +332,7 @@ builder.Services.AddSingleton<IVectorIndexProbe, NpgsqlVectorIndexProbe>();
 // The five /ready checks and their typed clients, the three external ones behind a result cache
 builder.Services.AddReadinessChecks();
 
-// Resolved from configuration before the host is built, like the Loki endpoint below. A separate change
+// Resolved from configuration before the host is built, like the Loki endpoint below.
 var traceExport = TraceExportPlan.From(
     builder.Configuration.GetSection(ObservabilityOptions.SectionName).Get<ObservabilityOptions>()
     ?? new ObservabilityOptions());
@@ -390,7 +356,7 @@ builder.Services.AddOpenTelemetry()
             })
         // The same fix for the two Week 2 SLO histograms, whose 6s and 11s targets otherwise sit inside the
         // 5-10s and 10-25s default buckets. A name typo here is silent, so Week2HistogramExportTests scrapes
-        // the host's /metrics and requires exactly these boundaries. A separate change
+        // the host's /metrics and requires exactly these boundaries.
         .AddView(
             instrumentName: "agentforge.evidence_retrieval.duration",
             metricStreamConfiguration: new ExplicitBucketHistogramConfiguration
@@ -425,14 +391,14 @@ builder.Services.AddOpenTelemetry()
             // First processor, so every exporter below reads the span only after it is scrubbed.
             .AddProcessor(new SpanPhiScrubber());
         // Local debugging only (Observability:TraceConsoleExporter): console spans land in the platform's
-        // stdout retention, so no deployed environment sets it. A separate change
+        // stdout retention, so no deployed environment sets it.
         if (traceExport.ConsoleExporter)
         {
             tracing.AddConsoleExporter();
         }
 
         // Only where an environment names a trace backend - staging's Tempo, never production ('s
-        // disposition, .railway/railway.ts TEMPO_IMAGE_BY_ENV). A separate change
+        // disposition, .railway/railway.ts TEMPO_IMAGE_BY_ENV).
         if (traceExport.OtlpEndpoint is { } traceEndpoint)
         {
             tracing.AddOtlpExporter(otlp =>
@@ -473,10 +439,10 @@ builder.Logging.AddOpenTelemetry(options =>
     }
 });
 
-// The access-audit trail names the patient: console only, never an OTel exporter. Separate changes
+// The access-audit trail names the patient: console only, never an OTel exporter.
 builder.Logging.KeepAccessAuditOffOpenTelemetry();
 
-// IncludeScopes exports the hosting scope's RequestPath, which can carry a document id. A separate change
+// IncludeScopes exports the hosting scope's RequestPath, which can carry a document id.
 builder.Logging.ScrubRequestPathFromLogScopes();
 
 // Read directly from configuration (not IOptions<BffOptions>) - this runs before
@@ -488,7 +454,7 @@ var bffPathBase = builder.Configuration.GetSection(BffOptions.SectionName)[nameo
 // (state + PKCE verifier, PendingLaunchCookie) and the session cookie below; the default in-memory ring
 // is regenerated per process, so a redeploy or a second replica cannot decrypt a cookie an earlier
 // process wrote - the launch callback then fails with "No pending SMART launch for this session".
-// reference: gitlab (sidecar DataProtection persistence). Empty KeyRingPath keeps the in-memory
+// Sidecar DataProtection persistence. Empty KeyRingPath keeps the in-memory
 // default for local dev / unit tests; every deployed environment must set it to a mounted volume.
 var dataProtectionOptions = builder.Configuration.GetSection(DataProtectionKeyRingOptions.SectionName)
     .Get<DataProtectionKeyRingOptions>() ?? new DataProtectionKeyRingOptions();
@@ -536,7 +502,7 @@ builder.Services.AddAgentForgeOpenApi();
 
 var app = builder.Build();
 
-// Observable gauges exist only once their owner is built; nothing else asks for it. A separate change
+// Observable gauges exist only once their owner is built; nothing else asks for it.
 app.Services.GetRequiredService<EvalResultsMetrics>();
 
 if (traceExport.EndpointRejected)
@@ -569,7 +535,7 @@ if (!app.Environment.IsProduction())
 }
 
 app.UseSession();
-// The hub cannot read the session itself on every transport, so it is resolved here. A separate change
+// The hub cannot read the session itself on every transport, so it is resolved here.
 app.UseChatHubSession();
 app.UseDefaultFiles();
 // Serve .mjs as a JS MIME so browsers execute the vendored pdf.js ES modules (evidence.html); the default

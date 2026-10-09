@@ -49,7 +49,7 @@ public sealed class EvidenceToolTests
     public async Task GetAsync_SnippetsFound_RecordsTheRetrievalAsAChatToolHit()
     {
         // The chat path's retrieve_evidence tool reaches the same retriever as POST /evidence/ask, so it must
-        // reach the same series - otherwise NFR-SLO-W2-1's p95 covers one of two call sites. A separate change
+        // reach the same series - otherwise NFR-SLO-W2-1's p95 covers one of two call sites.
         var snippets = new List<EvidenceSnippet>
         {
             new() { DocumentId = "d", Section = "s", ChunkId = "c1", Text = "t", Score = 0.9 },

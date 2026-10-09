@@ -3,7 +3,7 @@ namespace AgentForge.Observability;
 /// <summary>
 /// Which call site ran an evidence retrieval. Both reach the same <c>IEvidenceRetriever</c> and record into
 /// the same instruments, so <c>NFR-SLO-W2-1</c>'s retrieval p95 covers the stage; this only says which path a
-/// sample came from, so an operator can see which one is slow. A separate change
+/// sample came from, so an operator can see which one is slow.
 /// </summary>
 /// <remarks>
 /// <b>This becomes an exported metric label, so its cardinality is its contract.</b> Two values, both

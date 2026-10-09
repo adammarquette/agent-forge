@@ -26,7 +26,7 @@
 # without it that file is silently ignored and Grafana stays admin/admin, and with it the file must exist
 # (an explicit --env-file is required, unlike the default .env, so it exits 1 on a clean clone).
 #
-# reference: #438
+#
 
 services:
   prometheus:

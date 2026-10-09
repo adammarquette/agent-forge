@@ -36,7 +36,7 @@ public sealed class QaOpenEmrOptions
     /// A client asking for <c>user/</c> or <c>system/</c> scopes, or a public one asking for
     /// <c>launch</c>, still lands disabled until an admin enables it
     /// (<c>ScopeRepository::hasScopesThatRequireManualApproval</c>). Optional - tests that need it fail
-    /// with a clear message rather than silently passing when it's absent. A separate change
+    /// with a clear message rather than silently passing when it's absent.
     /// </summary>
     public string? TestClientId { get; init; }
 
@@ -59,17 +59,17 @@ public sealed class QaOpenEmrOptions
     /// A real, patient-scoped access token for identity A (<see cref="TestPatientId"/>), obtained via
     /// a SMART standalone-launch login the same way <see cref="SecondTestAccessToken"/> was - used
     /// only by the cross-identity entitlement tests. <see cref="TestAccessToken"/> can't stand in for
-    /// this: once <see cref="SystemClientId"/> is configured (GitLab issue #22), it mints a
+    /// this: once <see cref="SystemClientId"/> is configured, it mints a
     /// system-role <c>client_credentials</c> token that can read every patient, not just
-    /// <see cref="TestPatientId"/> - which would make a cross-identity isolation check meaningless
-    /// (GitLab issue #27). Optional - the tests that need it fail with a clear message rather than
+    /// <see cref="TestPatientId"/> - which would make a cross-identity isolation check meaningless.
+    /// Optional - the tests that need it fail with a clear message rather than
     /// silently skipping when it's absent.
     /// </summary>
     public string? CrossIdentityTestAccessTokenA { get; init; }
 
     /// <summary>
     /// Shared OAuth client id used to redeem <see cref="CrossIdentityRefreshTokenA"/>/
-    /// <see cref="CrossIdentityRefreshTokenB"/> (GitLab issue #29) - the refresh grant is redeemed by
+    /// <see cref="CrossIdentityRefreshTokenB"/> - the refresh grant is redeemed by
     /// the client that obtained it, not tied to either patient, so both identities' logins reuse the
     /// same registered client.
     /// </summary>
@@ -79,19 +79,19 @@ public sealed class QaOpenEmrOptions
     public string? CrossIdentityClientSecret { get; init; }
 
     /// <summary>
-    /// Identity A's refresh token (GitLab issue #29). When set alongside <see cref="CrossIdentityClientId"/>,
+    /// Identity A's refresh token. When set alongside <see cref="CrossIdentityClientId"/>,
     /// <see cref="OpenEmrQaFixture"/> exchanges it for a fresh <see cref="CrossIdentityTestAccessTokenA"/>
     /// at construction. Not durable: OpenEMR rotates a refresh token on use, so a stored one works for
     /// exactly one run, and CI stores none (DEPLOYMENT.md section 5).
     /// </summary>
     public string? CrossIdentityRefreshTokenA { get; init; }
 
-    /// <summary>Identity B's refresh token (GitLab issue #29) - same pattern as <see cref="CrossIdentityRefreshTokenA"/>.</summary>
+    /// <summary>Identity B's refresh token - same pattern as <see cref="CrossIdentityRefreshTokenA"/>.</summary>
     public string? CrossIdentityRefreshTokenB { get; init; }
 
     /// <summary>
     /// Client id of an enabled confidential client for the client_credentials + JWT-bearer grant
-    /// (RFC 7523, GitLab issue #22). Its id and public key are fixed, so a reseed that restores it
+    /// (RFC 7523). Its id and public key are fixed, so a reseed that restores it
     /// keeps this value valid (restored by the fork entrypoint once lands; enabled by hand
     /// until then) - the durable replacement for a manually re-minted
     /// <see cref="TestAccessToken"/>. Optional; when unset, <see cref="OpenEmrQaFixture"/> falls back
@@ -100,9 +100,9 @@ public sealed class QaOpenEmrOptions
     public string? SystemClientId { get; init; }
 
     /// <summary>
-    /// Filesystem path to the RSA private key PEM used to sign the client assertion. Backed by a
-    /// GitLab File-type CI/CD variable, whose value GitLab replaces at runtime with a path to a temp
-    /// file holding the pasted PEM - read as a path, never as inline PEM text.
+    /// Filesystem path to the RSA private key PEM used to sign the client assertion - a CI secret written
+    /// to a temp file at runtime (a CI file-type variable does this) - read as a path,
+    /// never as inline PEM text.
     /// </summary>
     public string? SystemPrivateKeyPath { get; init; }
 
@@ -116,7 +116,7 @@ public sealed class QaOpenEmrOptions
     public string? SystemScope { get; init; }
 
     /// <summary>
-    /// QA staff username for <see cref="PlaywrightLoginAutomation"/> (GitLab issue #30) - the
+    /// QA staff username for <see cref="PlaywrightLoginAutomation"/> - the
     /// login <see cref="OpenEmrQaFixture"/> uses, every CI run since refresh tokens rotate on use
     /// to mint
     /// <see cref="CrossIdentityTestAccessTokenA"/>/<see cref="SecondTestAccessToken"/> when neither a

@@ -9,7 +9,7 @@ namespace AgentForge.EvalTests;
 /// <c>phi_tokens</c> and pass whenever there were none, so 33 cases asserted nothing while counting toward
 /// a 1.0 safety score, and no case ever listed the patient id - the identifier that actually leaks
 /// (<c>a separate change</c>, <c>a separate change</c> item 7). Every test here plants one identifier in a log line and asks
-/// whether the rubric sees it. A separate change
+/// whether the rubric sees it.
 /// </summary>
 public sealed class PhiInLogsRubricTests
 {
@@ -170,7 +170,7 @@ public sealed class PhiInLogsRubricTests
     /// Given the real audit event - same event id, same name, same text - logged under any category but
     /// <c>AgentForge.AccessAudit</c>, when it carries the patient id, then the rubric fails: the exception
     /// is bound to the audit trail's own category, so a same-named <c>[LoggerMessage]</c> method on another
-    /// class is scanned like any other line. A separate change
+    /// class is scanned like any other line.
     /// </summary>
     [Fact]
     public void Evaluate_WhenTheAuditEventIsLoggedUnderAnotherCategory_FailsNoPhiInLogs()
@@ -190,7 +190,7 @@ public sealed class PhiInLogsRubricTests
     /// Given a real audit refusal, when the chart's display name or the patient id is planted in any field
     /// other than <c>patient=</c>, then the rubric fails: only the templated <c>patient=</c> value is
     /// excepted, and every other token is scanned in audit lines too, so a free-text <c>reason</c> cannot
-    /// carry PHI past the gate. A separate change
+    /// carry PHI past the gate.
     /// </summary>
     [Theory]
     [InlineData("reason")]
@@ -220,7 +220,7 @@ public sealed class PhiInLogsRubricTests
 
     /// <summary>
     /// Given an extraction reply, when a log line carries one of its field values or a truncated copy of it,
-    /// then the rubric fails - a whole-string match only ever caught a verbatim dump. A separate change
+    /// then the rubric fails - a whole-string match only ever caught a verbatim dump.
     /// </summary>
     [Theory]
     [InlineData("{\"tests\":[{\"test_name\":\"Potassium\",\"value\":\"5.0\"}]}", "Test Potassium has no citation")]
@@ -239,7 +239,7 @@ public sealed class PhiInLogsRubricTests
     /// Given an extraction reply with a short field of its own - a family name, a test name - when a log line
     /// carries that value as a whole word, then the rubric fails. Fields under 8 characters used to be
     /// dropped, so a short synthetic surname such as <c>Ng</c> leaked past the gate; a letter-free boundary
-    /// (digits, punctuation, <c>_</c>) still counts as a word edge. A separate change
+    /// (digits, punctuation, <c>_</c>) still counts as a word edge.
     /// </summary>
     [Theory]
     [InlineData("{\"demographics\":{\"full_name\":\"Planted Syntheticname\",\"family_name\":\"Ng\"}}", "Could not match family name Ng to the chart")]
@@ -259,7 +259,7 @@ public sealed class PhiInLogsRubricTests
     /// word, or carries a value with fewer than two letters (a bare figure, a one-letter code), then the
     /// rubric passes. The negative controls for whole-word matching: the quote <c>Intake</c> in the logged
     /// document type <c>IntakeForm</c>, the family name <c>Ng</c> in <c>tracking</c>, and the figure
-    /// <c>2.5</c> or the sex code <c>M</c> in ordinary diagnostic text. Separate changes
+    /// <c>2.5</c> or the sex code <c>M</c> in ordinary diagnostic text.
     /// </summary>
     [Theory]
     [InlineData("{\"citation\":{\"page\":1,\"quote\":\"Intake\"}}", "Extraction failed schema validation for IntakeForm")]

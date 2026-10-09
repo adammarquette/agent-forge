@@ -11,7 +11,7 @@ namespace AgentForge.IntegrationTests.Llm;
 /// on purpose: that fixture's constructor requires a valid key to be configured, which would
 /// block this test even though it doesn't need one.
 /// </summary>
-// Reaches the real Anthropic API, so it stays out of the merge-request job. A separate change
+// Reaches the real Anthropic API, so it stays out of the merge-request job.
 [Trait("Deployment", "Anthropic")]
 public sealed class AnthropicLlmProviderAuthenticationTests
 {

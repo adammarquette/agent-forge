@@ -8,7 +8,7 @@ namespace AgentForge.Api.Evidence;
 // CONVENTIONS.md §13 keeps that out of external API copy.
 // The omission of a patient field is the same rule seen from the other side - the patient is the session's,
 // and a form that offered one is exactly the disclosure a separate change closed, so it must not reappear here as
-// documentation either. A separate change
+// documentation either.
 
 /// <summary>
 /// The multipart request contract for <c>POST /evidence/ask</c> — the published shape of the form the

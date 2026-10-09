@@ -6,7 +6,7 @@ namespace AgentForge.Api.Observability;
 /// <summary>
 /// Reads the eval run and its baseline for <see cref="EvalResultsMetrics"/>. Never throws: the series is
 /// optional telemetry and the sidecar must boot without it, so every way of not having a run is logged by
-/// name instead - a silent absence would read as "no regression". A separate change
+/// name instead - a silent absence would read as "no regression".
 /// </summary>
 /// <param name="readFile">Returns a file's text, or <see langword="null"/> when it does not exist.</param>
 /// <param name="logger">Where a missing or unreadable run is reported.</param>

@@ -65,7 +65,7 @@ public sealed class PatientContextServiceTests
     public async Task BuildAsync_DemographicsAndConditionFetchesThrow_DiagnosticLinesNameTheResourceAndExceptionTypeButNotThePatient()
     {
         // NFR-SEC-1 / CONVENTIONS.md §7: the diagnostic stream carries no patient id, including one an
-        // exception message echoes back from the FHIR path. A separate change
+        // exception message echoes back from the FHIR path.
         A.CallTo(() => _fhirClient.GetPatientAsync("default", "patient-1", A<CancellationToken>._))
             .ThrowsAsync(new HttpRequestException("GET /fhir/Patient/patient-1 returned 503"));
         A.CallTo(() => _fhirClient.GetConditionsAsync("default", "patient-1", A<CancellationToken>._))

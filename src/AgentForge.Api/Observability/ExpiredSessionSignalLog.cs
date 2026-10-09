@@ -5,7 +5,7 @@ namespace AgentForge.Api.Observability;
 /// <summary>
 /// Source-generated log message for <see cref="ExpiredSessionSignal"/> (CA1848). The surface and
 /// nothing else — never the token, the session key, the expiry instant or the patient
-/// (CONVENTIONS.md §7). A separate change
+/// (CONVENTIONS.md §7).
 /// </summary>
 internal static partial class ExpiredSessionSignalLog
 {

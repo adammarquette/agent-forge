@@ -18,7 +18,7 @@ namespace AgentForge.UnitTests.Api.Evidence;
 /// XSS at <c>GET /evidence/document/{id}</c>: the response echoed the <c>Binary</c>'s declared media type and
 /// sent no <c>nosniff</c> or CSP, so an HTML or SVG file uploaded as a clinical document ran its script on the
 /// sidecar's origin when opened. The type must come from the bytes, and the document must be inert whatever
-/// they are. A separate change
+/// they are.
 /// </summary>
 public sealed class EvidenceDocumentResponseHeadersTests
 {

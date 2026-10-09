@@ -10,7 +10,7 @@ namespace AgentForge.UnitTests.Agents;
 /// it carries the Week 2 brief's minimum citation shape <c>{source_type, source_id, page_or_section,
 /// field_or_chunk_id, quote_or_value}</c> (FR-CITE-1), spelled in the API's camelCase, with
 /// <c>sourceType</c> as a string token rather than an enum ordinal - and the change that added it is additive,
-/// so every field the existing clients read is still there under its old name. A separate change
+/// so every field the existing clients read is still there under its old name.
 /// </summary>
 public sealed class DocumentCitationWireShapeTests
 {

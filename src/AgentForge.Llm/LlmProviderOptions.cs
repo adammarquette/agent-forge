@@ -19,6 +19,20 @@ public sealed class LlmProviderOptions : IValidatableObject
     /// <summary>Default total LLM request timeout (seconds); see <see cref="TotalRequestTimeoutSeconds"/>.</summary>
     public const int DefaultTotalRequestTimeoutSeconds = 150;
 
+    /// <summary>Base URL of the Anthropic Messages API, the default when <see cref="BaseUrl"/> is not set.</summary>
+    public const string AnthropicDefaultBaseUrl = "https://api.anthropic.com";
+
+    /// <summary>Base URL of the Gemini API, the default when <see cref="BaseUrl"/> is not set for Gemini.</summary>
+    public const string GeminiDefaultBaseUrl = "https://generativelanguage.googleapis.com";
+
+    private readonly string? _baseUrl;
+
+    /// <summary>
+    /// Which provider serves every model call. Defaults to Anthropic, so an environment that
+    /// sets nothing keeps the provider it had.
+    /// </summary>
+    public LlmProviderKind Provider { get; init; } = LlmProviderKind.Anthropic;
+
     /// <summary>Provider API key. Never logged, never in source (CONVENTIONS.md §11).</summary>
     [Required(AllowEmptyStrings = false)]
     public required string ApiKey { get; init; }
@@ -27,8 +41,15 @@ public sealed class LlmProviderOptions : IValidatableObject
     [Required(AllowEmptyStrings = false)]
     public required string Model { get; init; }
 
-    /// <summary>Provider API base URL.</summary>
-    public string BaseUrl { get; init; } = "https://api.anthropic.com";
+    /// <summary>
+    /// Provider API base URL. Unset or blank means the configured <see cref="Provider"/>'s own API, so switching
+    /// provider does not also require a base URL; an explicit value (a proxy, a test double) wins.
+    /// </summary>
+    public string BaseUrl
+    {
+        get => string.IsNullOrWhiteSpace(_baseUrl) ? DefaultBaseUrlFor(Provider) : _baseUrl;
+        init => _baseUrl = value;
+    }
 
     /// <summary>Published input-token price, for the cost estimate in <see cref="LlmUsage"/>.</summary>
     public required decimal InputPricePerMillionTokensUsd { get; init; }
@@ -53,6 +74,13 @@ public sealed class LlmProviderOptions : IValidatableObject
     /// <inheritdoc />
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        if (!Enum.IsDefined(Provider))
+        {
+            yield return new ValidationResult(
+                $"{nameof(Provider)} must be one of: {string.Join(", ", Enum.GetNames<LlmProviderKind>())}.",
+                [nameof(Provider)]);
+        }
+
         if (AttemptTimeoutSeconds <= 0)
         {
             yield return new ValidationResult(
@@ -81,4 +109,7 @@ public sealed class LlmProviderOptions : IValidatableObject
                 [nameof(OutputPricePerMillionTokensUsd)]);
         }
     }
+
+    private static string DefaultBaseUrlFor(LlmProviderKind provider) =>
+        provider == LlmProviderKind.Gemini ? GeminiDefaultBaseUrl : AnthropicDefaultBaseUrl;
 }

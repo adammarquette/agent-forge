@@ -9,7 +9,7 @@ namespace AgentForge.Observability;
 /// <c>agentforge_eval_run_timestamp_seconds</c> and <c>agentforge_eval_run_passed</c> (the gate's verdict, 1/0 -
 /// the only series that shows a safety-floor, orphan or population failure, none of which is a >5-point drop). Observable gauges read on every scrape, so a value is
 /// never cached anywhere that could outlive this process, and a category the run did not evaluate has no
-/// rate at all rather than a frozen one. With no snapshot it publishes nothing. A separate change
+/// rate at all rather than a frozen one. With no snapshot it publishes nothing.
 /// </summary>
 public sealed class EvalResultsMetrics : IDisposable
 {

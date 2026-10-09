@@ -177,7 +177,7 @@ public sealed class DocumentExtractor : IDocumentExtractor
         };
 
     // Whether an intake item's quote carries each of its claimed texts. A null entry is an optional field
-    // left absent, and claims nothing. A separate change
+    // left absent, and claims nothing.
     private static bool Carries(ExtractionCitation citation, params string?[] claimed) =>
         claimed.All(c => c is null || FactQuoteSupport.IsSupported(c, citation.Quote));
 
@@ -186,7 +186,7 @@ public sealed class DocumentExtractor : IDocumentExtractor
     /// This is the VERBATIM rule's deterministic backstop: the prompt asks the model to
     /// copy its quotes, and this is the only thing that can tell whether it did. <paramref name="supported"/>
     /// is whether the quote carries the fact it is cited for (<see cref="FactQuoteSupport"/>); a quote that
-    /// does not is unlocatable wherever it is printed. Separate changes
+    /// does not is unlocatable wherever it is printed.
     /// </summary>
     private static ExtractionCitation ResolveCitation(
         ExtractionCitation citation, PdfTextLayer text, List<CitationQuoteMatch> matches, bool supported)

@@ -24,7 +24,7 @@
 #                               left the suite green - the exact failure the suite exists to
 #                               prevent. With it, the one-sided edit is red here, and the two-sided
 #                               edit is red in check 3 because the synthetic series no longer
-#                               satisfies the raised threshold. A separate change
+#                               satisfies the raised threshold.
 #   5. FOR: PIN                - `for:` sits entirely outside check 4: `promql_expr_test` evaluates
 #                               at a single instant and never exercises the debounce, and every
 #                               `alert_rule_test` silent-half case in the tests file asserts
@@ -228,7 +228,7 @@ FOR_RULES=$((FOR_PINNED + FOR_UNPINNED))
 # line was deleted from a rule the table still pins (the rule survives, the debounce silently
 # doesn't), or the entry is a typo/rename that never matched anything. Both leave the table
 # claiming a pin that pins nothing, which the forward loop above cannot see - it only walks rules
-# that HAVE a for:, so a for: that vanished from the rules file is invisible to it. A separate change
+# that HAVE a for:, so a for: that vanished from the rules file is invisible to it.
 cut -f2 "$work/rule-fors.tsv" > "$work/live-for-alerts.txt"
 STALE_FOR=0
 printf '%s\n' "$FOR_PINS" | awk 'NF == 2 { print $1 }' > "$work/for-pin-names.txt"

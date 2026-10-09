@@ -30,7 +30,7 @@ public sealed class ChatHub(
     /// What the clinician is told when the SMART session has aged out. The browser matches on this
     /// text to show the <c>#expired</c> panel (<c>wwwroot/index.html</c>), so it is a contract with
     /// the client, not a log line - SignalR replaces the message of any non-<see cref="HubException"/>
-    /// with a generic transport error, which is how the refusal used to be lost. A separate change
+    /// with a generic transport error, which is how the refusal used to be lost.
     /// </summary>
     public const string SessionExpiredMessage =
         "No authenticated session - this SMART session has expired; re-launch AgentForge from the "
@@ -47,7 +47,7 @@ public sealed class ChatHub(
     /// <summary>
     /// What a connection is told when the page it serves was rendered for a different patient than the
     /// session's current one - another tab drilled down, or a second launch on the same cookie. The browser
-    /// matches on this text and reloads, so the banner and the chat show the same patient again. A separate change
+    /// matches on this text and reloads, so the banner and the chat show the same patient again.
     /// </summary>
     public const string PatientChangedMessage =
         "The patient for this session has changed since this page was loaded - reload to continue with the "
@@ -68,14 +68,14 @@ public sealed class ChatHub(
     /// <c>Items</c> but not <c>ISessionFeature</c>, so reading the session here threw
     /// <see cref="InvalidOperationException"/> on that transport instead of connecting
     /// . <c>Items</c> is on the hub's context under WebSockets, server-sent
-    /// events and long-polling alike. A separate change
+    /// events and long-polling alike.
     /// </para>
     /// <para>
     /// The connection is also bound to the patient its page was rendered for: the page presents the key
     /// <c>GET /patient</c> gave it (<see cref="PatientContextBinding"/>), and a connection whose key does not
     /// match the session's current site and patient is admitted but refuses every method with
     /// <see cref="PatientChangedMessage"/>. A reconnect re-resolves the session, which may have switched patient
-    /// under a page still showing the previous one. A separate change
+    /// under a page still showing the previous one.
     /// </para>
     /// </summary>
     public override async Task OnConnectedAsync()
@@ -190,7 +190,7 @@ public sealed class ChatHub(
     /// refusal would therefore mint a <em>second</em> id belonging to no other line, which is a
     /// parallel mechanism rather than a separate change. Setting it before the turn instead means the turn
     /// and the refusal that ended it carry the same id. <see cref="Observability.CorrelationIdMiddleware"/>
-    /// deliberately leaves hub traffic alone, so nothing upstream has set one. Separate changes
+    /// deliberately leaves hub traffic alone, so nothing upstream has set one.
     /// </remarks>
     private (string SessionId, PatientSessionContext Session) GetAuthenticatedSessionOrThrow()
     {
@@ -208,7 +208,7 @@ public sealed class ChatHub(
             // Re-checked per method, not once at connect: the session is cached on Context.Items when
             // the connection opens, so a tab left open crosses the token's one-hour lifetime while
             // still holding a live-looking context. Refusing here also means an aged-out session
-            // never bills an LLM round before failing. A separate change
+            // never bills an LLM round before failing.
             if (AccessTokenLifetime.HasExpired(session.ExpiresAt, timeProvider.GetUtcNow()))
             {
                 expiredSession.Record(ExpiredSessionSurface.ChatPreTurn, sessionId);

@@ -111,7 +111,7 @@
         // (name 'agfpat', distinct from the agenda's 'agf') that re-navigates to whichever patient
         // is clicked - mirrors OpenEMR's single-patient-chart model and keeps the Daily Agenda tab
         // open alongside it. The SMART patient-scoped re-launch completes in the tab's iframe
-        // same-origin, no SameSite bridge-cookie dance. A separate change
+        // same-origin, no SameSite bridge-cookie dance.
         var loadingLabel = displayName || ('Patient ' + patientId);
         try {
           var top = window.top;
@@ -148,7 +148,7 @@
           } else if (r.summary) {
             var sum = document.createElement('div'); sum.className = 'summary'; sum.textContent = r.summary;
             btn.appendChild(sum);
-            // A re-served summary and its flags predate the page header; say so. A separate change
+            // A re-served summary and its flags predate the page header; say so.
             if (r.summaryAsOf && data.asOf && new Date(r.summaryAsOf) < new Date(data.asOf)) {
               var age = document.createElement('div'); age.className = 'summary summary-age';
               age.textContent = 'Summary from ' + fmtTime(r.summaryAsOf);

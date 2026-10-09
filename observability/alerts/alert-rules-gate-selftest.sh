@@ -21,15 +21,15 @@
 #   - the parser silently matching nothing ................................. checks 2/4/5 fail closed
 #
 # Runs in the same prom/prometheus:v3.15.0 container as the gate, so promtool is present; POSIX sh,
-# not bash, because that image is BusyBox. Separate changes
+# not bash, because that image is BusyBox.
 set -u
 
 # Fails CLOSED the same way the gate it tests does: a suite that silently stops running cases
 # still prints a PASS/TOTAL line that reads exactly like a pass (platform.md, "Read a gate's
 # POSITIVE statement"). Update this when you add or remove an `expect` call - the count check
 # below is what turns a case that quietly never ran into a red suite instead of a smaller "N of N".
-# !616 and this branch each added cases independently; reconciled to the true
-# total of both on rebase. Separate changes
+# Two changes each added cases independently; reconciled to the true
+# total of both on rebase.
 EXPECTED_ASSERTIONS=32
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -90,7 +90,7 @@ expect() {
 # fatal (`promtool check rules "$RULES" || true`) still lets check 1 run and still lets the
 # generic 'FAILED' or the 'Checking ' header print, and the case would stay green. Counting the
 # line check 1's own header shares with nothing else catches that a second failure block printed
-# after it. A separate change
+# after it.
 expect_count() {
   want="$1"; needle="$2"; desc="$3"
   got_count="$(grep -Fc "$needle" "$work/out")"
@@ -117,7 +117,7 @@ week2_sed() { # <file> <sed-expr>
 # file, start marker through the line before the next "      - alert:" (or EOF). Used to orphan a
 # promql_expr_test left behind in the tests file: the rule it was pinning no longer exists, so the
 # UNPINNED direction (check 4's forward pin) has nothing to flag, and only the STALE/orphan
-# direction can catch it. A separate change
+# direction can catch it.
 remove_rule() { # <file> <alert-name>
   awk -v name="$2" '
     $0 ~ ("^      - alert: " name "$") { skip = 1; next }
@@ -134,7 +134,7 @@ expect 0 'eval threshold 0.05 == baseline max_regression 0.05' "and names the tw
 
 # --- 1. the finding: all three thresholds raised out of reach, tests untouched -----------------
 # This is the reviewer's own mutation, verbatim. Before the expression pin it was SUCCESS, exit 0
-# - the suite green with all three Week 2 alerts permanently silent. A separate change
+# - the suite green with all three Week 2 alerts permanently silent.
 d="$(fixture unfireable)"
 week2_sed "$d/alerts/agentforge-alerts.yml" 's/) > 0\.2$/) > 0.9/; s/by (le)) > 6$/by (le)) > 20/; s/) > 0\.05$/) > 0.5/'
 got="$(run "$d")"
@@ -300,7 +300,7 @@ got="$(run "$d")"
 # 'Checking ' is check 1's own header line (`promtool check rules` prints "Checking <file>" before
 # its verdict) and `promtool test rules` never prints it on any fixture in this suite - confirmed
 # by deleting check 1's invocation and re-running this exact case, which then loses the needle
-# though the exit code stays 1. A separate change
+# though the exit code stays 1.
 expect 1 'Checking ' "a rules file Prometheus would reject is RED, and check 1 is what ran"
 # 'Checking ' proves check 1 RAN; it does not prove nothing AFTER it also fired - if the die on
 # check 1 stopped being fatal (`promtool check rules "$RULES" || true`), check 1 still prints its

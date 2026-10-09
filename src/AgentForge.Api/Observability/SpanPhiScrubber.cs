@@ -13,7 +13,7 @@ namespace AgentForge.Api.Observability;
 /// and the client address are dropped; the free-text status description is cleared while the status code
 /// is kept; and <c>exception</c> events (message and stack trace) are removed while every other event is
 /// kept. A URL that cannot be parsed is removed rather than exported raw. Registered ahead of the
-/// exporters in <c>Program.cs</c>, so it sees each span first. A separate change
+/// exporters in <c>Program.cs</c>, so it sees each span first.
 /// </summary>
 public sealed partial class SpanPhiScrubber : BaseProcessor<Activity>
 {
@@ -98,7 +98,7 @@ public sealed partial class SpanPhiScrubber : BaseProcessor<Activity>
         return origin + ScrubPath(uri.AbsolutePath);
     }
 
-    // Shared with RequestPathScrubbingScopeProvider, so a log scope's path reads as the span's does. A separate change
+    // Shared with RequestPathScrubbingScopeProvider, so a log scope's path reads as the span's does.
     internal static string ScrubPath(string raw)
     {
         var cut = raw.IndexOfAny(['?', '#']);

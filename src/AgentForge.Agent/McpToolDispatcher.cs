@@ -24,7 +24,7 @@ namespace AgentForge.Agent;
 /// <see cref="AccessTokenExpiredException"/> through, so a dispatch on a dead SMART session ends
 /// the turn instead of returning a tool_result - there is no chart left to degrade to and the
 /// remedy is a re-launch, not a retry. <c>ChatHub</c> turns it into the session-expired message
-/// the clinician can act on. A separate change
+/// the clinician can act on.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -112,7 +112,7 @@ public sealed class McpToolDispatcher(
         // wired into the switch and advertised nowhere is inert instead of callable - and so a tool
         // that changes the record cannot become reachable without someone adding it to the advertised
         // surface. Deliberately after the FR-AUTH-2 gate: "may this requester see this patient" is the
-        // outer question, and every dispatch still produces a decision. A separate change
+        // outer question, and every dispatch still produces a decision.
         if (!McpToolCatalog.Offers(toolCall.ToolName))
         {
             metrics.RecordOutOfScopeToolCall();
@@ -141,7 +141,7 @@ public sealed class McpToolDispatcher(
             metrics.RecordToolCall(toolCall.ToolName, succeeded: false, stopwatch.Elapsed);
             // An upstream FHIR/HTTP failure (e.g. a 403 for a resource the token can't read) reads as
             // a clean "unavailable", not raw "Response status code..." text in the brief - the agent
-            // still sees IsError:true and won't fabricate (UC-5). A separate change
+            // still sees IsError:true and won't fabricate (UC-5).
             var message = ex is HttpRequestException
                 ? "This clinical data source is temporarily unavailable and could not be retrieved."
                 : ex.Message;

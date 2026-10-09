@@ -89,7 +89,7 @@ public sealed class McpToolServerEndToEndTests : IClassFixture<McpToolServerQaFi
         // prove we sent the right parameter, not that OpenEMR applied it correctly. NotContain
         // (rather than OnlyContain, which FluentAssertions fails on an empty collection) so this
         // tolerates the QA test patient having no labs in range at all (CONVENTIONS.md §8.2 - graceful
-        // handling of the demo data's known gaps, issue #26) while still catching a real violation:
+        // handling of the demo data's known gaps) while still catching a real violation:
         // any returned lab whose date predates the filter.
         result.NewLabs.Should().NotContain(
             lab => lab.EffectiveDateTime != null && lab.EffectiveDateTime < sinceDate,

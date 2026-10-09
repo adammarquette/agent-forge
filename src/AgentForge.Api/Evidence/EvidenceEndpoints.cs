@@ -101,10 +101,10 @@ public static class EvidenceEndpoints
     /// session patient no longer holds. Every decision writes one access-audit record (FR-AUTH-4), granted or
     /// refused, naming the clinician, the patient and the correlation id and never the document id. A page rendered
     /// for another patient than the session's current one is answered 409 before any of that, and audited as
-    /// nothing: it asked about no patient's data. A separate change
+    /// nothing: it asked about no patient's data.
     /// </summary>
     // Separate from the private handler so the unit tests can drive it without publishing its summary in the
-    // OpenAPI document (see the .WithSummary note in MapEvidenceEndpoints). A separate change
+    // OpenAPI document (see the .WithSummary note in MapEvidenceEndpoints).
     internal static async Task<IResult> GetDocumentAsync(
         HttpContext httpContext, string documentId, string? contextKey,
         IOpenEmrFhirClient fhirClient, IDerivedFactStore store, IPatientRelationshipAuthorizer relationshipAuthorizer,
@@ -173,7 +173,7 @@ public static class EvidenceEndpoints
         }
 
         // Never document.ContentType: that is the upload's declared type, and echoing it served HTML/SVG as
-        // live markup on this origin. A separate change
+        // live markup on this origin.
         return document is null
             ? Results.NotFound()
             : SourceDocumentResponse.Create(httpContext.Response, document.Content);
@@ -213,7 +213,7 @@ public static class EvidenceEndpoints
     {
         // The request's application root span (NFR-TRACE-W2): this route bypasses AgentOrchestrator, so nothing
         // else opens one. It nests under the host's HTTP server span and carries the correlation id every log
-        // line of the request is scoped to - never the patient, the requester or the question. A separate change
+        // line of the request is scoped to - never the patient, the requester or the question.
         using var span = AgentForgeActivitySource.Instance.StartActivity(EvidenceTracing.AskSpan);
         span?.SetTag(EvidenceTracing.CorrelationId, correlationIdAccessor.CorrelationId);
         try
@@ -255,7 +255,7 @@ public static class EvidenceEndpoints
         IConversationTurnBudget turnBudget)
     {
         // Gate on the BFF session, same as /agenda and /patient: the endpoint burns LLM + retrieval quota, so
-        // access required a launch even before the flow made a user-scoped FHIR call of its own (#96, #105).
+        // access required a launch even before the flow made a user-scoped FHIR call of its own.
         // The FR-AUTH-2 lookup below is that call, so the session is the token source now as well as the
         // paywall. The read also refuses an aged-out session, so an expired token normally never reaches
         // that lookup; one that dies in between is caught there and answered 401.
@@ -280,7 +280,7 @@ public static class EvidenceEndpoints
         }
 
         // The session id outlives a patient switch in another tab, so the session alone does not say which patient
-        // this page shows. Refused before the relationship lookup, the audit and the budget. A separate change
+        // this page shows. Refused before the relationship lookup, the audit and the budget.
         if (!PatientContextBinding.Matches(form[PatientContextBinding.QueryParameter].ToString(), httpContext.Session.Id, session))
         {
             return PatientChanged();
@@ -343,7 +343,7 @@ public static class EvidenceEndpoints
         }
 
         // Charged last, once nothing else can refuse it, so a 400 or 403 spends no budget. The edge limits this
-        // route per minute, never in total; this is the total. A separate change
+        // route per minute, never in total; this is the total.
         if (!turnBudget.TryConsume(httpContext.Session.Id))
         {
             return Results.Json(BudgetExhaustedMessage, statusCode: StatusCodes.Status429TooManyRequests);

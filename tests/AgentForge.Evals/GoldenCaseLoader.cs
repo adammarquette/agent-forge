@@ -64,7 +64,7 @@ internal static class GoldenCaseLoader
         }
 
         // A fault fails every declared rubric, so a case declaring none passes even when its run throws.
-        // `null` gets here too: the serializer does not enforce the non-nullable annotation. A separate change
+        // `null` gets here too: the serializer does not enforce the non-nullable annotation.
         if (parsed.Rubrics is null || parsed.Rubrics.Count == 0)
         {
             throw new InvalidOperationException(

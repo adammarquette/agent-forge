@@ -113,7 +113,7 @@ public sealed class EvidenceAgentSupervisor : IEvidenceAgentSupervisor
         var storedFacts = await _factStore.GetByPatientAsync(request.PatientId, cancellationToken);
         var priorFacts = ProjectDerivedFacts(storedFacts);
         // Surface persisted facts as fetchable click-to-source citations (each carries its OpenEMR
-        // DocumentReference id, so the client renders the source PDF from OpenEMR) alongside any in-turn ones (#109).
+        // DocumentReference id, so the client renders the source PDF from OpenEMR) alongside any in-turn ones.
         documentCitations = [.. documentCitations, .. DerivedFactCitationProjector.Project(storedFacts)];
         if (priorFacts.Count > 0)
         {

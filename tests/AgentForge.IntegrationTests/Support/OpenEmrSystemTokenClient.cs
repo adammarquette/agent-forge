@@ -4,7 +4,7 @@ namespace AgentForge.IntegrationTests.Support;
 
 /// <summary>
 /// Mints an OpenEMR access token via the <c>client_credentials</c> grant + JWT-bearer client assertion
-/// (RFC 7523, GitLab issue #22) - the durable replacement for a manually re-minted, hour-lived
+/// (RFC 7523) - the durable replacement for a manually re-minted, hour-lived
 /// <c>OpenEmrQa__TestAccessToken</c>. QA-harness-only: deliberately a raw <see cref="HttpClient"/>, not
 /// the production <c>IOpenEmrAuthApi</c>/<c>TokenRequest</c> Refit types, which stay authorization_code-only
 /// by design (client_credentials is out of v1 production scope, ARCHITECTURE.md §18.2).

@@ -5,7 +5,7 @@ namespace AgentForge.Documents;
 /// <summary>
 /// What <see cref="CitationBoundingBoxResolver"/> concluded about one citation's quote: the outcome, and the
 /// exact geometry when — and only when — the quote was located. A negative outcome carries no box, so the
-/// caller cannot accidentally treat "I could not find this" as "here is where it is". A separate change
+/// caller cannot accidentally treat "I could not find this" as "here is where it is".
 /// </summary>
 /// <param name="Match">Whether the quote was located, searched for and missing, or not checkable at all.</param>
 /// <param name="BoundingBox">

@@ -11,7 +11,7 @@ namespace AgentForge.EvalTests;
 /// patient identifiers"). The datasets are synthetic by construction and name synthetic patients on
 /// purpose, so they are held to two narrower rules: every patient id is in the synthetic namespace, and no
 /// string has the shape of a real identifier. The reports are held to the strict rule: none of the golden
-/// set's patient identifiers at all. A separate change
+/// set's patient identifiers at all.
 /// </summary>
 public sealed class CommittedArtifactPhiScanTests
 {

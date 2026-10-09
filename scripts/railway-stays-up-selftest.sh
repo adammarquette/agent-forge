@@ -326,7 +326,7 @@ expect 1 "whole seconds" "a non-numeric --settle is a usage error" --state "$tmp
 # output through `awk` to append `\r` before every newline, so this case exercises the override
 # (scripts/lib/jq-crlf.sh) rather than trusting it never regresses. Without that override this case
 # fails exactly as the recorded bug did: a healthy world reads as `nothing moved`/UNDECIDABLE rather
-# than STAYED UP. A separate change
+# than STAYED UP.
 #
 # `exit "${PIPESTATUS[0]}"` IS LOAD-BEARING. Without it the stub's own exit status is awk's, not the
 # real jq's — awk always exits 0, so a `jq -e` call that correctly found `false` (exit 1) would be

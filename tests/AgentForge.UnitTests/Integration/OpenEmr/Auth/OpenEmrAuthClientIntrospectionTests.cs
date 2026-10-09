@@ -44,7 +44,7 @@ public sealed class OpenEmrAuthClientIntrospectionTests
     [Fact]
     public async Task IntrospectAsync_NullClientSecret_SendsEmptyStringNotNull()
     {
-        // Regression test (GitLab issue TBD): a public client's registered secret is an empty
+        // Regression test: a public client's registered secret is an empty
         // string, not absent - the introspection endpoint authenticates the caller by matching
         // client_secret exactly, including empty-string-to-empty-string. Refit's UrlEncoded body
         // serialization omits null properties entirely, which the live server treats as an

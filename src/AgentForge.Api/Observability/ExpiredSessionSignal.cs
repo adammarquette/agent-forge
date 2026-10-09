@@ -8,7 +8,7 @@ namespace AgentForge.Api.Observability;
 /// The one server-side record that a SMART session was refused for having aged out: a counter
 /// increment on <c>agentforge.expired_session_refusals</c> and one correlation-scoped log line.
 /// Every surface in <see cref="ExpiredSessionSurface"/> emits through here rather than instrumenting
-/// itself, so the rules below are stated once. A separate change
+/// itself, so the rules below are stated once.
 /// </summary>
 /// <remarks>
 /// <para>

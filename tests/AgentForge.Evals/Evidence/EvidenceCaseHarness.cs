@@ -12,7 +12,7 @@ namespace AgentForge.Evals.Evidence;
 /// <c>SourceAttributionEngine</c> and <c>CardiologyConstraintEngine</c>. Only the two retrieval halves, the
 /// reranker and the model's turn are fixtures — nothing about fusion, ordering, citation resolution or
 /// degradation is re-implemented here.
-/// reference: ARCHITECTURE-DOCUMENTS.md §5 (hybrid RAG), §8 (the gate), §10 (degradation); a separate change
+/// reference: ARCHITECTURE-DOCUMENTS.md §5 (hybrid RAG), §8 (the gate), §10 (degradation);
 /// </summary>
 internal static class EvidenceCaseHarness
 {

@@ -109,7 +109,7 @@ internal sealed record AuthorizationScenario
 /// One Week 1 <b>answer-path</b> scenario: the chart the tools serve, the model turns the orchestrator is
 /// fed, and what the verified answer must and must not contain. This is the population M1 (groundedness),
 /// M2 (constraint recall) and M5 (transparent degradation) are stated over and had none of until now
-/// (METRICS.md §2). A separate change
+/// (METRICS.md §2).
 /// </summary>
 /// <remarks>
 /// <para>
@@ -188,7 +188,7 @@ internal sealed record AnswerScenario
     /// Marks a case pinning NG1's prompt-only limit: a treatment recommendation that cites correctly passes
     /// FR-VERIF-1 and ships, because grounding decides whether a claim is supported and never what kind of
     /// act it performs. Counted and printed <b>beside</b> M1's number, so a green run cannot be read as "no
-    /// recommendation can ship". A separate change
+    /// recommendation can ship".
     /// </summary>
     public bool KnownScopeEscape { get; init; }
 }
@@ -324,7 +324,7 @@ internal sealed record ToolCallFixture
 /// ranked, what the reranker did with the fused pool, and what the composed answer must and must not carry.
 /// This is the population the eval gate had nothing in at all - hybrid RAG shipped scored by no case, so a
 /// regression in RRF fusion, in the rerank call or in the degradation path passed
-/// unnoticed. A separate change
+/// unnoticed.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -377,7 +377,7 @@ internal sealed record EvidenceScenario
     /// The reranker returns all of <see cref="RerankRanking"/> rather than the <c>topK</c> it was asked
     /// for. <c>IReranker</c> promises at most <c>topK</c> and the Cohere provider sends it as <c>top_n</c>,
     /// so a reranker that honours it hides <c>HybridEvidenceRetriever</c>'s own cap on the reranked path;
-    /// this is the only way a case can reach that cap. A separate change
+    /// this is the only way a case can reach that cap.
     /// </summary>
     public bool RerankIgnoresTopK { get; init; }
 
@@ -460,7 +460,7 @@ internal sealed record EvalBaseline
     /// <c>safety</c> at <c>1.0</c>, where a single failing case must block and the regression arm therefore
     /// has nothing to add, and <c>quality</c> at <c>0.80</c>, chosen so the >5% regression arm is reachable.
     /// No default — an unknown or absent tier is a gate failure rather than a lenient fallback, which is
-    /// what stops a rubric added later from inheriting the looser floor in silence. A separate change
+    /// what stops a rubric added later from inheriting the looser floor in silence.
     /// </summary>
     public required IReadOnlyDictionary<string, double> PassThresholds { get; init; }
 
@@ -473,7 +473,7 @@ internal sealed record EvalBaseline
     /// <summary>
     /// How many cases pin each documented limit, keyed by <see cref="EvalGatePolicy.KeywordBoundaryEscape"/>
     /// and <see cref="EvalGatePolicy.ScopeEscape"/>. A run whose count differs fails the gate, so a limit
-    /// stops being reported only by a deliberate edit here. A separate change
+    /// stops being reported only by a deliberate edit here.
     /// </summary>
     public IReadOnlyDictionary<string, int> PinnedEscapes { get; init; } = new Dictionary<string, int>(StringComparer.Ordinal);
 }

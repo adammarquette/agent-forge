@@ -199,7 +199,7 @@ public sealed class BffQaFixture : WebApplicationFactory<global::Program>
     /// so the hub sees whatever session they hold. The transport choice lives in
     /// <see cref="TestServerHubConnection"/>, because it decides whether the hub can read a session
     /// at all - and nothing here would notice if it changed. Presents the page key the jar's patient session was
-    /// seeded with, as <c>index.html</c> presents the one <c>GET /patient</c> gave it. A separate change
+    /// seeded with, as <c>index.html</c> presents the one <c>GET /patient</c> gave it.
     /// </summary>
     public HubConnection BuildHubConnection(CookieContainer cookies) =>
         TestServerHubConnection.Build(

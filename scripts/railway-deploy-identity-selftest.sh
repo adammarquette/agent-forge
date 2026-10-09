@@ -415,7 +415,7 @@ if [ -f "$tmp/ran-ok" ]; then fail "run: the deploy ran although the capture fai
 # triggered it. This runs the real `railway-snapshot-guard.sh` against the real
 # `railway-deploy-identity.sh`, in the inverted order, and asserts the refusal AND its reason —
 # demonstrated, not merely read off the two files. No credential or network reaches this:
-# `require_plan_identity` runs before `resolve_scope`. Separate changes
+# `require_plan_identity` runs before `resolve_scope`.
 nest_plan="$tmp/plan-changes.json"
 expect_cmd_says 2 "Name the plan once." \
     "the inverted nesting (snapshot-guard OUTSIDE, deploy-identity INSIDE) refuses every deploy" \

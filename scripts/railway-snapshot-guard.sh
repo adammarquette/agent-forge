@@ -11,7 +11,7 @@
 # Production's database was emptied on 2026-09-18 and `volumeInstanceBackupList` returned an empty array
 # for `mysql-data`: no scheduled backups, no manual ones, nothing to restore. Recovery was possible only
 # because this project mandates synthetic demo data and the cohort could be re-seeded. Real state would
-# have been gone. A separate change
+# have been gone.
 #
 # WHAT RAILWAY ACTUALLY OFFERS, established by introspecting the live API rather than assumed:
 #
@@ -30,17 +30,17 @@
 #      A credential may create a backup and still not be allowed to read `workflowStatus`. A TEAM token
 #      does exactly that (2026-09-19, fearless-abundance/staging, where this guard refused a snapshot it
 #      had in fact taken) - AND SO DOES A PROJECT TOKEN, measured 2026-09-22 on the same environment,
-#      which means the fallback below is the ONLY path CI ever takes. A separate change
+#      which means the fallback below is the ONLY path CI ever takes.
 #      Waiting therefore falls back to polling the backup list for the label, on the
 #      RESTARTED deadline - see the note at the fallback loop for why it restarts and what it costs.
 #      THE PROOF DOES NOT MOVE, and `Not Authorized` is the only message that triggers the
-#      fallback — every other workflow failure still refuses. A separate change
+#      fallback — every other workflow failure still refuses.
 #   2. IT KEYS OFF A VOLUME **INSTANCE**, NOT A VOLUME. A `Volume` is project-level (id, name, projectId).
 #      A `VolumeInstance` is the per-environment materialisation (environmentId, serviceId, mountPath) and
 #      is what carries data and backups. `railway volume list --json` prints VOLUME ids. Passing one to
 #      `volumeInstanceBackupList` answers `Not Authorized` — a message that names neither the real fault
 #      nor the right object. That project-level/environment-level confusion is the shape of the incident
-#      this guard exists for. A separate change
+#      this guard exists for.
 #   3. THE CLI CANNOT DO IT. Railway CLI 5.57.2's `railway volume` has list/add/delete/update/detach/
 #      attach/files/browse and no backup or snapshot verb at all. The guard therefore talks to the
 #      GraphQL API directly; `railway` stays the thing it guards, not the thing it calls.
@@ -58,7 +58,7 @@
 # (maintainer ruling). Every OTHER refusal above is unchanged, including for that environment.
 # An environment that is not listed — or listed with anything other than the boolean `true` — is
 # snapshotted exactly as before: the declaration can only be read as "not refreshable" when it is
-# missing, broken or ambiguous. A separate change
+# missing, broken or ambiguous.
 #
 # Every API result below is captured into a variable and its status checked before it is parsed. Nothing
 # is read out of a pipeline, because a pipeline reports only its last command and would report jq's
@@ -68,7 +68,7 @@
 # document that names itself — `kind: "railway.config.plan"` — and labels EVERY entry in
 # `changeSet.changes[]` with a `severity` drawn from {safe, destructive}. That is the closed vocabulary,
 # published by the thing that owns the schema. `classify_plan` reads it structurally, demands the shape
-# first, and refuses on anything outside that vocabulary. A separate change
+# first, and refuses on anything outside that vocabulary.
 #
 # It was previously MODELLED instead — an action key drawn from a guessed list carrying a value from a
 # guessed safe set — and against a real plan that classifier could not return HARMLESS at all: Railway's
@@ -89,7 +89,7 @@
 # case where a plan is allowed to LOWER the verdict is `railway config apply`, whose argv verdict is
 # literally "I cannot judge this without the plan"; that, and nothing else, is what `--plan` clears — and
 # only when the guarded command NAMES that same plan, because an apply that names none re-evaluates the
-# authoring file and so was never classified by the pin at all. A separate change
+# authoring file and so was never classified by the pin at all.
 
 set -euo pipefail
 
@@ -124,7 +124,7 @@ ERRFILE="$(mktemp)"
 # ERRKIND IS SEPARATE FROM ERRFILE ON PURPOSE. ERRFILE holds a COMPOSED, human-facing sentence - the
 # call site's `what`, the generic explanation, sometimes a hint - so substring-matching it for a
 # decision matches text this guard wrote about the error rather than the error. ERRKIND holds one
-# machine token set only on an EXACT match, and callers switch on it. A separate change
+# machine token set only on an EXACT match, and callers switch on it.
 ERRKIND="$(mktemp)"
 trap 'rm -f "$ERRFILE" "$ERRKIND"' EXIT
 
@@ -184,7 +184,7 @@ command -v jq >/dev/null 2>&1 \
 # RAILWAY_SNAPSHOT_GUARD_TRANSPORT is a command that reads the GraphQL request body on stdin and writes
 # the GraphQL response on stdout. Unset, it is curl against $ENDPOINT.
 #
-# AUTH IS NOT ONE HEADER. A Railway PROJECT token — which is what CI holds, as RAILWAY_TOKEN_PROD, and
+# AUTH IS NOT ONE HEADER. A Railway PROJECT token — which is what CI holds, as RAILWAY_PROD_TOKEN, and
 # what `railway` itself reads from RAILWAY_TOKEN — authenticates with `Project-Access-Token`. A personal
 # or team token uses `Authorization: Bearer`. Sending a project token as a Bearer credential answers
 # `Not Authorized`, which reads like a permissions problem and is a header problem.
@@ -393,7 +393,7 @@ snapshot_instance() { # <instance-id> <volume-name> <mount> <sizeMB> <currentMB>
   # the evidence itself. NOTHING IS WEAKENED — the identity check below is unchanged and still the only
   # thing that can call a snapshot taken. Every other failure of this query is still fatal, because only
   # `Not Authorized` says "this credential cannot answer"; the rest say the workflow is in a state this
-  # guard must not read as success. A separate change
+  # guard must not read as success.
   waited=0
   while :; do
     if ! out="$(gql_checked "polling workflow $wf" \
@@ -486,7 +486,7 @@ do_snapshot() { # do_snapshot <label> [volume-name]
   # NOT SILENT. An operator reading a job log has to be able to tell "this guard took no backup
   # because someone decided none was needed" from "this guard is broken" — those look identical at
   # exit 0, and only one of them is fine. So the environment, the file and the recorded reason all go
-  # to the log every time. A separate change
+  # to the log every time.
   data_refreshable_resolve "$ENVIRONMENT_ID"
   if [ "$DATA_REFRESHABLE" = "yes" ]; then
     note "NO SNAPSHOT" "environment $ENVIRONMENT_ID is declared data-refreshable: $DATA_REFRESHABLE_WHY"
@@ -495,19 +495,30 @@ do_snapshot() { # do_snapshot <label> [volume-name]
   fi
 
   rows="$(resolve_instances "$want")"
-  while IFS=$'\t' read -r vi name mount size used; do
+  # THE ROWS ARE READ FROM FD 3, AND EVERY INSTANCE RUNS WITH STDIN FROM /dev/null. The loop
+  # used to read the rows from its stdin, so anything inside snapshot_instance that read stdin ate the
+  # instances not yet snapshotted - and the loop then ended early and reported success. On the
+  # self-hosted CI runner `jq` was a Windows jq.exe reached through WSL interop, whose relay drains
+  # stdin even for `jq -n`: instance 1 was snapshotted, instance 2 was never visited, and the guard
+  # PERMITTED a volume delete. Linux jq -n never reads stdin, which is why it passed everywhere else.
+  # And the count is checked against the rows resolved, so any other way of skipping one refuses too.
+  local expected
+  expected="$(printf '%s\n' "$rows" | grep -c . || true)"
+  while IFS=$'\t' read -r -u 3 vi name mount size used; do
     [ -n "${vi:-}" ] || continue
-    snapshot_instance "$vi" "$name" "$mount" "$size" "$used" "$label"
+    snapshot_instance "$vi" "$name" "$mount" "$size" "$used" "$label" </dev/null
     count=$((count + 1))
-  done <<EOF
+  done 3<<EOF
 $rows
 EOF
   [ "$count" -gt 0 ] || die_refused "nothing was snapshotted."
+  [ "$count" = "$expected" ] \
+    || die_refused "snapshotted $count of ${expected:-?} volume instance(s) resolved in environment $ENVIRONMENT_ID. Refusing: an instance that was resolved and not snapshotted is not protected."
   note "GUARD" "$count volume instance(s) snapshotted and verified."
 }
 
 # --- classification ---------------------------------------------------------------------------------
-# WHAT COUNTS AS DESTRUCTIVE IS ENUMERATED, NOT JUDGED. Three shapes. A separate change
+# WHAT COUNTS AS DESTRUCTIVE IS ENUMERATED, NOT JUDGED. Three shapes.
 #
 #   (a) a `railway config apply` whose plan proposes a delete — the plan decides, see classify_plan;
 #   (b) a verb that removes or re-points storage: volume delete/detach/update, service or environment
@@ -515,7 +526,7 @@ EOF
 #   (c) an environment-scoped invocation that names a PROJECT-level object — `-v <name>` and friends.
 #       `railway volume delete -v mysql-data` binds a project-level volume by name; that is how the
 #       previous outage happened. Any argv naming a volume is destructive-or-undecidable whatever the
-#       verb. A separate change
+#       verb.
 #
 # Anything not positively recognised as read-only is UNDECIDABLE, which `run` treats as destructive.
 #
@@ -795,13 +806,13 @@ decide() { # decide <plan-or-empty> <argv...>; sets VERDICT and returns the code
 # twice on one line. Nothing compared the two, so
 #   run --plan A -- railway config apply --plan B
 # classified A, found it harmless, took no snapshot and applied B. A verdict about one document is not a
-# verdict about another. A separate change
+# verdict about another.
 #
 # EVERY occurrence is printed, not the first. `--plan <PLAN>` is a single-value clap argument
 # (`ArgAction::Set`), which OVERWRITES rather than accumulates, so the CLI reads the LAST `--plan` on the
 # line while a first-wins reader here would vouch for the first. Silently picking either is the permissive
 # direction, and this file's own doctrine is that the enumeration is only as good as its spellings: more
-# than one `--plan` is an ambiguity to refuse, not a thing to choose from. A separate change
+# than one `--plan` is an ambiguity to refuse, not a thing to choose from.
 argv_plans() { # argv_plans <argv...>; prints every --plan the guarded command names, one per line
   local a take=0
   for a in "$@"; do
@@ -826,7 +837,7 @@ canonical_path() { # canonical_path <path>
 }
 
 # A content fingerprint, so a plan REWRITTEN between the classification and the exec is caught too. The
-# GitLab job runs BusyBox and GitHub's runs GNU; both carry sha256sum, and cksum is the last resort.
+# CI runs GNU, and BusyBox (the earlier CI image) also carries sha256sum; cksum is the last resort.
 plan_fingerprint() { # plan_fingerprint <file>
   if command -v sha256sum >/dev/null 2>&1; then sha256sum < "$1" | cut -d' ' -f1
   elif command -v shasum  >/dev/null 2>&1; then shasum -a 256 < "$1" | cut -d' ' -f1

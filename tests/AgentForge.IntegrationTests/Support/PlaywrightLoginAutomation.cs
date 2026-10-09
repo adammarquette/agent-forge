@@ -8,7 +8,7 @@ using Refit;
 namespace AgentForge.IntegrationTests.Support;
 
 /// <summary>
-/// Drives a real SMART standalone-launch login via Playwright (GitLab issue #30) - no human in the
+/// Drives a real SMART standalone-launch login via Playwright - no human in the
 /// loop. Confirmed live against the QA server: staff login ("OpenEMR Login") -&gt; patient-select
 /// (matched by exact <c>data-patient-id</c>, never by name - the QA panel carries two "Ada
 /// Testpatient" rows with different ids, which is exactly what caused a real token/patient mix-up

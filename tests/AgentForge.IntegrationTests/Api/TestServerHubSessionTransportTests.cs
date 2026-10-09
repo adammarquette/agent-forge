@@ -34,7 +34,7 @@ namespace AgentForge.IntegrationTests.Api;
 /// no LLM key - the exact conditions under which the original defect went uninvestigated for
 /// weeks.
 /// </summary>
-// Selects this class into the merge-request job integration-tests-no-deployment. A separate change
+// Selects this class into the merge-request job integration-tests-no-deployment.
 [Trait("Deployment", "None")]
 public sealed class TestServerHubSessionTransportTests
 {
@@ -66,7 +66,7 @@ public sealed class TestServerHubSessionTransportTests
     // client can negotiate. Named failure mode (regression): under LongPolling the hub read
     // HttpContext.Session off a cloned context with no ISessionFeature and threw
     // InvalidOperationException, so the connection never started and the clinician got an opaque
-    // failure instead of the refusal the #expired panel matches on. Separate changes
+    // failure instead of the refusal the #expired panel matches on.
     public static TheoryData<HttpTransportType> EveryTransport =>
         new() { HttpTransportType.WebSockets, HttpTransportType.ServerSentEvents, HttpTransportType.LongPolling };
 
@@ -125,7 +125,7 @@ public sealed class TestServerHubSessionTransportTests
     {
         var host = new HostBuilder()
             // As Program.cs does in every environment: a missing registration fails here, naming the type,
-            // rather than as a hub connection that closes before its first invoke. A separate change
+            // rather than as a hub connection that closes before its first invoke.
             .UseDefaultServiceProvider(options =>
             {
                 options.ValidateOnBuild = true;
@@ -246,7 +246,7 @@ internal sealed class ChatHubHost : IAsyncDisposable
     {
         var host = new HostBuilder()
             // As Program.cs does in every environment: a missing registration fails here, naming the type,
-            // rather than as a hub connection that closes before its first invoke. A separate change
+            // rather than as a hub connection that closes before its first invoke.
             .UseDefaultServiceProvider(options =>
             {
                 options.ValidateOnBuild = true;

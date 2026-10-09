@@ -11,7 +11,7 @@ namespace AgentForge.UnitTests.Api.OpenApi;
 /// </summary>
 /// <remarks>
 /// Written for the test alone and sharing nothing with the generator, so it cannot agree with it by
-/// construction. A separate change
+/// construction.
 /// </remarks>
 internal static class OpenApiDocumentDiff
 {

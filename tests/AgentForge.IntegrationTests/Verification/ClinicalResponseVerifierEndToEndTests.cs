@@ -29,7 +29,7 @@ public sealed class ClinicalResponseVerifierEndToEndTests : IClassFixture<Verifi
     }
 
     [Fact(Skip =
-        "QA test patient (Ada Testpatient) has no active medications or problems on file - issue #26. Unlike " +
+        "QA test patient (Ada Testpatient) has no active medications or problems on file. Unlike " +
         "the labs-date-filter test, there's no weaker-but-still-meaningful assertion available here: the whole " +
         "point is exercising source attribution against a real cited fact, so it needs real medication/problem " +
         "data seeded into QA OpenEMR to mean anything.")]

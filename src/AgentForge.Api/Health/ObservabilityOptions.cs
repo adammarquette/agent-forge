@@ -28,7 +28,7 @@ public sealed class ObservabilityOptions
     /// OTLP log exporter alongside the console one (<c>Program.cs</c>) so structured logs are queryable
     /// in Grafana. Optional and fail-open: unset -> console-only logging, and a wrong/unreachable value
     /// never blocks the app (the exporter batches and drops on failure). Include the full
-    /// <c>/otlp/v1/logs</c> path - it is used as-is, not appended to. A separate change
+    /// <c>/otlp/v1/logs</c> path - it is used as-is, not appended to.
     /// </summary>
     public string? LokiOtlpEndpoint { get; init; }
 
@@ -38,13 +38,13 @@ public sealed class ObservabilityOptions
     /// trace exporter, so spans are queryable in Grafana; used as-is, not appended to. Optional and
     /// fail-open: unset means no exporter, a malformed value means no exporter and one startup warning that
     /// does not echo it, and an unreachable one never blocks the app. Every span passes
-    /// <c>SpanPhiScrubber</c> first. A separate change
+    /// <c>SpanPhiScrubber</c> first.
     /// </summary>
     public string? TraceOtlpEndpoint { get; init; }
 
     /// <summary>
     /// Also writes every span to stdout. For local debugging only, and off by default: console spans reach
-    /// whatever collects the container's stdout. A separate change
+    /// whatever collects the container's stdout.
     /// </summary>
     public bool TraceConsoleExporter { get; init; }
 }

@@ -7,7 +7,8 @@ namespace AgentForge.Api.Health;
 
 /// <summary>
 /// Readiness check for the LLM provider dependency (NFR-HEALTH-1, NFR-REL-2): an authenticated GET of
-/// the configured model (<c>/v1/models/{model}</c>), which spends no tokens and answers 200 only when the
+/// the configured model on the configured provider - Anthropic's <c>/v1/models/{model}</c> or Gemini's
+/// <c>/v1beta/models/{model}</c> - which spends no tokens and answers 200 only when the
 /// base URL, the API key and the model all resolve - the three things every clinical turn needs.
 /// Bounded by <see cref="ReadinessOptions.ProbeTimeout"/>.
 /// </summary>
@@ -16,8 +17,9 @@ namespace AgentForge.Api.Health;
 /// 2xx is <see cref="HealthStatus.Healthy"/>; 429 is <see cref="HealthStatus.Degraded"/>, because a
 /// throttle is on the account every instance shares, so shedding this one relieves nothing; every other
 /// status - a rejected key, an unknown route or model, a provider outage - and no answer at all are
-/// <see cref="HealthStatus.Unhealthy"/>. The key is attached by the same <c>AnthropicAuthHandler</c>
-/// every model call goes through, so a probe that lost it reads 401 and fails closed.
+/// <see cref="HealthStatus.Unhealthy"/>. The key is attached by the same auth handler every model call to
+/// that provider goes through (<c>AnthropicAuthHandler</c> or <c>GeminiAuthHandler</c>), so a probe that
+/// lost it reads 401 or 403 and fails closed.
 /// <para>
 /// <b>Cost:</b> each probe is one authenticated provider request on the configured key. <c>/ready</c> is
 /// public, so the host serves this check through <see cref="CachedReadinessCheck{TCheck}"/>: at most one
@@ -36,7 +38,7 @@ public sealed class LlmProviderHealthCheck(
         HealthCheckContext context, CancellationToken cancellationToken = default)
     {
         var llm = options.Value;
-        var uri = $"{llm.BaseUrl.TrimEnd('/')}/v1/models/{Uri.EscapeDataString(llm.Model)}";
+        var uri = $"{llm.BaseUrl.TrimEnd('/')}/{ModelsPathFor(llm.Provider)}/{Uri.EscapeDataString(llm.Model)}";
         var probeTimeout = readinessOptions.Value.ProbeTimeout;
 
         var outcome = await ReadinessProbe.GetAsync(httpClient, uri, probeTimeout, cancellationToken)
@@ -59,4 +61,11 @@ public sealed class LlmProviderHealthCheck(
             ? HealthCheckResult.Degraded($"LLM provider rate-limited the readiness probe ({status}) - the key was accepted; whether model calls are throttled too is not established.")
             : HealthCheckResult.Unhealthy($"LLM provider responded {status} to the configured model lookup - model calls will fail.");
     }
+
+    private static string ModelsPathFor(LlmProviderKind provider) => provider switch
+    {
+        LlmProviderKind.Anthropic => "v1/models",
+        LlmProviderKind.Gemini => "v1beta/models",
+        _ => throw new ArgumentOutOfRangeException(nameof(provider), provider, "Unknown LlmProviderKind."),
+    };
 }

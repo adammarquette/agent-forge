@@ -112,7 +112,7 @@ public sealed class DerivedFactMapper : IDerivedFactMapper
     // text it encloses says what the citation claims.
     //
     // The three values and their meanings live on ExtractionConfidenceScore, because DocumentIngestionService
-    // reads the outcome back off the stored number to meter it and the two must not drift. A separate change
+    // reads the outcome back off the stored number to meter it and the two must not drift.
     private static double ConfidenceFrom(ExtractionCitation citation) =>
         ExtractionConfidenceScore.For(citation.Match);
 

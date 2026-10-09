@@ -10,7 +10,7 @@ public sealed record CreatedPatient(int Pid, string Uuid);
 /// <summary>
 /// Creates and reads back <c>Patient</c> FHIR resources against QA OpenEMR
 /// (<c>POST /apis/{site}/fhir/Patient</c>) - the only FHIR resource with a working create route on
-/// this deployment (confirmed against the sibling OpenEMR fork's source; GitLab issue #26).
+/// this deployment (confirmed against the sibling OpenEMR fork's source).
 /// </summary>
 public static class PatientSeederClient
 {

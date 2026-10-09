@@ -5,8 +5,8 @@ using System.Text.Json;
 namespace AgentForge.IntegrationTests.Support;
 
 /// <summary>
-/// Signs an RFC 7523 JWT-bearer client assertion for OpenEMR's <c>client_credentials</c> grant
-/// (GitLab issue #22) - QA-harness-only, never used by production (<see cref="OpenEmrQaFixture"/>).
+/// Signs an RFC 7523 JWT-bearer client assertion for OpenEMR's <c>client_credentials</c> grant,
+/// QA-harness-only, never used by production (<see cref="OpenEmrQaFixture"/>).
 /// Hand-rolled rather than via a JWT library: no JWT/crypto package exists anywhere in this repo,
 /// and net10.0's <see cref="RSA"/> does RS384 signing and PEM import natively.
 /// </summary>

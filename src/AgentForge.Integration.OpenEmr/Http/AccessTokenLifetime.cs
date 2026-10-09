@@ -9,7 +9,7 @@ namespace AgentForge.Integration.OpenEmr.Http;
 /// A one-line rule in four places is a one-line rule that drifts, and the boundary is the part that
 /// would drift: <c>&lt;=</c>, not <c>&lt;</c>. At the expiry instant OpenEMR has already stopped
 /// accepting the token, and the round trip only widens the gap — so the boundary sits on the
-/// refusing side, where being wrong costs a re-launch rather than a 401. A separate change
+/// refusing side, where being wrong costs a re-launch rather than a 401.
 /// </remarks>
 public static class AccessTokenLifetime
 {

@@ -12,7 +12,7 @@ namespace AgentForge.HermeticTests;
 /// its document. <b>Failure mode guarded (regression):</b> a fixture hand-edited, re-exported or regenerated
 /// by a different tool drifts from the strings the scripted model quotes, and the pipeline test then fails for
 /// a reason that has nothing to do with the pipeline - or, worse, a pinned sha256 is updated to
-/// bytes nobody can reproduce. Separate changes
+/// bytes nobody can reproduce.
 /// </summary>
 public sealed partial class FixtureDocumentTests
 {

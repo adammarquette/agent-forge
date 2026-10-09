@@ -1,7 +1,7 @@
 # SeedDemoPatients
 
-One-time operational script that seeds 20 synthetic demo patients into the QA OpenEMR instance
-(GitLab issue #26 follow-up). Not part of the shipped product and not run by CI — `dotnet build`
+One-time operational script that seeds 20 synthetic demo patients into the QA OpenEMR instance.
+Not part of the shipped product and not run by CI — `dotnet build`
 and `dotnet format` cover it (kept clean like everything else in the solution), but the `unit-tests`
 and `integration-tests` CI jobs filter by project filename and never invoke it.
 
@@ -11,7 +11,7 @@ and `integration-tests` CI jobs filter by project filename and never invoke it.
 > below, so a pre-visit brief over one of its patients is empty — and an empty brief looks like a broken
 > agent rather than an empty chart. Reach for it when you want volume in the patient list (search, paging,
 > load), not to demo the product.
-> a separate change
+> reference:
 
 ## What this does — and doesn't — do
 
@@ -26,15 +26,15 @@ patients, but investigation found that's not achievable on this OpenEMR deployme
   `Observation`/`Condition`/`MedicationRequest` have none.
 - `client_credentials` grants are hard-coded server-side to OpenEMR's "system" role, which this
   fork's scope generator never grants write access to for any resource — ruling out reusing the
-  `client_credentials`/JWT-bearer system client built for issue #22.
+  `client_credentials`/JWT-bearer system client the QA suite uses.
 - The legacy `/apis/{site}/api/...` REST API's write scopes for `medical_problem`/`prescription`/
   `vital` (which the checked-out source code defines) are rejected as `invalid_scope` when actually
   requested against the live deployed server — a real drift between source and deployment, not a
   naming mistake.
 
-So this script closes part of issue #26 (a richer patient panel exists) but **not** the specific ask
-of an INR lab on Ada Testpatient — no lab-creation path exists on this server at all. That issue
-should stay open.
+So this script gives a richer patient panel but **not** the specific ask
+of an INR lab on Ada Testpatient — no lab-creation path exists on this server at all. That gap
+remains.
 
 ## Running it
 

@@ -25,6 +25,10 @@
 # the incident was `.railway/railway.ts` following it, which resolved to a seven-week-old build
 # and would have downgraded staging silently.
 #
+# THE REGISTRY IS GHCR: GitHub Actions' publish-image moves `agent-forge-latest` there on every
+# `develop` push. The Docker Hub `agent-forge-latest` is frozen at the last Docker Hub build and nothing
+# moves it any more.
+#
 # DEPLOYMENT.md section 1
 services:
   agent-forge-api:
@@ -33,4 +37,4 @@ services:
     # pulls. Nothing DEPLOYED would move — that is the boundary the guard protects — but everyone
     # else's local stack would. To build under an unmistakable name instead:
     #   SIDECAR_IMAGE=agent-forge-api:local docker compose --profile copilot up --build
-    image: ${SIDECAR_IMAGE:-docker.io/amarquette/gauntletai:agent-forge-latest}
+    image: ${SIDECAR_IMAGE:-ghcr.io/marqspec/agent-forge:agent-forge-latest}

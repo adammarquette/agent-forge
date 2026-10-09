@@ -7,7 +7,7 @@ namespace AgentForge.IntegrationTests.Support;
 /// Guards the environment-fault classification of a failed QA login: a Playwright error or a timeout is
 /// reported as <see cref="QaEnvironmentUnavailableException"/>, anything else is not. Browser-free.
 /// </summary>
-// Selects this class into the merge-request job integration-tests-no-deployment. A separate change
+// Selects this class into the merge-request job integration-tests-no-deployment.
 [Trait("Deployment", "None")]
 public sealed class PlaywrightLoginAutomationFaultTests
 {

@@ -27,7 +27,7 @@ questions, and lists the day's remaining patients.
   Documentation agents.
 
 Stack: C# / .NET 10 (LTS), ASP.NET Core, Refit, SignalR, Polly, EF Core with Npgsql and pgvector, Anthropic
-as the LLM provider behind `ILlmProvider`, Cohere for embeddings and reranking, nginx as the front door,
+as the LLM provider behind `ILlmProvider` (Gemini selectable per environment with `Llm__Provider`), Cohere for embeddings and reranking, nginx as the front door,
 Prometheus and Grafana for monitoring, and Python for the security platform.
 
 ## Run it locally
@@ -48,7 +48,8 @@ patches, so stock OpenEMR with the module dropped on top will not complete a lau
 
 To add the copilot:
 
-1. Put an Anthropic API key in `.env` as `ANTHROPIC_API_KEY`.
+1. Put an Anthropic API key in `.env` as `ANTHROPIC_API_KEY`. (To use Gemini instead, set `LLM_PROVIDER=Gemini`
+   with a Gemini key, model and prices; see [DEPLOYMENT.md](DEPLOYMENT.md) §3.)
 2. Register the SMART clients, and copy the printed patient-client id and secret into `.env` as
    `OPENEMR_CLIENT_ID` / `OPENEMR_CLIENT_SECRET`:
 
@@ -84,6 +85,17 @@ docker compose -f docker-compose.yml -f docker-compose.observability.yml --profi
 **Synthetic data only.** This stack runs over plain HTTP with local-development settings. It is for
 evaluation on synthetic data, never real patient data.
 
+## Hosted environments
+
+The same stack is hosted on Railway, defined in [.railway/railway.ts](.railway/railway.ts) and built and
+deployed by GitHub Actions. Its images are published at `ghcr.io/marqspec/agent-forge`, a public package.
+
+- **Staging** is live at <https://staging-agent-forge.marqspec.com>, seeded with the synthetic cardiology demo.
+- **Production** is not yet deployed in the new Railway project; it follows in a later delivery.
+
+[DEPLOYMENT.md](DEPLOYMENT.md) §9 describes the environments, how a fresh Railway project is brought up, and
+the plan, apply and verify sequence.
+
 ## Build and test
 
 ```bash
@@ -110,7 +122,7 @@ described in [evals/README.md](evals/README.md) and [ARCHITECTURE-DOCUMENTS.md](
 | `src/AgentForge.Mcp` | the read-only MCP tool server and the patient-relationship authorization gate |
 | `src/AgentForge.Integration.OpenEmr` | typed (Refit) OpenEMR OAuth and FHIR clients |
 | `src/AgentForge.Verification` | source attribution and the cardiology rule engine |
-| `src/AgentForge.Llm` | the LLM provider seam and the Anthropic implementation |
+| `src/AgentForge.Llm` | the LLM provider seam and its Anthropic and Gemini implementations |
 | `src/AgentForge.Documents`, `src/AgentForge.Agents`, `src/AgentForge.Retrieval`, `src/AgentForge.Data` | document extraction, the evidence agent graph, hybrid retrieval, the Postgres data tier and its migrations |
 | `src/AgentForge.Observability` | metrics, tracing and audit logging |
 | `tests/` | unit, integration, hermetic and eval tests, and a Bruno request collection |

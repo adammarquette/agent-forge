@@ -99,7 +99,7 @@ public sealed class DocumentExtractorTracingTests
     public async Task ExtractAsync_ModelThrows_LeavesTheVlmSpanWithNoOutcomeAndNoTokenCounts()
     {
         // The failed-extraction shape ARCHITECTURE-DOCUMENTS.md §10 documents: `responded` is never set when the
-        // model did not answer, so the absence of an outcome plus Error is the failure. A separate change
+        // model did not answer, so the absence of an outcome plus Error is the failure.
         A.CallTo(() => _llm.CompleteAsync(A<LlmRequest>._, A<CancellationToken>._))
             .ThrowsAsync(new HttpRequestException("model unavailable"));
         using var recorder = SpanRecorder.Start();

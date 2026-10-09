@@ -43,7 +43,7 @@ public sealed class VectorIndexHealthCheck : IHealthCheck
     private readonly IOptions<ReadinessOptions> _readinessOptions;
     private readonly DataStoreStartupState _startup;
 
-    // Explicit, not primary: with that header semgrep 1.174.0 cannot parse this file at all. A separate change
+    // Explicit, not primary: with that header semgrep 1.174.0 cannot parse this file at all.
     /// <summary>Creates the check over the probe, the data and readiness options, and the startup state.</summary>
     public VectorIndexHealthCheck(
         IVectorIndexProbe probe,

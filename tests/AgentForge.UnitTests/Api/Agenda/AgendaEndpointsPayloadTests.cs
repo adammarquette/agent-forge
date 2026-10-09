@@ -11,7 +11,7 @@ public sealed class AgendaEndpointsPayloadTests
     [Fact]
     public void ToPayload_RowWithAnOlderSummary_CarriesTheSummarysOwnAsOfBesideThePagesAsOf()
     {
-        // The UI labels a row whose summary predates the page from exactly these two fields. A separate change
+        // The UI labels a row whose summary predates the page from exactly these two fields.
         var result = new AgendaResult(
             [
                 new AgendaRow("patient-1", "Synthetic One", LoadedAt.AddHours(1), "summary", [], Failed: false, FailureReason: null, SummaryAsOf: GeneratedAt),

@@ -8,7 +8,7 @@ var identityAPatientUuid = Environment.GetEnvironmentVariable("OpenEmrQa__TestPa
 var identityBPatientUuid = Environment.GetEnvironmentVariable("OpenEmrQa__SecondTestPatientId");
 
 Console.WriteLine($"Minting a patient-scoped QA identity token against {baseUrl} (site: {site}).");
-Console.WriteLine("For GitLab issue #27 (CrossIdentityAuthorizationTests): a real, SMART standalone-launch");
+Console.WriteLine("For CrossIdentityAuthorizationTests: a real, SMART standalone-launch");
 Console.WriteLine("login, scoped to whichever patient you select/log in as during the browser step below.");
 Console.WriteLine("Log in as Ada Testpatient for identity A, or any other patient for identity B.");
 
@@ -72,12 +72,12 @@ else
 }
 
 Console.WriteLine();
-Console.WriteLine("=== Paste into GitLab (Settings -> CI/CD -> Variables, protected + masked) ===");
+Console.WriteLine("=== Store as CI secrets (GitHub: Settings -> Secrets and variables -> Actions) ===");
 if (token.RefreshToken is not null)
 {
     Console.WriteLine("This deployment granted a refresh token - use it instead of the raw access token so");
-    Console.WriteLine("OpenEmrQaFixture can mint a fresh access token every run instead of it expiring hourly");
-    Console.WriteLine("(GitLab issue #29). OpenEmrQa__CrossIdentityClientId is SHARED - set it once, reuse for");
+    Console.WriteLine("OpenEmrQaFixture can mint a fresh access token every run instead of it expiring hourly.");
+    Console.WriteLine("OpenEmrQa__CrossIdentityClientId is SHARED - set it once, reuse for");
     Console.WriteLine("both identity A and B (set MintToken__ClientId to this same value on future runs so both");
     Console.WriteLine("logins use the same registered client, which the refresh grant requires).");
     Console.WriteLine();

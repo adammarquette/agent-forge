@@ -13,7 +13,7 @@ namespace AgentForge.UnitTests.Api.Patient;
 
 /// <summary>
 /// <c>GET /patient</c> is what the chat page renders its banner from, so it is also where the page learns the
-/// key its hub connection must present. Synthetic ids only. A separate change
+/// key its hub connection must present. Synthetic ids only.
 /// </summary>
 public sealed class PatientEndpointsTests
 {

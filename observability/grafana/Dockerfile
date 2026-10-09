@@ -53,7 +53,7 @@ ENV PROMETHEUS_URL=http://agentforge-prometheus:9090
 # The auth posture, SET rather than inherited. Both of these are already Grafana's defaults, which is
 # why the header above could claim them - but this image is the one that gets published at a public
 # origin, and a default is not a gate. An upstream default that changes, or a stray env var on the
-# platform, silently turns the dashboard into an open one. A separate change
+# platform, silently turns the dashboard into an open one.
 ENV GF_AUTH_ANONYMOUS_ENABLED=false \
     GF_USERS_ALLOW_SIGN_UP=false
 

@@ -14,10 +14,10 @@ namespace AgentForge.IntegrationTests.Support;
 /// </summary>
 public sealed class OpenEmrQaFixture
 {
-    // Full FHIR resource set IOpenEmrFhirApi.cs queries (GitLab issue #41's PascalCase-casing fix,
+    // Full FHIR resource set IOpenEmrFhirApi.cs queries (the PascalCase-casing fix,
     // confirmed working against the production sidecar) - was previously missing Observation,
     // Encounter, DocumentReference, Procedure, and DiagnosticReport, so every MCP tool other than
-    // get_patient_summary 401'd against a live server (issue #43's follow-up). offline_access is
+    // get_patient_summary 401'd against a live server. offline_access is
     // still requested, but the refresh token it returns is single-use: OpenEMR rotates it on redeem
     // so nothing stores it for a later run. MedicationDispense
     // is absent because the sidecar no longer reads the resource - the fork's V1 catalog has no
@@ -91,7 +91,7 @@ public sealed class OpenEmrQaFixture
         var testAccessToken = section["TestAccessToken"];
         if (!string.IsNullOrWhiteSpace(systemClientId) && !string.IsNullOrWhiteSpace(systemPrivateKeyPath))
         {
-            // client_credentials + JWT-bearer minting (GitLab issue #22) supersedes a static
+            // client_credentials + JWT-bearer minting supersedes a static
             // TestAccessToken - it never expires in practice, unlike a token re-minted by hand
             // through an interactive SMART launch. A configured-but-failed mint throws rather than
             // silently falling back to a possibly-stale static token: that would defeat the point of
@@ -118,7 +118,7 @@ public sealed class OpenEmrQaFixture
         var secondTestAccessToken = section["SecondTestAccessToken"];
         if (!string.IsNullOrWhiteSpace(crossIdentityClientId))
         {
-            // refresh_token (GitLab issue #29): a real production-shaped grant
+            // refresh_token: a real production-shaped grant
             // (IOpenEmrAuthClient.RefreshAccessTokenAsync). OpenEMR rotates the refresh token on use, so a
             // stored one works for exactly one run; CI stores none and this branch does not run there
             // (DEPLOYMENT.md section 5).
@@ -152,14 +152,14 @@ public sealed class OpenEmrQaFixture
         var secondTestPatientId = section["SecondTestPatientId"];
         if (!string.IsNullOrWhiteSpace(loginUsername) && !string.IsNullOrWhiteSpace(loginPassword))
         {
-            // Playwright login (GitLab issue #30): fires when neither a refresh token nor a static
+            // Playwright login: fires when neither a refresh token nor a static
             // token already produced an access token above. Slower than a refresh_token exchange, but
             // since refresh tokens rotate on use it is the path CI actually takes for the
             // patient-scoped tokens, every run.
             //
             // testAccessToken (FhirApi, most McpToolServerQaFixture-based tests) previously had no
-            // fallback here at all - only crossIdentityAccessTokenA/secondTestAccessToken did (GitLab
-            // issue #43). Minted first and separately from crossIdentityAccessTokenA below: they serve
+            // fallback here at all - only crossIdentityAccessTokenA/secondTestAccessToken did.
+            // Minted first and separately from crossIdentityAccessTokenA below: they serve
             // distinct fixture properties even when pointed at the same patient, and keeping one mint
             // call per token matches this method's existing shape for secondTestAccessToken.
             if (string.IsNullOrWhiteSpace(testAccessToken) && !string.IsNullOrWhiteSpace(testPatientId))

@@ -126,7 +126,7 @@ public sealed class DocumentIngestionService : IDocumentIngestionService
 
     // FR-OBS-W2-2's two extraction signals, emitted only here - on the path that actually persisted facts.
     // Re-posting the same bytes returns AlreadyIngested above and must not re-count a population that is
-    // already in the histogram, and a rejected extraction has no facts to score. A separate change
+    // already in the histogram, and a rejected extraction has no facts to score.
     //
     // Per DOCUMENT for the confidence, per FACT for the outcome: one observation each way is what makes the
     // first a distribution over documents (a 500-fact lab cannot outvote fifty intake forms) and the second a
@@ -143,7 +143,7 @@ public sealed class DocumentIngestionService : IDocumentIngestionService
     // observation at all rather than a number that would sort against those. Such documents stay visible:
     // every one of their facts is counted `unchecked` on the field-outcome counter, and
     // agentforge_document_ingestions_total{outcome="ingested"} minus this histogram's count is how many
-    // documents arrived with nothing to check. Separate changes
+    // documents arrived with nothing to check.
     private void RecordExtractionGrounding(ClinicalDocumentType documentType, IReadOnlyList<DerivedFact> facts)
     {
         var checkable = 0;

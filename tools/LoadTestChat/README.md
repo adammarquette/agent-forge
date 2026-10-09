@@ -1,6 +1,6 @@
 # LoadTestChat
 
-Load/stress-test harness for the deployed AgentForge sidecar (GitLab issue #20, Epic 12 - REQUIREMENTS.md
+Load/stress-test harness for the deployed AgentForge sidecar (REQUIREMENTS.md
 NFR-PERF-3/4). Not part of the shipped product and not run by CI - `dotnet build`/`dotnet format` cover it,
 but `unit-tests`/`integration-tests` filter by project filename and never invoke it.
 
@@ -58,7 +58,7 @@ Set `LoadTest__Question` to a guideline/evidence question and every call becomes
 request driving the hybrid-RAG `retrieve_evidence` path (Core Req 3) instead of the Week-1 brief. It is a
 stateless HTTP call to the Week-2 evidence graph, not a chat turn — see *Output* for what that means for the
 metrics. Both flows share the same client-side round-trip measurement, so the two runs are directly
-comparable — the vs-Week-1 baseline the cost/latency report needs. A separate change
+comparable — the vs-Week-1 baseline the cost/latency report needs.
 
 ```bash
 LoadTest__LoginUsername=cardio1 LoadTest__LoginPassword='<demo password>' \
@@ -102,7 +102,7 @@ evidence-flow run **every** `turn_type` series looks idle, `follow_up` included,
 this harness has no mode for.) The server-side counterparts that *do* move for an evidence run are
 `agentforge_worker_duration_seconds{worker=...}` per graph stage and the
 `agentforge_evidence_retrieval_*` histograms; end to end, the harness's own client-side percentiles above
-are the only latency numbers that flow has. A separate change
+are the only latency numbers that flow has.
 
 ## Before you believe a number
 
@@ -150,4 +150,4 @@ corpus rather than dispatching MCP FHIR tools, so `agentforge_tool_calls_total` 
 `agentforge_worker_duration_seconds_count{worker="answer-composer"}` (turns that reached the composer - the
 denominator `METRICS.md` uses for this flow) and `agentforge_evidence_retrievals_total{outcome="hit",entry_point="evidence_ask"}`
 (retrieval actually returned candidates; the label excludes chat-tool retrievals, which record there too since
-a separate change). A separate change
+a separate change).

@@ -14,7 +14,7 @@ namespace AgentForge.UnitTests.Api.Observability;
 /// instrument or mistyping the view leaves every constant-level test green while <c>/metrics</c> silently
 /// reverts to OpenTelemetry's defaults. This boots the real <c>Program</c>, records through the host's own
 /// <see cref="IAgentForgeMetrics"/>, scrapes its <c>/metrics</c>, and requires the published <c>le</c> set to
-/// be exactly the declared boundaries - no default boundary surviving. A separate change
+/// be exactly the declared boundaries - no default boundary surviving.
 /// </summary>
 public sealed class Week2HistogramExportTests : IDisposable
 {

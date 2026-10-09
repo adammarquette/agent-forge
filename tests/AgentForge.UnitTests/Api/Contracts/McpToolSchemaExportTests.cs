@@ -6,7 +6,7 @@ namespace AgentForge.UnitTests.Api.Contracts;
 /// <summary>
 /// The command line that selects tool-schema export (<c>--export-tool-schemas</c>). Guarded like the
 /// graph-schema flag: a normal start is never mistaken for an export, and an export with no path refuses rather
-/// than booting the host from a script. A separate change
+/// than booting the host from a script.
 /// </summary>
 public sealed class McpToolSchemaExportTests
 {

@@ -13,7 +13,7 @@ namespace AgentForge.Agents;
 /// accumulates across its workers and hands back. <see cref="RenderSchema"/> produces the JSON Schema
 /// (<c>--export-graph-schema</c>), and <see cref="Serialize(HandoffEvent)"/> /
 /// <see cref="Serialize(EvidenceAgentResult)"/> produce the wire form that schema describes. The evolution rules
-/// - which change bumps which part of <see cref="Version"/> - are in ARCHITECTURE-DOCUMENTS.md §9. A separate change
+/// - which change bumps which part of <see cref="Version"/> - are in ARCHITECTURE-DOCUMENTS.md §9.
 /// </summary>
 public static class EvidenceGraphContract
 {

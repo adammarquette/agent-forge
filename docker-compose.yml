@@ -32,8 +32,8 @@
 # which carries core patches the launch depends on (SessionUtil's launch-bridge
 # cookie, AuthorizationController, library/auth.inc.php) on top of the
 # oe-module-agentforge module. Stock openemr/openemr plus the module dropped on
-# top does NOT reproduce a working launch. The fork's own pipeline (GitLab project
-# 2046) is MEANT to publish straight to the Docker Hub repo referenced below on a
+# top does NOT reproduce a working launch. The fork's own pipeline
+# is MEANT to publish straight to the Docker Hub repo referenced below on a
 # green main, no hand copy, since a separate change - but currently does not; see
 # DEPLOYMENT.md section 1 "Publishing status" before trusting this
 # pin is fresh. Building it here instead would mean cloning a second repo and a
@@ -85,7 +85,8 @@ services:
     # the proxy from a GitHub `develop` BRANCH nothing mirrors this project to. Moving THIS
     # default onto that pin is a separate change; until then the compose default and the deployment
     # deliberately differ, which is the one place they do.
-    # Build it, do not pull it, unless you know what is in that tag.
+    # Build it, do not pull it, unless you know what is in that tag. It exists ONLY on Docker Hub:
+    # since a separate change publish-proxy-image pushes `proxy-sha-<12>` to GHCR and no `proxy-latest` anywhere.
     # reference: DEPLOYMENT.md section 1, a separate change
     image: ${PROXY_IMAGE:-docker.io/amarquette/gauntletai:proxy-latest}
     build:
@@ -140,7 +141,7 @@ services:
     # DEPLOYMENT.md section 1 "Publishing status" for why: the two
     # tags are not interchangeable, and the fork's CI that is meant to publish both from one
     # build currently does not run at all.
-    # The fork is a SEPARATE repository - adammarquette/openemr, GitLab 2046 - not vendored here.
+    # The fork is a SEPARATE repository - adammarquette/openemr - not vendored here.
     # .railway/railway.ts carries the same reference; keep the two in step. To run a locally-built fork image, override OPENEMR_IMAGE in .env under
     # a name that cannot be mistaken for a published tag. reference: DEPLOYMENT.md section 1
     environment:
@@ -221,6 +222,10 @@ services:
     # which the old moving default did not have. Keep this pin and production's in step.
     # WANT THE NEWEST BUILD INSTEAD? That is development, and it has its own file:
     #   docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile copilot up
+    # THE REGISTRY FOLLOWS PRODUCTION'S PIN TOO. Builds are on GHCR
+    # (ghcr.io/marqspec/agent-forge), but production still runs the Docker Hub build
+    # the earlier pipeline published, so this stays on docker.io until a promotion re-pins production to a GHCR
+    # build staging ran - and that promotion copies the full string here as well.
     # reference: DEPLOYMENT.md section 1, a separate change
     image: ${SIDECAR_IMAGE:-docker.io/amarquette/gauntletai:agent-forge-sha-49a8a5b5c411}
     build:
@@ -283,7 +288,7 @@ services:
       # Index 15 is not a data need: FR-AUTH-2's relationship gate resolves the
       # clinician-patient relationship from the clinic day's Appointment
       # participants on EVERY launch, and without the scope that search 401s, the
-      # gate fails closed and the launch is refused 403. A separate change
+      # gate fails closed and the launch is refused 403.
       OpenEmr__Scopes__0: openid
       OpenEmr__Scopes__1: fhirUser
       OpenEmr__Scopes__2: launch
@@ -304,12 +309,15 @@ services:
       # default keyless tier still starts. The sidecar's Llm:ApiKey is [Required]
       # with ValidateOnStart, so an empty value here fails at ITS startup with an
       # explicit message rather than blocking compose for everyone.
+      # Anthropic or Gemini. The key must belong to that provider; Gemini's free
+      # tier is for synthetic data only (DEPLOYMENT.md section 3).
+      Llm__Provider: ${LLM_PROVIDER:-Anthropic}
       Llm__ApiKey: ${ANTHROPIC_API_KEY:-}
       Llm__Model: ${LLM_MODEL:-claude-sonnet-5}
       # claude-sonnet-5's list rate. Nothing validates these against Llm__Model, so a model
       # change that leaves them behind mis-reports agentforge_llm_cost_usd_total in silence -
-      # which is what shipped. Change all three together, here and in
-      # .railway/railway.ts and .env.example. A separate change
+      # which is what shipped. Change the provider, model and prices together, here
+      # and in .railway/railway.ts and .env.example.
       Llm__InputPricePerMillionTokensUsd: ${LLM_INPUT_PRICE:-2.00}
       Llm__OutputPricePerMillionTokensUsd: ${LLM_OUTPUT_PRICE:-10.00}
       AgentForgeData__ConnectionString: Host=postgres;Port=5432;Database=agentforge;Username=agentforge;Password=${POSTGRES_PASSWORD:-agentforge}

@@ -4,7 +4,7 @@
     The hermetic tier (CONVENTIONS.md section 8.3): the real ingestion-to-answer pipeline over
     committed fixture documents, with only the model (ILlmProvider) scripted and no network, database
     process, API key or OpenEMR. Its own project because the unit tier forbids the file I/O a fixture
-    needs and the integration tier forbids the stub the model needs. A separate change
+    needs and the integration tier forbids the stub the model needs.
   -->
   <PropertyGroup>
     <IsPackable>false</IsPackable>

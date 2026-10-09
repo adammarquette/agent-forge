@@ -324,7 +324,7 @@ src/
   AgentForge.Mcp/                 tool server: contracts, access-audit log, read-only FHIR tools
   AgentForge.Verification/        source attribution and cardiology constraint rules
   AgentForge.Integration.OpenEmr/ Refit clients, OAuth/SMART, FHIR mappers
-  AgentForge.Llm/                 ILlmProvider abstraction and the Anthropic implementation
+  AgentForge.Llm/                 ILlmProvider abstraction and the Anthropic and Gemini implementations
   AgentForge.Documents/           document extraction, PDF text layer, citation boxes
   AgentForge.Retrieval/           hybrid (dense + full-text) retrieval, reranking, corpus seeding
   AgentForge.Data/                EF Core + pgvector: entities, DbContext, migrations

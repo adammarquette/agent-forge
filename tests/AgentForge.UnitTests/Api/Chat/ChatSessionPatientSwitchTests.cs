@@ -19,7 +19,7 @@ namespace AgentForge.UnitTests.Api.Chat;
 /// same cookie) keeps the session id but changes the launch context's patient. The conversation state is
 /// keyed by session id, so these tests compose the real coordinator, orchestrator and state store and fake
 /// only the model and the tool dispatcher: the assertion is on the patient id the tool call actually
-/// carries. A separate change
+/// carries.
 /// </summary>
 public sealed class ChatSessionPatientSwitchTests
 {
@@ -134,7 +134,7 @@ public sealed class ChatSessionPatientSwitchTests
     public async Task Resume_PatientSwitchedThenReconnectFromSequenceZero_ReplaysNothingDeliveredForThePreviousPatient()
     {
         // A freshly loaded page reconnects before its first message and asks for everything since 0. The outbox is
-        // keyed by the session id, which the switch keeps. A separate change
+        // keyed by the session id, which the switch keeps.
         var briefA = await _sut.RequestBriefAsync(SessionId, SessionFor("pt-A"), CancellationToken.None);
         var answerA = await _sut.AskFollowUpAsync(SessionId, SessionFor("pt-A"), "Latest potassium?", CancellationToken.None);
         var briefB = await _sut.RequestBriefAsync(SessionId, SessionFor("pt-B"), CancellationToken.None);

@@ -31,7 +31,7 @@
 #   - Grafana's admin credential is a passthrough, so it can be changed without editing this file.
 # See DEPLOYMENT.md § "Observability: three wirings".
 #
-# reference: DEPLOYMENT.md §1, #417
+# reference: DEPLOYMENT.md §1
 # -----------------------------------------------------------------------------
 
 services:

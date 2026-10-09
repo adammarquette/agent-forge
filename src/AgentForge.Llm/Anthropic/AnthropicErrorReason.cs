@@ -9,7 +9,7 @@ namespace AgentForge.Llm.Anthropic;
 /// What of a failed Messages API call is safe to repeat in an exception message or a log line: Anthropic's
 /// <c>error.type</c>, which is a fixed vocabulary, and the <c>request-id</c> response header, which is an opaque
 /// token Anthropic support can look the call up by. Never the body's <c>message</c> - it can quote the request
-/// back, and the request carries chart content (CONVENTIONS.md §7). A separate change
+/// back, and the request carries chart content (CONVENTIONS.md §7).
 /// </summary>
 internal sealed partial record AnthropicErrorReason(string ErrorType, string RequestId)
 {

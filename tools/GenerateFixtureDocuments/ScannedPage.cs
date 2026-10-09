@@ -5,7 +5,7 @@ namespace AgentForge.GenerateFixtureDocuments;
 /// low resolution, a small skew, speckle and dropped-out ink. All of it is integer arithmetic or plain
 /// IEEE multiply-and-add on constants - no <c>Math.Sin</c>, no <c>Random</c> - so the pixels are the same on
 /// every machine and runtime. <see cref="RegionOf"/> reports where a printed span lands <i>after</i> the
-/// skew, as the manifest's truth. A separate change
+/// skew, as the manifest's truth.
 /// </summary>
 public sealed class ScannedPage
 {

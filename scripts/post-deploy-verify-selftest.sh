@@ -212,7 +212,7 @@ FRONT_DOOR="localhost:8080" expect 2 "a base URL with no scheme is refused"
 
 # DNS is case-insensitive and ignores the trailing root label, so these reach the same container as
 # `http://openemr/`. The C# guard in tools/BootstrapOpenEmr matches a lower-cased Uri.Host; these
-# keep the shell one honest about the parity it claims. A separate change
+# keep the shell one honest about the parity it claims.
 healthy
 FRONT_DOOR="http://OPENEMR" expect 2 "an UPPER-CASE internal hostname is refused too"
 healthy
@@ -250,7 +250,7 @@ GATE_BIN="$tmp/bin/gate-no-ready.sh" EXPECT_SAYING="ran 3 of 4 checks" \
 # ---- the globals half ----------------------------------------------------
 healthy
 # "Done: 0 changed" here on purpose: with "1 changed" the positive-invariant check further down
-# reddens this fixture too once the drift-verb check is deleted, backstopping it. A separate change
+# reddens this fixture too once the drift-verb check is deleted, backstopping it.
 bootstrap 0 "globals:" "  ok      site_addr_oath = http://front-door.example:8080" \
               "  SET     agentforge_launch_mode = tab   (was 'iframe')" "Done: 0 changed, 1 already correct."
 expect 1 "an unexpected SET reddens: the deploy did not carry the setting" --globals
@@ -264,7 +264,7 @@ expect 1 "a bootstrap that reports nothing at all reddens, rather than passing o
 
 # The `Done: 0 changed` line is here on purpose: without it the positive-invariant check further
 # down reddens this fixture too, so deleting the rc check left the case red. Only the exit code is
-# wrong now. A separate change
+# wrong now.
 bootstrap 1 "globals:" "  ok      site_addr_oath = http://front-door.example:8080" "No AgentForge SMART clients found." "Done: 0 changed, 1 already correct."
 expect 1 "a bootstrap that exits non-zero reddens even when its lines all say ok" --globals
 
@@ -302,7 +302,7 @@ expect 1 "--grafana reddens when Grafana ACCEPTS admin/admin (the unset-credenti
 
 # The refusing login is here on purpose. Without it, deleting the health-status check sends the login
 # probe to the stand-in's unmatched-path 599, and the case stays red for the wrong reason. With it,
-# only the health check can redden this case. A separate change
+# only the health check can redden this case.
 healthy
 printf '%s\n' "/grafana/api/health 404" "/grafana/login#admin:admin 401" >> "$tmp/spec"
 expect 1 "--grafana reddens where /grafana is not routed (404): absent is not refused" --grafana

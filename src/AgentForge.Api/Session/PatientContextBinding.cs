@@ -9,7 +9,7 @@ namespace AgentForge.Api.Session;
 /// session's current site and patient; the page presents it on every hub connection, reconnects included;
 /// <c>ChatHub</c> refuses a connection whose key no longer matches the session's patient. Needed because the
 /// session id outlives a patient switch: another tab's drill-down, or a second launch on the same cookie,
-/// changes the patient under a page that is still showing the previous one. A separate change
+/// changes the patient under a page that is still showing the previous one.
 /// </summary>
 /// <remarks>
 /// A one-way digest of the server-side session id, site and patient id. It travels in the hub URL's query
